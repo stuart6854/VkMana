@@ -10,6 +10,28 @@ VULKAN_HPP_DEFAULT_DISPATCH_LOADER_DYNAMIC_STORAGE
 
 namespace VkMana
 {
+	GraphicsDevice::Impl::Impl(const GraphicsDeviceOptions& options, SwapchainDescription* swapchainDescription, bool colorSrgb)
+	{
+		VULKAN_HPP_DEFAULT_DISPATCHER.init();
+
+		CreateInstance(options.Debug, options.InstanceExtensions);
+
+		VULKAN_HPP_DEFAULT_DISPATCHER.init(GetInstance());
+
+		vk::SurfaceKHR surface;
+		if (swapchainDescription != nullptr)
+		{
+			//			surface = SurfaceUtils.CreateSurface(this, GetInstance(), swapchainDescription->Source);
+		}
+
+		CreatePhysicalDevice();
+		CreateLogicalDevice(surface, options.DeviceExtensions);
+
+		VULKAN_HPP_DEFAULT_DISPATCHER.init(GetInstance(), GetLogicalDevice());
+
+		m_allocationManager = AllocationManager(m_instance, m_physicalDevice, m_device);
+	}
+
 	GraphicsDevice::Impl::~Impl()
 	{
 		while (!m_freeFences.empty())

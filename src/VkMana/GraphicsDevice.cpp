@@ -13,27 +13,9 @@ namespace VkMana
 	}
 
 	GraphicsDevice::GraphicsDevice(const GraphicsDeviceOptions& options, SwapchainDescription* swapchainDescription, bool colorSrgb)
-		: m_impl(new Impl)
+		: m_impl(new Impl(options, swapchainDescription, colorSrgb))
 		, m_factory(new ResourceFactory(*this))
 	{
-		VULKAN_HPP_DEFAULT_DISPATCHER.init();
-
-		m_impl->CreateInstance(options.Debug, options.InstanceExtensions);
-
-		VULKAN_HPP_DEFAULT_DISPATCHER.init(m_impl->GetInstance());
-
-		vk::SurfaceKHR surface;
-		if (swapchainDescription != nullptr)
-		{
-			//			surface = SurfaceUtils.CreateSurface(this, m_impl->GetInstance(), swapchainDescription->Source);
-		}
-
-		m_impl->CreatePhysicalDevice();
-		m_impl->CreateLogicalDevice(surface, options.DeviceExtensions);
-
-		VULKAN_HPP_DEFAULT_DISPATCHER.init(m_impl->GetInstance(), m_impl->GetLogicalDevice());
-
-		m_allocator =
 	}
 
 	GraphicsDevice::~GraphicsDevice() = default;

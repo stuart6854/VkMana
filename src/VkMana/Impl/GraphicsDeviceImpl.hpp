@@ -1,6 +1,7 @@
 #pragma once
 
 #include "VkMana/GraphicsDevice.hpp"
+#include "AllocationManager.hpp"
 
 #include <vulkan/vulkan.hpp>
 
@@ -11,7 +12,7 @@ namespace VkMana
 	class GraphicsDevice::Impl
 	{
 	public:
-		Impl() = default;
+		explicit Impl(const GraphicsDeviceOptions& options, SwapchainDescription* swapchainDescription, bool colorSrgb);
 		~Impl();
 
 		void CreateInstance(bool debug, const std::vector<const char*>& instanceExtensions);
@@ -57,6 +58,8 @@ namespace VkMana
 		std::int32_t m_presentQueueIndex = -1;
 
 		vk::Queue m_graphicsQueue;
+
+		AllocationManager m_allocationManager;
 
 		std::queue<vk::Fence> m_freeFences;
 		std::queue<FenceSubmitInfo> m_submittedFences;

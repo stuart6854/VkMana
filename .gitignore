@@ -1,0 +1,8 @@
+# Build Artifacts
+cmake-*/
+build/
+
+# IDE Artifacts
+.idea
+.vs
+.vscode

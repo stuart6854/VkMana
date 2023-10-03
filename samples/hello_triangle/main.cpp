@@ -24,11 +24,7 @@ int main()
 	auto windowFlags = SDL_WINDOW_VULKAN | SDL_WINDOW_RESIZABLE | SDL_WINDOW_SHOWN;
 	auto* sdlWindow = SDL_CreateWindow("Sample - Hello Triangle", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, 1270, 720, windowFlags);
 
-	SwapchainDescription swapchainDescription(GetSwapchainSource(sdlWindow), // SwapchainSource::CreateWin32(nullptr, nullptr),
-		1270,
-		720,
-		{},
-		true);
+	SwapchainDescription swapchainDescription(GetSwapchainSource(sdlWindow), 1270, 720, {}, true);
 
 	GraphicsDeviceOptions options;
 	options.Debug = true;
@@ -52,15 +48,15 @@ int main()
 		}
 
 		const auto& vulkanStats = graphicsDevice->GetVulkanStats();
-		std::cout << "Vulkan Stats:\n";
-		std::cout << " Command Buffers: " << vulkanStats.NumCommandBuffers << "\n";
-		std::cout << " Fences: " << vulkanStats.NumFences << "\n";
+		// std::cout << "Vulkan Stats:\n";
+		// std::cout << " Command Buffers: " << vulkanStats.NumCommandBuffers << "\n";
+		// std::cout << " Fences: " << vulkanStats.NumFences << "\n";
 
 		cmdList->Begin();
 		cmdList->End();
 
 		graphicsDevice->SubmitCommands(*cmdList);
-		//		graphicsDevice->SwapBuffers();
+		graphicsDevice->SwapBuffers();
 
 		std::this_thread::sleep_for(std::chrono::milliseconds(16));
 	}

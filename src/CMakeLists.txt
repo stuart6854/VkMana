@@ -3,11 +3,14 @@ add_library(VkMana
         VkMana/Impl/CommandListImpl.cpp
         VkMana/Impl/FenceImpl.cpp
         VkMana/Impl/AllocationManager.cpp
+        VkMana/Impl/SwapchainImpl.cpp
+        VkMana/Impl/SurfaceUtil.cpp
         VkMana/GraphicsDevice.cpp
         VkMana/ResourceFactory.cpp
         VkMana/SwapchainSource.cpp
         VkMana/CommandList.cpp
         VkMana/Fence.cpp
+        VkMana/Swapchain.cpp
 )
 
 target_include_directories(VkMana PUBLIC ../include)

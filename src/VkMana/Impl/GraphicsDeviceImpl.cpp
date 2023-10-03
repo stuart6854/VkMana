@@ -2,6 +2,8 @@
 
 #include "CommandListImpl.hpp"
 #include "FenceImpl.hpp"
+#include "SurfaceUtil.hpp"
+#include "SwapchainImpl.hpp"
 
 VULKAN_HPP_DEFAULT_DISPATCH_LOADER_DYNAMIC_STORAGE
 
@@ -19,9 +21,9 @@ namespace VkMana
 		VULKAN_HPP_DEFAULT_DISPATCHER.init(GetInstance());
 
 		vk::SurfaceKHR surface;
-		if (swapchainDescription != nullptr)
+		if (swapchainDescription != nullptr && swapchainDescription->Source != nullptr)
 		{
-			//			surface = SurfaceUtils.CreateSurface(this, GetInstance(), swapchainDescription->Source);
+			surface = SurfaceUtil::CreateSurface(*this, GetInstance(), *swapchainDescription->Source);
 		}
 
 		CreatePhysicalDevice();
@@ -30,6 +32,8 @@ namespace VkMana
 		VULKAN_HPP_DEFAULT_DISPATCHER.init(GetInstance(), GetLogicalDevice());
 
 		m_allocationManager = AllocationManager(m_instance, m_physicalDevice, m_device);
+
+		m_instance.destroy(surface);
 	}
 
 	GraphicsDevice::Impl::~Impl()
@@ -114,7 +118,7 @@ namespace VkMana
 
 		vk::DeviceCreateInfo deviceInfo{};
 		deviceInfo.setQueueCreateInfos(queueCreateInfos);
-		deviceInfo.setPEnabledExtensionNames(deviceExtensions);
+		deviceInfo.setPEnabledExtensionNames(extensions);
 		m_device = m_physicalDevice.createDevice(deviceInfo);
 		// #TODO: Handle failure
 
@@ -147,6 +151,16 @@ namespace VkMana
 		fenceSubmitInfo.cmdBuffer = cmdBuffer;
 
 		commandList.GetImpl()->CommandBufferSubmitted(cmdBuffer);
+	}
+
+	void GraphicsDevice::Impl::SwapBuffers(Swapchain& swapchain)
+	{
+		swapchain.GetImpl()->Present();
+	}
+
+	void GraphicsDevice::Impl::WaitForIdle()
+	{
+		m_device.waitIdle();
 	}
 
 	void GraphicsDevice::Impl::GetQueueFamilyIndices(vk::SurfaceKHR surface)

@@ -10,6 +10,7 @@
 	#include <GLFW/glfw3.h>
 #endif
 
+#include <iostream>
 #include <memory>
 
 namespace VkMana
@@ -17,18 +18,22 @@ namespace VkMana
 #ifdef VKMANA_USE_SDL2
 	auto GetSwapchainSource(SDL_Window* window) -> std::shared_ptr<SwapchainSource>
 	{
-		SDL_version version;
-		SDL_GetVersion(&version);
 		SDL_SysWMinfo info;
-		SDL_GetWindowWMInfo(window, &info);
+		SDL_GetVersion(&info.version);
+		if (SDL_GetWindowWMInfo(window, &info) == 0)
+		{
+			std::cerr << SDL_GetError() << "\n";
+			// #TODO: Error.
+		}
+
 		switch (info.subsystem)
 		{
 			case SDL_SYSWM_WINDOWS:
 				auto* hwnd = info.info.win.window;
 				auto* hInstance = info.info.win.hinstance;
 				return SwapchainSource::CreateWin32(hwnd, hInstance);
-//			default:
-//				break;
+				//			default:
+				//				break;
 		}
 
 		return nullptr;
@@ -36,9 +41,7 @@ namespace VkMana
 #endif
 
 #ifdef VKMANA_USE_GLFW
-	auto GetSwapchainSource() -> std::shared_ptr<SwapchainSource>
-	{
-	}
+	auto GetSwapchainSource() -> std::shared_ptr<SwapchainSource> {}
 #endif
 
 } // namespace VkMana

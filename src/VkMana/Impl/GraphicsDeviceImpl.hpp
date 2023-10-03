@@ -2,10 +2,12 @@
 
 #include "VkMana/GraphicsDevice.hpp"
 #include "AllocationManager.hpp"
+#include "SwapchainImpl.hpp"
 
 #include <vulkan/vulkan.hpp>
 
 #include <queue>
+#include <memory>
 
 namespace VkMana
 {
@@ -20,6 +22,10 @@ namespace VkMana
 		void CreateLogicalDevice(vk::SurfaceKHR surface, const std::vector<const char*>& deviceExtensions);
 
 		void SubmitCommands(CommandList& commandList, Fence* fence = nullptr);
+
+		void SwapBuffers(Swapchain& swapchain);
+
+		void WaitForIdle();
 
 		auto GetInstance() const -> auto { return m_instance; }
 		auto GetPhysicalDevice() const -> auto { return m_physicalDevice; }

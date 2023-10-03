@@ -25,6 +25,9 @@ namespace VkMana
 	class GraphicsDevice
 	{
 	public:
+		class Impl;
+
+	public:
 		static auto Create(const GraphicsDeviceOptions& options, SwapchainDescription* swapchainDescription, bool colorSrgb = false)
 			-> std::unique_ptr<GraphicsDevice>;
 
@@ -77,9 +80,9 @@ namespace VkMana
 		auto GetImpl() const -> auto* { return m_impl.get(); }
 
 	private:
-		class Impl;
 		std::unique_ptr<Impl> m_impl;
 
 		std::unique_ptr<ResourceFactory> m_factory;
+		std::shared_ptr<Swapchain> m_mainSwapchain;
 	};
 } // namespace VkMana

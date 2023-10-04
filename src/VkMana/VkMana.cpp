@@ -31,7 +31,7 @@ namespace VkMana
 		vk::Instance Instance;
 		vk::PhysicalDevice PhysicalDevice;
 		vk::Device Device;
-		QueueFamilyIndices QueueFamilyIndices;
+		Internal::QueueFamilyIndices QueueFamilyIndices;
 		vk::Queue GraphicsQueue;
 		vma::Allocator Allocator;
 		std::vector<std::unique_ptr<DeviceBuffer_T>> Buffers;
@@ -71,7 +71,7 @@ namespace VkMana
 
 		context.GraphicsDevices.push_back(std::make_unique<GraphicsDevice_T>());
 		auto& graphicsDevice = *context.GraphicsDevices.back();
-		if (!CreateInstance(graphicsDevice.Instance, createInfo.Debug, {}))
+		if (!Internal::CreateInstance(graphicsDevice.Instance, createInfo.Debug, {}))
 		{
 			// #TODO: Error. Failed to create Vulkan instance.
 			DestroyGraphicDevice(&graphicsDevice);
@@ -79,14 +79,14 @@ namespace VkMana
 		}
 		VULKAN_HPP_DEFAULT_DISPATCHER.init(graphicsDevice.Instance);
 
-		if (!CreatePhysicalDevice(graphicsDevice.PhysicalDevice, graphicsDevice.Instance))
+		if (!Internal::CreatePhysicalDevice(graphicsDevice.PhysicalDevice, graphicsDevice.Instance))
 		{
 			// #TODO: Error. Failed to create Vulkan physical device.
 			DestroyGraphicDevice(&graphicsDevice);
 			return nullptr;
 		}
 
-		graphicsDevice.QueueFamilyIndices = GetQueueFamilyIndices(graphicsDevice.PhysicalDevice, {});
+		graphicsDevice.QueueFamilyIndices = Internal::GetQueueFamilyIndices(graphicsDevice.PhysicalDevice, {});
 
 		if (!CreateLogicalDevice(graphicsDevice.Device, graphicsDevice.PhysicalDevice, graphicsDevice.QueueFamilyIndices, {}))
 		{
@@ -96,7 +96,7 @@ namespace VkMana
 		}
 		VULKAN_HPP_DEFAULT_DISPATCHER.init(graphicsDevice.Device);
 
-		if (!CreateAllocator(graphicsDevice.Allocator, graphicsDevice.Instance, graphicsDevice.PhysicalDevice, graphicsDevice.Device))
+		if (!Internal::CreateAllocator(graphicsDevice.Allocator, graphicsDevice.Instance, graphicsDevice.PhysicalDevice, graphicsDevice.Device))
 		{
 			// #TODO: Error. Failed to create Vulkan allocator.
 			DestroyGraphicDevice(&graphicsDevice);
@@ -118,7 +118,7 @@ namespace VkMana
 
 		buffer.graphicsDevice = graphicsDevice;
 
-		if (!CreateDeviceBuffer(buffer.Buffer, buffer.Allocation, graphicsDevice->Allocator, createInfo.Size, createInfo.Usage))
+		if (!Internal::CreateDeviceBuffer(buffer.Buffer, buffer.Allocation, graphicsDevice->Allocator, createInfo.Size, createInfo.Usage))
 		{
 			// #TODO: Error. Failed to create Vulkan device buffer.
 			DestroyBuffer(&buffer);

@@ -7,7 +7,7 @@
 #include <unordered_set>
 #include <vector>
 
-namespace VkMana
+namespace VkMana::Internal
 {
 	bool CreateInstance(vk::Instance& outInstance, bool debug, std::vector<const char*> extensions)
 	{

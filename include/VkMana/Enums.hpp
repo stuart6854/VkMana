@@ -4,6 +4,19 @@
 
 namespace VkMana
 {
+	enum class BufferUsage : std::uint8_t
+	{
+		None,
+		/** Vertex buffer. */
+		Vertex,
+		/** Index buffer. */
+		Index,
+		/** Uniform buffer. Implies host-accessible. */
+		Uniform,
+		/** Similar to Uniform buffer, but usually for much larger data. */
+		Storage,
+	};
+
 	enum class PixelFormat : std::uint8_t
 	{
 		None,
@@ -169,8 +182,9 @@ namespace VkMana
 		BC7_UNorm_SRgb,
 	};
 
-	enum class TextureUsage
+	enum class TextureUsage : std::uint8_t
 	{
+		None = 0,
 		/** Read-Only. Shader accessible. */
 		Sampled = 1 << 0,
 		/** Read/Write. Shader accessible. */
@@ -187,14 +201,15 @@ namespace VkMana
 		GenerateMipMaps = 1 << 6,
 	};
 
-	enum class TextureType
+	enum class TextureType : std::uint8_t
 	{
+		None,
 		Texture1D,
 		Texture2D,
 		Texture3D,
 	};
 
-	enum class IndexFormat
+	enum class IndexFormat : std::uint8_t
 	{
 		UInt16,
 		UInt32,

@@ -10,6 +10,7 @@ Checks: >
   -*-braces-around-statements,
   -*-signed-bitwise,
   -*-avoid-magic-numbers,
+  -*-implicit-bool-conversion,
   -modernize-use-trailing-return-type,
   -modernize-use-nodiscard,
   -readability-redundant-access-specifiers,

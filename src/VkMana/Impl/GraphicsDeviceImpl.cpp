@@ -8,6 +8,7 @@
 VULKAN_HPP_DEFAULT_DISPATCH_LOADER_DYNAMIC_STORAGE
 
 #include <cassert>
+#include <iostream>
 #include <set>
 
 namespace VkMana
@@ -115,6 +116,12 @@ namespace VkMana
 
 		auto extensions = deviceExtensions;
 		extensions.push_back(VK_KHR_SWAPCHAIN_EXTENSION_NAME); // #TODO: Check extensions supported
+		if (DeviceSupportsExtension(VK_KHR_DYNAMIC_RENDERING_EXTENSION_NAME))
+		{
+			m_supportsDynamicRendering = true;
+			extensions.push_back(VK_KHR_DYNAMIC_RENDERING_EXTENSION_NAME);
+			std::cout << "Device - Extension 'VK_KHR_dynamic_rendering' supported.\n";
+		}
 
 		vk::DeviceCreateInfo deviceInfo{};
 		deviceInfo.setQueueCreateInfos(queueCreateInfos);
@@ -161,6 +168,28 @@ namespace VkMana
 	void GraphicsDevice::Impl::WaitForIdle()
 	{
 		m_device.waitIdle();
+	}
+
+	bool GraphicsDevice::Impl::InstanceSupportsExtension(const char* extName)
+	{
+		auto extensions = vk::enumerateInstanceExtensionProperties();
+		for (auto& ext : extensions)
+		{
+			if (std::strcmp(ext.extensionName, extName) == 0)
+				return true;
+		}
+		return false;
+	}
+
+	bool GraphicsDevice::Impl::DeviceSupportsExtension(const char* extName)
+	{
+		auto extensions = m_physicalDevice.enumerateDeviceExtensionProperties();
+		for (auto& ext : extensions)
+		{
+			if (std::strcmp(ext.extensionName, extName) == 0)
+				return true;
+		}
+		return false;
 	}
 
 	void GraphicsDevice::Impl::GetQueueFamilyIndices(vk::SurfaceKHR surface)

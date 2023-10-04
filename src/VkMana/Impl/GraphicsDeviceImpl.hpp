@@ -37,9 +37,14 @@ namespace VkMana
 		auto GetGraphicsQueue() const -> auto { return m_graphicsQueue; }
 		// auto GetPresentQueue() const -> auto { return m_presentQueue; }
 
+		auto SupportsDynamicRendering() const -> auto { return m_supportsDynamicRendering; }
+
 		auto GetVulkanStats() -> auto& { return m_vulkanStats; }
 
 	private:
+		bool InstanceSupportsExtension(const char* extName);
+		bool DeviceSupportsExtension(const char* extName);
+
 		void GetQueueFamilyIndices(vk::SurfaceKHR surface);
 
 		auto GetNextFreeFence() -> vk::Fence;
@@ -69,6 +74,8 @@ namespace VkMana
 
 		std::queue<vk::Fence> m_freeFences;
 		std::queue<FenceSubmitInfo> m_submittedFences;
+
+		bool m_supportsDynamicRendering;
 
 		VulkanStats m_vulkanStats;
 	};

@@ -11,6 +11,7 @@ add_library(VkMana
         VkMana/CommandList.cpp
         VkMana/Fence.cpp
         VkMana/Swapchain.cpp
+        VkMana/SwapchainFramebuffer.cpp
 )
 
 target_include_directories(VkMana PUBLIC ../include)

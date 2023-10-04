@@ -1,6 +1,7 @@
 #pragma once
 
 #include "VkMana/Swapchain.hpp"
+#include "../SwapchainFramebuffer.hpp"
 
 #include <vulkan/vulkan.hpp>
 
@@ -37,7 +38,7 @@ namespace VkMana
 
 		vk::SurfaceKHR m_surface;
 		vk::SwapchainKHR m_swapchain;
-		//		std::unique_ptr<Framebuffer> m_framebuffer;
+		std::unique_ptr<SwapchainFramebuffer> m_framebuffer;
 		vk::Fence m_imageReadyFence;
 		std::uint32_t m_presentQueueIndex;
 		vk::Queue m_presentQueue;

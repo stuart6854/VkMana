@@ -174,7 +174,7 @@ namespace VkMana
 			m_graphicsDevice.GetImpl()->GetLogicalDevice().destroy(oldSwapchain);
 		}
 
-		//		m_framebuffer.SetNewSwapchain(m_swapchain, width, height, surfaceFormat, swapchainInfo.imageExtent);
+		m_framebuffer->SetNewSwapchain(m_swapchain, width, height, surfaceFormat, swapchainInfo.imageExtent);
 	}
 
 	void Swapchain::Impl::AcquireNextImage(vk::Device device, vk::Semaphore semaphore, vk::Fence fence)

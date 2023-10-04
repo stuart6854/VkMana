@@ -169,6 +169,31 @@ namespace VkMana
 		BC7_UNorm_SRgb,
 	};
 
+	enum class TextureUsage
+	{
+		/** Read-Only. Shader accessible. */
+		Sampled = 1 << 0,
+		/** Read/Write. Shader accessible. */
+		Storage = 1 << 1,
+		/** Color Target. */
+		RenderTarget = 1 << 2,
+		/** Depth/Stencil Target. */
+		DepthStencil = 1 << 3,
+		/** 2D CubeMap. */
+		CubeMap = 1 << 4,
+		/** Read/Write staging resource for uploading texture data. */
+		Staging = 1 << 5,
+		/** Texture supports automatic generation of mipmaps through CommandList. */
+		GenerateMipMaps = 1 << 6,
+	};
+
+	enum class TextureType
+	{
+		Texture1D,
+		Texture2D,
+		Texture3D,
+	};
+
 	enum class IndexFormat
 	{
 		UInt16,

@@ -141,6 +141,7 @@ namespace VkMana
 
 		{
 			std::lock_guard lock(graphicsDevice->Mutex);
+			graphicsDevice->Allocator.destroy();
 			graphicsDevice->Device.destroy();
 			graphicsDevice->Instance.destroy();
 		}

@@ -29,6 +29,11 @@ int main()
 	auto* graphicsDevice = CreateGraphicsDevice(gdInfo);
 	//	auto* factory = graphicsDevice->GetFactory();
 
+	BufferCreateInfo bufferInfo{};
+	bufferInfo.Size = 512;
+	bufferInfo.Usage = BufferUsage::Storage;
+	auto* buffer = CreateBuffer(graphicsDevice, bufferInfo);
+
 	//	auto cmdList = factory->CreateCommandList();
 
 	SDL_Event event;
@@ -59,6 +64,7 @@ int main()
 		std::this_thread::sleep_for(std::chrono::milliseconds(16));
 	}
 
+	DestroyBuffer(buffer);
 	DestroyGraphicDevice(graphicsDevice);
 
 	SDL_Quit();

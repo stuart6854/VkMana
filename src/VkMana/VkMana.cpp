@@ -34,6 +34,8 @@ namespace VkMana
 		QueueFamilyIndices QueueFamilyIndices;
 		vk::Queue GraphicsQueue;
 		vma::Allocator Allocator;
+		std::vector<std::unique_ptr<DeviceBuffer_T>> Buffers;
+		std::vector<std::unique_ptr<Texture_T>> Textures;
 	};
 	struct DeviceBuffer_T
 	{
@@ -106,7 +108,24 @@ namespace VkMana
 
 	auto CreateBuffer(GraphicsDevice graphicsDevice, const BufferCreateInfo& createInfo) -> DeviceBuffer
 	{
-		return nullptr;
+		if (graphicsDevice == nullptr)
+			return nullptr;
+
+		std::lock_guard lock(graphicsDevice->Mutex);
+
+		graphicsDevice->Buffers.push_back(std::make_unique<DeviceBuffer_T>());
+		auto& buffer = *graphicsDevice->Buffers.back();
+
+		buffer.graphicsDevice = graphicsDevice;
+
+		if (!CreateDeviceBuffer(buffer.Buffer, buffer.Allocation, graphicsDevice->Allocator, createInfo.Size, createInfo.Usage))
+		{
+			// #TODO: Error. Failed to create Vulkan device buffer.
+			DestroyBuffer(&buffer);
+			return nullptr;
+		}
+
+		return &buffer;
 	}
 
 	auto CreateTexture(GraphicsDevice graphicsDevice, const TextureCreateInfo& createInfo) -> Texture
@@ -128,7 +147,23 @@ namespace VkMana
 		if (buffer == nullptr)
 			return false;
 
-		std::lock_guard lock(buffer->Mutex);
+		{
+			std::lock_guard lock(buffer->Mutex);
+			buffer->graphicsDevice->Allocator.destroyBuffer(buffer->Buffer, buffer->Allocation);
+		}
+
+		{
+			std::lock_guard lock(buffer->graphicsDevice->Mutex);
+			for (auto i = 0; i < buffer->graphicsDevice->Buffers.size(); ++i)
+			{
+				auto* gdBuffer = buffer->graphicsDevice->Buffers[i].get();
+				if (gdBuffer == buffer)
+				{
+					buffer->graphicsDevice->Buffers.erase(buffer->graphicsDevice->Buffers.begin() + i);
+					break;
+				}
+			}
+		}
 		return true;
 	}
 

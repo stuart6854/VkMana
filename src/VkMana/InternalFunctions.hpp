@@ -164,4 +164,26 @@ namespace VkMana
 		outAllocator = vma::createAllocator(allocInfo);
 		return outAllocator;
 	}
+
+	bool CreateDeviceBuffer(
+		vk::Buffer& outBuffer, vma::Allocation& outAllocation, vma::Allocator allocator, std::uint64_t size, BufferUsage usage)
+	{
+		vk::BufferCreateInfo bufferInfo{};
+		bufferInfo.setSize(size);
+		if (usage == BufferUsage::Vertex)
+			bufferInfo.setUsage(vk::BufferUsageFlagBits::eVertexBuffer);
+		else if (usage == BufferUsage::Index)
+			bufferInfo.setUsage(vk::BufferUsageFlagBits::eIndexBuffer);
+		else if (usage == BufferUsage::Uniform)
+			bufferInfo.setUsage(vk::BufferUsageFlagBits::eUniformBuffer);
+		else if (usage == BufferUsage::Storage)
+			bufferInfo.setUsage(vk::BufferUsageFlagBits::eStorageBuffer);
+
+		vma::AllocationCreateInfo allocInfo{};
+		allocInfo.setUsage(vma::MemoryUsage::eAutoPreferDevice);
+
+		std::tie(outBuffer, outAllocation) = allocator.createBuffer(bufferInfo, allocInfo);
+		return outBuffer != nullptr && outAllocation != nullptr;
+	}
+
 } // namespace VkMana

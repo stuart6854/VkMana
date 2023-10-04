@@ -3,6 +3,8 @@
 #include "InternalFunctions.hpp"
 
 #include <vulkan/vulkan.hpp>
+#define VMA_IMPLEMENTATION
+#include <vk_mem_alloc.h>
 #include <vk_mem_alloc.hpp>
 
 #include <mutex>
@@ -31,6 +33,7 @@ namespace VkMana
 		vk::Device Device;
 		QueueFamilyIndices QueueFamilyIndices;
 		vk::Queue GraphicsQueue;
+		vma::Allocator Allocator;
 	};
 	struct DeviceBuffer_T
 	{
@@ -90,6 +93,13 @@ namespace VkMana
 			return nullptr;
 		}
 		VULKAN_HPP_DEFAULT_DISPATCHER.init(graphicsDevice.Device);
+
+		if (!CreateAllocator(graphicsDevice.Allocator, graphicsDevice.Instance, graphicsDevice.PhysicalDevice, graphicsDevice.Device))
+		{
+			// #TODO: Error. Failed to create Vulkan allocator.
+			DestroyGraphicDevice(&graphicsDevice);
+			return nullptr;
+		}
 
 		return &graphicsDevice;
 	}

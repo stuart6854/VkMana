@@ -149,4 +149,19 @@ namespace VkMana
 		return !!outDevice;
 	}
 
+	bool CreateAllocator(vma::Allocator& outAllocator, vk::Instance instance, vk::PhysicalDevice physicalDevice, vk::Device device)
+	{
+		vma::VulkanFunctions functions{};
+		functions.vkGetInstanceProcAddr = VULKAN_HPP_DEFAULT_DISPATCHER.vkGetInstanceProcAddr;
+		functions.vkGetDeviceProcAddr = VULKAN_HPP_DEFAULT_DISPATCHER.vkGetDeviceProcAddr;
+
+		vma::AllocatorCreateInfo allocInfo{};
+		allocInfo.setInstance(instance);
+		allocInfo.setPhysicalDevice(physicalDevice);
+		allocInfo.setDevice(device);
+		allocInfo.setVulkanApiVersion(VK_API_VERSION_1_3);
+		allocInfo.setPVulkanFunctions(&functions);
+		outAllocator = vma::createAllocator(allocInfo);
+		return outAllocator;
+	}
 } // namespace VkMana

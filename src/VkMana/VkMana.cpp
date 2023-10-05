@@ -36,6 +36,7 @@ namespace VkMana
 		vma::Allocator Allocator;
 		std::vector<std::unique_ptr<DeviceBuffer_T>> Buffers;
 		std::vector<std::unique_ptr<Texture_T>> Textures;
+		std::vector<std::unique_ptr<CommandList_T>> CmdLists;
 	};
 	struct DeviceBuffer_T
 	{
@@ -59,7 +60,13 @@ namespace VkMana
 		std::uint32_t ArrayLayers = 0;
 		PixelFormat Format = {};
 		TextureUsage Usage = {};
-		TextureType Type = {};
+		// TextureType Type = {};
+	};
+	/** A CommandList should only be used by one thread. */
+	struct CommandList_T
+	{
+		GraphicsDevice GraphicsDevice = nullptr;
+		vk::CommandPool CmdPool;
 	};
 
 	auto CreateGraphicsDevice(const GraphicsDeviceCreateInfo& createInfo) -> GraphicsDevice
@@ -158,6 +165,50 @@ namespace VkMana
 		}
 
 		return &texture;
+	}
+
+	auto CreateCommandList(GraphicsDevice graphicsDevice) -> CommandList
+	{
+		if (graphicsDevice == nullptr)
+			return nullptr;
+
+		std::lock_guard lock(graphicsDevice->Mutex);
+
+		graphicsDevice->CmdLists.push_back(std::make_unique<CommandList_T>());
+		auto& cmdList = *graphicsDevice->CmdLists.back();
+
+		cmdList.GraphicsDevice = graphicsDevice;
+
+		if (!Internal::CreateCommandPool(cmdList.CmdPool, graphicsDevice->Device))
+		{
+			// #TODO: Error. Failed to create Vulkan command pool.
+			DestroyCommandList(&cmdList);
+			return nullptr;
+		}
+
+		return &cmdList;
+	}
+
+	bool DestroyCommandList(CommandList commandList)
+	{
+		if (commandList == nullptr)
+			return false;
+
+		commandList->GraphicsDevice->Device.destroy(commandList->CmdPool);
+
+		{
+			std::lock_guard lock(commandList->GraphicsDevice->Mutex);
+			for (auto i = 0; i < commandList->GraphicsDevice->CmdLists.size(); ++i)
+			{
+				auto* gdBuffer = commandList->GraphicsDevice->CmdLists[i].get();
+				if (gdBuffer == commandList)
+				{
+					commandList->GraphicsDevice->CmdLists.erase(commandList->GraphicsDevice->CmdLists.begin() + i);
+					break;
+				}
+			}
+		}
+		return true;
 	}
 
 	bool DestroyTexture(Texture texture)

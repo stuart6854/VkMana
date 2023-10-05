@@ -12,6 +12,7 @@ namespace VkMana
 	VKMANA_DEFINE_HANDLE(GraphicsDevice);
 	VKMANA_DEFINE_HANDLE(DeviceBuffer);
 	VKMANA_DEFINE_HANDLE(Texture);
+	VKMANA_DEFINE_HANDLE(CommandList);
 
 	struct GraphicsDeviceCreateInfo
 	{
@@ -37,7 +38,9 @@ namespace VkMana
 	auto CreateGraphicsDevice(const GraphicsDeviceCreateInfo& createInfo) -> GraphicsDevice;
 	auto CreateBuffer(GraphicsDevice graphicsDevice, const BufferCreateInfo& createInfo) -> DeviceBuffer;
 	auto CreateTexture(GraphicsDevice graphicsDevice, const TextureCreateInfo& createInfo) -> Texture;
+	auto CreateCommandList(GraphicsDevice graphicsDevice) -> CommandList;
 
+	bool DestroyCommandList(CommandList commandList);
 	bool DestroyTexture(Texture texture);
 	bool DestroyBuffer(DeviceBuffer buffer);
 	bool DestroyGraphicDevice(GraphicsDevice graphicsDevice);

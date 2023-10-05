@@ -323,4 +323,12 @@ namespace VkMana::Internal
 		return outImage != nullptr && outAllocation != nullptr;
 	}
 
+	bool CreateCommandPool(vk::CommandPool& cmdPool, vk::Device device)
+	{
+		vk::CommandPoolCreateInfo poolInfo{};
+		poolInfo.setFlags(vk::CommandPoolCreateFlagBits::eResetCommandBuffer);
+		cmdPool = device.createCommandPool(poolInfo);
+		return !!cmdPool;
+	}
+
 } // namespace VkMana::Internal

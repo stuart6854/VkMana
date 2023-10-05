@@ -39,7 +39,7 @@ int main()
 	textureInfo.Usage = VkMana::TextureUsage::Sampled;
 	auto texture = VkMana::CreateTexture(graphicsDevice, textureInfo);
 
-	//	auto cmdList = factory->CreateCommandList();
+	auto cmdList = VkMana::CreateCommandList(graphicsDevice);
 
 	SDL_Event event;
 	bool running = true;
@@ -69,6 +69,7 @@ int main()
 		std::this_thread::sleep_for(std::chrono::milliseconds(16));
 	}
 
+	VkMana::DestroyCommandList(cmdList);
 	VkMana::DestroyTexture(texture);
 	VkMana::DestroyBuffer(buffer);
 	VkMana::DestroyGraphicDevice(graphicsDevice);

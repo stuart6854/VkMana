@@ -103,6 +103,8 @@ namespace VkMana
 		}
 		VULKAN_HPP_DEFAULT_DISPATCHER.init(graphicsDevice.Device);
 
+		graphicsDevice.GraphicsQueue = graphicsDevice.Device.getQueue(graphicsDevice.QueueFamilyIndices.Graphics, 0);
+
 		if (!Internal::CreateAllocator(
 				graphicsDevice.Allocator, graphicsDevice.Instance, graphicsDevice.PhysicalDevice, graphicsDevice.Device))
 		{

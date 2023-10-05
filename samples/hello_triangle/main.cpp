@@ -60,10 +60,10 @@ int main()
 		// std::cout << " Command Buffers: " << vulkanStats.NumCommandBuffers << std::endl;
 		// std::cout << " Fences: " << vulkanStats.NumFences << std::endl;
 
-		//		cmdList->Begin();
-		//		cmdList->End();
+		VkMana::CommandListBegin(cmdList);
+		VkMana::CommandListEnd(cmdList);
 
-		//		graphicsDevice->SubmitCommands(*cmdList);
+		VkMana::SubmitCommandList(cmdList);
 		//		graphicsDevice->SwapBuffers();
 
 		std::this_thread::sleep_for(std::chrono::milliseconds(16));

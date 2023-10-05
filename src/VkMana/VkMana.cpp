@@ -7,6 +7,7 @@
 #include <vk_mem_alloc.h>
 #include <vk_mem_alloc.hpp>
 
+#include <queue>
 #include <mutex>
 #include <memory>
 
@@ -34,6 +35,7 @@ namespace VkMana
 		Internal::QueueFamilyIndices QueueFamilyIndices;
 		vk::Queue GraphicsQueue;
 		vma::Allocator Allocator;
+		std::queue<vk::Fence> AvailableFences;
 		std::vector<std::unique_ptr<DeviceBuffer_T>> Buffers;
 		std::vector<std::unique_ptr<Texture_T>> Textures;
 		std::vector<std::unique_ptr<CommandList_T>> CmdLists;
@@ -62,12 +64,27 @@ namespace VkMana
 		TextureUsage Usage = {};
 		// TextureType Type = {};
 	};
+	struct SubmittedCmdInfo
+	{
+		vk::Fence Fence;
+		vk::CommandBuffer CmdBuffer;
+	};
 	/** A CommandList should only be used by one thread. */
 	struct CommandList_T
 	{
 		GraphicsDevice GraphicsDevice = nullptr;
 		vk::CommandPool CmdPool;
+		vk::CommandBuffer CmdBuffer;
+		std::queue<vk::CommandBuffer> AvailableCmdLists;
+		std::queue<SubmittedCmdInfo> SubmittedCmdBuffers;
+		bool HasBegun = false;
+		bool HasEnded = false;
 	};
+
+	namespace
+	{
+		void CheckSubmittedCmdBuffers(CommandList commandList);
+	}
 
 	auto CreateGraphicsDevice(const GraphicsDeviceCreateInfo& createInfo) -> GraphicsDevice
 	{
@@ -196,6 +213,16 @@ namespace VkMana
 		if (commandList == nullptr)
 			return false;
 
+		while (!commandList->SubmittedCmdBuffers.empty())
+		{
+			auto submission = commandList->SubmittedCmdBuffers.front();
+			commandList->SubmittedCmdBuffers.pop();
+			void(commandList->GraphicsDevice->Device.waitForFences(submission.Fence, VK_TRUE, std::uint64_t(-1)));
+
+			std::lock_guard lock(commandList->GraphicsDevice->Mutex);
+			commandList->GraphicsDevice->AvailableFences.push(submission.Fence);
+		}
+
 		commandList->GraphicsDevice->Device.destroy(commandList->CmdPool);
 
 		{
@@ -268,10 +295,23 @@ namespace VkMana
 		if (graphicsDevice == nullptr)
 			return false;
 
+		WaitForIdle(graphicsDevice); // #TODO: Can we only wait for the devices own CommandLists?
+
 		auto& context = GetContext();
 
 		{
+			for (auto& cmdList : graphicsDevice->CmdLists)
+			{
+				DestroyCommandList(cmdList.get());
+			}
+
 			std::lock_guard lock(graphicsDevice->Mutex);
+			while (!graphicsDevice->AvailableFences.empty())
+			{
+				auto fence = graphicsDevice->AvailableFences.front();
+				graphicsDevice->AvailableFences.pop();
+				graphicsDevice->Device.destroy(fence);
+			}
 			graphicsDevice->Allocator.destroy();
 			graphicsDevice->Device.destroy();
 			graphicsDevice->Instance.destroy();
@@ -292,5 +332,135 @@ namespace VkMana
 
 		return true;
 	}
+
+	void WaitForIdle(GraphicsDevice graphicsDevice)
+	{
+		if (graphicsDevice == nullptr)
+		{
+			// #TODO: Error. GraphicsDevice is null.
+			return;
+		}
+
+		graphicsDevice->Device.waitIdle();
+	}
+
+	void CommandListBegin(CommandList commandList)
+	{
+		if (commandList == nullptr)
+		{
+			// #TODO: Error. Cannot record on null CommandList.
+			return;
+		}
+
+		if (commandList->HasBegun)
+		{
+			// #TODO: Error. CommandList has already begun.
+			return;
+		}
+
+		commandList->HasBegun = true;
+
+		if (!commandList->AvailableCmdLists.empty())
+		{
+			commandList->CmdBuffer = commandList->AvailableCmdLists.front();
+			commandList->AvailableCmdLists.pop();
+			commandList->CmdBuffer.reset();
+		}
+		else
+		{
+			if (!Internal::AllocateCommandBuffer(commandList->CmdBuffer, commandList->GraphicsDevice->Device, commandList->CmdPool))
+			{
+				// #TODO: Error. Failed to allocate Vulkan command buffer.
+				return;
+			}
+		}
+
+		vk::CommandBufferBeginInfo beginInfo{};
+		commandList->CmdBuffer.begin(beginInfo);
+	}
+
+	void CommandListEnd(CommandList commandList)
+	{
+		if (commandList == nullptr)
+		{
+			// #TODO: Error. Cannot record on null CommandList.
+			return;
+		}
+
+		if (!commandList->HasBegun)
+		{
+			// #TODO: Error. CommandList has already not been begun.
+			return;
+		}
+
+		commandList->HasBegun = false;
+		commandList->HasEnded = true;
+
+		commandList->CmdBuffer.end();
+	}
+
+	void SubmitCommandList(CommandList commandList)
+	{
+		if (commandList == nullptr)
+		{
+			// #TODO: Error. Cannot submit null CommandList.
+			return;
+		}
+
+		auto* graphicsDevice = commandList->GraphicsDevice;
+
+		CheckSubmittedCmdBuffers(commandList);
+
+		vk::Fence submitFence;
+		if (!graphicsDevice->AvailableFences.empty())
+		{
+			submitFence = graphicsDevice->AvailableFences.front();
+			graphicsDevice->AvailableFences.pop();
+			graphicsDevice->Device.resetFences(submitFence);
+		}
+		else
+		{
+			if (!Internal::CreateFence(submitFence, graphicsDevice->Device))
+			{
+				// #TODO: Error. Failed to create Vulkan fence.
+				return;
+			}
+		}
+
+		vk::SubmitInfo submitInfo{};
+		submitInfo.setCommandBuffers(commandList->CmdBuffer);
+		auto queue = graphicsDevice->GraphicsQueue;
+		queue.submit(submitInfo, submitFence);
+
+		/*auto& fenceSubmitInfo = graphicsDevice->SubmittedFences.emplace();
+		fenceSubmitInfo.Fence = submitFence;
+		fenceSubmitInfo.CmdList = commandList;
+		fenceSubmitInfo.CmdBuffer = commandList->CmdBuffer;*/
+
+		auto& submittedCmdInfo = commandList->SubmittedCmdBuffers.emplace();
+		submittedCmdInfo.Fence = submitFence;
+		submittedCmdInfo.CmdBuffer = commandList->CmdBuffer;
+	}
+
+	namespace
+	{
+		void CheckSubmittedCmdBuffers(CommandList commandList)
+		{
+			while (!commandList->SubmittedCmdBuffers.empty())
+			{
+				auto submittedFence = commandList->SubmittedCmdBuffers.front();
+				if (commandList->GraphicsDevice->Device.getFenceStatus(submittedFence.Fence) == vk::Result::eSuccess)
+				{
+					commandList->SubmittedCmdBuffers.pop();
+
+					commandList->AvailableCmdLists.push(submittedFence.CmdBuffer);
+
+					std::lock_guard lock(commandList->GraphicsDevice->Mutex);
+					commandList->GraphicsDevice->AvailableFences.push(submittedFence.Fence);
+				}
+			}
+		}
+
+	} // namespace
 
 } // namespace VkMana

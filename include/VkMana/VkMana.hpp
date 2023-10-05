@@ -45,4 +45,15 @@ namespace VkMana
 	bool DestroyBuffer(DeviceBuffer buffer);
 	bool DestroyGraphicDevice(GraphicsDevice graphicsDevice);
 
+	void WaitForIdle(GraphicsDevice graphicsDevice);
+
+	/*************************************************************
+	 * Command List Recording
+	 ************************************************************/
+
+	void CommandListBegin(CommandList commandList);
+	void CommandListEnd(CommandList commandList);
+
+	void SubmitCommandList(CommandList commandList);
+
 } // namespace VkMana

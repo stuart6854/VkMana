@@ -331,4 +331,21 @@ namespace VkMana::Internal
 		return !!cmdPool;
 	}
 
+	bool AllocateCommandBuffer(vk::CommandBuffer& outCmdBuffer, vk::Device device, vk::CommandPool cmdPool)
+	{
+		vk::CommandBufferAllocateInfo allocInfo{};
+		allocInfo.setCommandPool(cmdPool);
+		allocInfo.setCommandBufferCount(1);
+		allocInfo.setLevel(vk::CommandBufferLevel::ePrimary);
+		outCmdBuffer = device.allocateCommandBuffers(allocInfo)[0];
+		return !!outCmdBuffer;
+	}
+
+	bool CreateFence(vk::Fence& outFence, vk::Device device)
+	{
+		vk::FenceCreateInfo fenceInfo{};
+		outFence = device.createFence(fenceInfo);
+		return !!outFence;
+	}
+
 } // namespace VkMana::Internal

@@ -31,7 +31,7 @@ namespace VkMana
 		std::uint32_t ArrayLayers = 1;
 		PixelFormat Format = PixelFormat::None;
 		TextureUsage Usage = TextureUsage::None;
-		TextureType Type = TextureType::None;
+//		TextureType Type = TextureType::None;
 	};
 
 	auto CreateGraphicsDevice(const GraphicsDeviceCreateInfo& createInfo) -> GraphicsDevice;

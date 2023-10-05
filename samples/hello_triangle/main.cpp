@@ -11,8 +11,6 @@
 
 int main()
 {
-	using namespace VkMana;
-
 	std::cout << "Sample - Hello Triangle" << '\n';
 
 	if (SDL_InitSubSystem(SDL_INIT_VIDEO) != 0)
@@ -24,15 +22,22 @@ int main()
 	auto windowFlags = SDL_WINDOW_VULKAN | SDL_WINDOW_RESIZABLE | SDL_WINDOW_SHOWN;
 	auto* sdlWindow = SDL_CreateWindow("Sample - Hello Triangle", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, 1270, 720, windowFlags);
 
-	GraphicsDeviceCreateInfo gdInfo{};
+	VkMana::GraphicsDeviceCreateInfo gdInfo{};
 	gdInfo.Debug = true;
-	auto* graphicsDevice = CreateGraphicsDevice(gdInfo);
+	auto* graphicsDevice = VkMana::CreateGraphicsDevice(gdInfo);
 	//	auto* factory = graphicsDevice->GetFactory();
 
-	BufferCreateInfo bufferInfo{};
+	VkMana::BufferCreateInfo bufferInfo{};
 	bufferInfo.Size = 512;
-	bufferInfo.Usage = BufferUsage::Storage;
+	bufferInfo.Usage = VkMana::BufferUsage::Storage;
 	auto* buffer = CreateBuffer(graphicsDevice, bufferInfo);
+
+	VkMana::TextureCreateInfo textureInfo{};
+	textureInfo.Width = 2048;
+	textureInfo.Height = 2048;
+	textureInfo.Format = VkMana::PixelFormat::R8_G8_B8_A8_UNorm;
+	textureInfo.Usage = VkMana::TextureUsage::Sampled;
+	auto texture = VkMana::CreateTexture(graphicsDevice, textureInfo);
 
 	//	auto cmdList = factory->CreateCommandList();
 
@@ -64,8 +69,9 @@ int main()
 		std::this_thread::sleep_for(std::chrono::milliseconds(16));
 	}
 
-	DestroyBuffer(buffer);
-	DestroyGraphicDevice(graphicsDevice);
+	VkMana::DestroyTexture(texture);
+	VkMana::DestroyBuffer(buffer);
+	VkMana::DestroyGraphicDevice(graphicsDevice);
 
 	SDL_Quit();
 

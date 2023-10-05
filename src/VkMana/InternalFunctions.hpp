@@ -9,6 +9,101 @@
 
 namespace VkMana::Internal
 {
+	auto ToVkFormat(PixelFormat format) -> vk::Format
+	{
+		switch (format)
+		{
+			case PixelFormat::R8_G8_B8_A8_UNorm:
+				return vk::Format::eR8G8B8A8Unorm;
+			case PixelFormat::B8_G8_R8_A8_UNorm:
+				return vk::Format::eB8G8R8A8Unorm;
+			case PixelFormat::R8_UNorm:
+				return vk::Format::eR8Unorm;
+			case PixelFormat::R16_UNorm:
+				return vk::Format::eR16Unorm;
+			case PixelFormat::R32_G32_B32_A32_Float:
+				return vk::Format::eR32G32B32A32Sfloat;
+			case PixelFormat::R32_Float:
+				return vk::Format::eR32Sfloat;
+			case PixelFormat::D24_UNorm_S8_UInt:
+				return vk::Format::eD24UnormS8Uint;
+			case PixelFormat::D32_Float_S8_UInt:
+				return vk::Format::eD32SfloatS8Uint;
+			case PixelFormat::R32_G32_B32_A32_UInt:
+				return vk::Format::eR32G32B32A32Uint;
+			case PixelFormat::R8_G8_SNorm:
+				return vk::Format::eR8G8Snorm;
+			/*
+			case PixelFormat::R8_SNorm:
+				return vk::Format::e;
+			case PixelFormat::R8_UInt:
+				return vk::Format::e;
+			case PixelFormat::R8_SInt:
+				return vk::Format::e;
+			case PixelFormat::R16_SNorm:
+				return vk::Format::e;
+			case PixelFormat::R16_UInt:
+				return vk::Format::e;
+			case PixelFormat::R16_SInt:
+				return vk::Format::e;
+			case PixelFormat::R16_Float:
+				return vk::Format::e;
+			case PixelFormat::R32_UInt:
+				return vk::Format::e;
+			case PixelFormat::R32_SInt:
+				return vk::Format::e;
+			case PixelFormat::R8_G8_UNorm:
+				return vk::Format::e;
+			case PixelFormat::R8_G8_UInt:
+				return vk::Format::e;
+			case PixelFormat::R8_G8_SInt:
+				return vk::Format::e;
+			case PixelFormat::R16_G16_UNorm:
+				return vk::Format::e;
+			case PixelFormat::R16_G16_SNorm:
+				return vk::Format::e;
+			case PixelFormat::R16_G16_UInt:
+				return vk::Format::e;
+			case PixelFormat::R16_G16_SInt:
+				return vk::Format::e;
+			case PixelFormat::R16_G16_Float:
+				return vk::Format::e;
+			case PixelFormat::R32_G32_UInt:
+				return vk::Format::e;
+			case PixelFormat::R32_G32_SInt:
+				return vk::Format::e;
+			case PixelFormat::R32_G32_Float:
+				return vk::Format::e;
+			case PixelFormat::R8_G8_B8_A8_SNorm:
+				return vk::Format::e;
+			case PixelFormat::R8_G8_B8_A8_UInt:
+				return vk::Format::e;
+			case PixelFormat::R8_G8_B8_A8_SInt:
+				return vk::Format::e;
+			case PixelFormat::R16_G16_B16_A16_UNorm:
+				return vk::Format::e;
+			case PixelFormat::R16_G16_B16_A16_SNorm:
+				return vk::Format::e;
+			case PixelFormat::R16_G16_B16_A16_UInt:
+				return vk::Format::e;
+			case PixelFormat::R16_G16_B16_A16_SInt:
+				return vk::Format::e;
+			case PixelFormat::R16_G16_B16_A16_Float:
+				return vk::Format::e;
+			case PixelFormat::R32_G32_B32_A32_SInt:
+				return vk::Format::e;
+			case PixelFormat::R8_G8_B8_A8_UNorm_SRgb:
+				return vk::Format::e;
+			case PixelFormat::B8_G8_R8_A8_UNorm_SRgb:
+				return vk::Format::e;
+			*/
+			case PixelFormat::None:
+			default:
+				// #TODO: Error. Unknown PixelFormat.
+				return vk::Format::eUndefined;
+		}
+	}
+
 	bool CreateInstance(vk::Instance& outInstance, bool debug, std::vector<const char*> extensions)
 	{
 		vk::ApplicationInfo appInfo{};
@@ -186,4 +281,46 @@ namespace VkMana::Internal
 		return outBuffer != nullptr && outAllocation != nullptr;
 	}
 
-} // namespace VkMana
+	bool CreateTexture(vk::Image& outImage,
+		vma::Allocation& outAllocation,
+		vma::Allocator allocator,
+		std::uint32_t width,
+		std::uint32_t height,
+		std::uint32_t depth,
+		std::uint32_t mipLevels,
+		std::uint32_t arrayLayers,
+		PixelFormat format,
+		TextureUsage usage)
+	{
+		vk::ImageCreateInfo imageInfo{};
+		imageInfo.setExtent({ width, height, depth });
+		imageInfo.setMipLevels(mipLevels);
+		imageInfo.setArrayLayers(arrayLayers);
+		imageInfo.setFormat(ToVkFormat(format));
+
+		if (usage == TextureUsage::Sampled)
+			imageInfo.setUsage(vk::ImageUsageFlagBits::eSampled);
+		else if (usage == TextureUsage::Storage)
+			imageInfo.setUsage(vk::ImageUsageFlagBits::eStorage);
+		else if (usage == TextureUsage::RenderTarget)
+			imageInfo.setUsage(vk::ImageUsageFlagBits::eColorAttachment);
+		else if (usage == TextureUsage::DepthStencil)
+			imageInfo.setUsage(vk::ImageUsageFlagBits::eDepthStencilAttachment);
+		//		else if (usage == TextureUsage::CubeMap)
+		//			imageInfo.setUsage(vk::ImageUsageFlagBits::eSampled);
+
+		if (width > 1 && height > 1 && depth > 1)
+			imageInfo.setImageType(vk::ImageType::e3D);
+		else if (width > 1 && height > 1)
+			imageInfo.setImageType(vk::ImageType::e2D);
+		else if (width > 1)
+			imageInfo.setImageType(vk::ImageType::e1D);
+
+		vma::AllocationCreateInfo allocInfo{};
+		allocInfo.setUsage(vma::MemoryUsage::eAutoPreferDevice);
+
+		std::tie(outImage, outAllocation) = allocator.createImage(imageInfo, allocInfo);
+		return outImage != nullptr && outAllocation != nullptr;
+	}
+
+} // namespace VkMana::Internal

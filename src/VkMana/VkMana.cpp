@@ -96,7 +96,8 @@ namespace VkMana
 		}
 		VULKAN_HPP_DEFAULT_DISPATCHER.init(graphicsDevice.Device);
 
-		if (!Internal::CreateAllocator(graphicsDevice.Allocator, graphicsDevice.Instance, graphicsDevice.PhysicalDevice, graphicsDevice.Device))
+		if (!Internal::CreateAllocator(
+				graphicsDevice.Allocator, graphicsDevice.Instance, graphicsDevice.PhysicalDevice, graphicsDevice.Device))
 		{
 			// #TODO: Error. Failed to create Vulkan allocator.
 			DestroyGraphicDevice(&graphicsDevice);
@@ -130,7 +131,33 @@ namespace VkMana
 
 	auto CreateTexture(GraphicsDevice graphicsDevice, const TextureCreateInfo& createInfo) -> Texture
 	{
-		return nullptr;
+		if (graphicsDevice == nullptr)
+			return nullptr;
+
+		std::lock_guard lock(graphicsDevice->Mutex);
+
+		graphicsDevice->Textures.push_back(std::make_unique<Texture_T>());
+		auto& texture = *graphicsDevice->Textures.back();
+
+		texture.graphicsDevice = graphicsDevice;
+
+		if (!Internal::CreateTexture(texture.Image,
+				texture.Allocation,
+				graphicsDevice->Allocator,
+				createInfo.Width,
+				createInfo.Height,
+				createInfo.Depth,
+				createInfo.MipLevels,
+				createInfo.ArrayLayers,
+				createInfo.Format,
+				createInfo.Usage))
+		{
+			// #TODO: Error. Failed to create Vulkan texture.
+			DestroyTexture(&texture);
+			return nullptr;
+		}
+
+		return &texture;
 	}
 
 	bool DestroyTexture(Texture texture)
@@ -138,7 +165,23 @@ namespace VkMana
 		if (texture == nullptr)
 			return false;
 
-		std::lock_guard lock(texture->Mutex);
+		{
+			std::lock_guard lock(texture->Mutex);
+			texture->graphicsDevice->Allocator.destroyImage(texture->Image, texture->Allocation);
+		}
+
+		{
+			std::lock_guard lock(texture->graphicsDevice->Mutex);
+			for (auto i = 0; i < texture->graphicsDevice->Textures.size(); ++i)
+			{
+				auto* gdBuffer = texture->graphicsDevice->Textures[i].get();
+				if (gdBuffer == texture)
+				{
+					texture->graphicsDevice->Textures.erase(texture->graphicsDevice->Textures.begin() + i);
+					break;
+				}
+			}
+		}
 		return true;
 	}
 

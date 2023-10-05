@@ -6,6 +6,7 @@
 #include <chrono>
 #include <iostream>
 #include <thread>
+#include <string>
 
 // #TODO: Sdl2Window wrapper
 
@@ -41,11 +42,16 @@ int main()
 
 	auto cmdList = VkMana::CreateCommandList(graphicsDevice);
 
+	std::uint64_t nowTime = SDL_GetPerformanceCounter();
+	std::uint64_t lastTime = 0;
 	SDL_Event event;
 	bool running = true;
 	while (running)
 	{
-		// std::cout << "New Frame" << std::endl;
+		lastTime = nowTime;
+		nowTime = SDL_GetPerformanceCounter();
+		auto deltaTime = float((nowTime - lastTime) * 1000 / double(SDL_GetPerformanceFrequency())) * 0.001f;
+		//		std::cout << "New Frame. DeltaTime=" << deltaTime << "s" << std::endl;
 
 		while (SDL_PollEvent(&event) != 0)
 		{
@@ -54,6 +60,9 @@ int main()
 				running = false;
 			}
 		}
+
+		auto title = std::string("Sample - Hello Triangle - ") + std::to_string(deltaTime) + "s";
+		SDL_SetWindowTitle(sdlWindow, title.c_str());
 
 		//		const auto& vulkanStats = gd->GetVulkanStats();
 		// std::cout << "Vulkan Stats:" << std::endl;
@@ -66,7 +75,7 @@ int main()
 		VkMana::SubmitCommandList(cmdList);
 		//		graphicsDevice->SwapBuffers();
 
-		std::this_thread::sleep_for(std::chrono::milliseconds(16));
+		std::this_thread::sleep_for(std::chrono::milliseconds(33));
 	}
 
 	VkMana::DestroyCommandList(cmdList);

@@ -1,3 +1,17 @@
+/**
+ * TODO:
+ * - Texture from vk::Image (Private API. For swapchain images.)
+ * - Swapchains
+ * - Buffer Upload
+ * - Texture Upload
+ * - Push Constants
+ * - Binding Sets (Shader resources)
+ * - Fences (Public API)
+ * - MipMap Generation
+ * - Compute
+ * - Framebuffers - vk::RenderPass (if Dynamic rendering extension not supported.)
+ */
+
 #pragma once
 
 #include "Enums.hpp"

@@ -232,6 +232,9 @@ namespace VkMana::Internal
 			queueInfo.setPQueuePriorities(&priority);
 		}
 
+		vk::PhysicalDeviceDynamicRenderingFeatures dynRenderFeature{};
+		dynRenderFeature.setDynamicRendering(VK_TRUE);
+
 		vk::PhysicalDeviceFeatures features{};
 		features.setFillModeNonSolid(VK_TRUE);
 		features.setWideLines(VK_TRUE);
@@ -240,6 +243,7 @@ namespace VkMana::Internal
 		deviceInfo.setQueueCreateInfos(queueInfos);
 		deviceInfo.setPEnabledExtensionNames(extensions);
 		deviceInfo.setPEnabledFeatures(&features);
+		deviceInfo.setPNext(&dynRenderFeature);
 		outDevice = physicalDevice.createDevice(deviceInfo);
 		return !!outDevice;
 	}

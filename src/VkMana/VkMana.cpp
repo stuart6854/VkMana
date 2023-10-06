@@ -36,6 +36,7 @@ namespace VkMana
 		vk::Queue GraphicsQueue;
 		vma::Allocator Allocator;
 		std::queue<vk::Fence> AvailableFences;
+		std::vector<std::unique_ptr<Framebuffer_T>> Framebuffers;
 		std::vector<std::unique_ptr<DeviceBuffer_T>> Buffers;
 		std::vector<std::unique_ptr<Texture_T>> Textures;
 		std::vector<std::unique_ptr<CommandList_T>> CmdLists;
@@ -64,6 +65,24 @@ namespace VkMana
 		TextureUsage Usage = {};
 		// TextureType Type = {};
 	};
+	struct FramebufferAttachment_T
+	{
+		Texture TargetTexture = nullptr;
+		std::uint32_t MipLevel = 0;
+		std::uint32_t ArrayLayer = 0;
+		RgbaFloat ClearColor = Rgba_Black;
+		vk::ImageView ImageView;
+	};
+	struct Framebuffer_T
+	{
+		GraphicsDevice GraphicsDevice = nullptr;
+		Swapchain SwapchainTarget = nullptr; // nullptr = Offscreen.
+		std::vector<FramebufferAttachment_T> ColorTargets;
+		FramebufferAttachment_T DepthTarget;
+		std::uint32_t CurrentImageIndex = 0; // For swapchain target.
+
+		// vk::RenderPass RenderPass;
+	};
 	struct SubmittedCmdInfo
 	{
 		vk::Fence Fence;
@@ -79,12 +98,15 @@ namespace VkMana
 		std::queue<SubmittedCmdInfo> SubmittedCmdBuffers;
 		bool HasBegun = false;
 		bool HasEnded = false;
+
+		Framebuffer BoundFramebuffer = nullptr;
 	};
 
 	namespace
 	{
 		void CheckSubmittedCmdBuffers(CommandList commandList);
-	}
+		void ClearCachedCmdListState(CommandList commandList);
+	} // namespace
 
 	auto CreateGraphicsDevice(const GraphicsDeviceCreateInfo& createInfo) -> GraphicsDevice
 	{
@@ -193,6 +215,85 @@ namespace VkMana
 		return &texture;
 	}
 
+	auto CreateFramebuffer(GraphicsDevice graphicsDevice, const FramebufferCreateInfo& createInfo) -> Framebuffer
+	{
+		if (graphicsDevice == nullptr)
+			return nullptr;
+
+		std::lock_guard lock(graphicsDevice->Mutex);
+
+		graphicsDevice->Framebuffers.push_back(std::make_unique<Framebuffer_T>());
+		auto& framebuffer = *graphicsDevice->Framebuffers.back();
+
+		framebuffer.GraphicsDevice = graphicsDevice;
+
+		for (const auto& colorAttachmentInfo : createInfo.ColorAttachments)
+		{
+			auto& colorTarget = framebuffer.ColorTargets.emplace_back();
+			if (colorAttachmentInfo.TargetTexture != nullptr)
+			{
+				if (colorAttachmentInfo.TargetTexture->Usage != TextureUsage::RenderTarget)
+				{
+					// #Error. Framebuffer color attachment texture must be a TextureUsage::RenderTarget texture.
+					return nullptr;
+				}
+
+				colorTarget.TargetTexture = colorAttachmentInfo.TargetTexture;
+				colorTarget.MipLevel = colorAttachmentInfo.MipLevel;
+				colorTarget.ArrayLayer = colorAttachmentInfo.ArrayLayer;
+				colorTarget.ClearColor = colorAttachmentInfo.ClearColor;
+				vk::ImageSubresourceRange subresource{};
+				subresource.aspectMask = vk::ImageAspectFlagBits::eColor;
+				subresource.baseMipLevel = colorTarget.MipLevel;
+				subresource.levelCount = 1;
+				subresource.baseArrayLayer = colorTarget.ArrayLayer;
+				subresource.layerCount = 1;
+				if (!Internal::CreateImageView(colorTarget.ImageView,
+						graphicsDevice->Device,
+						colorTarget.TargetTexture->Image,
+						vk::ImageViewType::e2D,
+						colorTarget.TargetTexture->Format,
+						subresource))
+				{
+					// #TODO: Error. Failed to create Vulkan image view.
+					DestroyFramebuffer(&framebuffer);
+					return nullptr;
+				}
+			}
+		}
+		if (createInfo.DepthAttachment.TargetTexture != nullptr)
+		{
+			if (framebuffer.DepthTarget.TargetTexture->Usage != TextureUsage::DepthStencil)
+			{
+				// #Error. Framebuffer depth attachment texture must be a TextureUsage::DepthStencil texture.
+				return nullptr;
+			}
+
+			framebuffer.DepthTarget.TargetTexture = createInfo.DepthAttachment.TargetTexture;
+			framebuffer.DepthTarget.MipLevel = createInfo.DepthAttachment.MipLevel;
+			framebuffer.DepthTarget.ArrayLayer = createInfo.DepthAttachment.ArrayLayer;
+			vk::ImageSubresourceRange subresource{};
+			subresource.aspectMask = vk::ImageAspectFlagBits::eDepth;
+			subresource.baseMipLevel = framebuffer.DepthTarget.MipLevel;
+			subresource.levelCount = 1;
+			subresource.baseArrayLayer = framebuffer.DepthTarget.ArrayLayer;
+			subresource.layerCount = 1;
+			if (!Internal::CreateImageView(framebuffer.DepthTarget.ImageView,
+					graphicsDevice->Device,
+					framebuffer.DepthTarget.TargetTexture->Image,
+					vk::ImageViewType::e2D,
+					framebuffer.DepthTarget.TargetTexture->Format,
+					subresource))
+			{
+				// #TODO: Error. Failed to create Vulkan image view.
+				DestroyFramebuffer(&framebuffer);
+				return nullptr;
+			}
+		}
+
+		return &framebuffer;
+	}
+
 	auto CreateCommandList(GraphicsDevice graphicsDevice) -> CommandList
 	{
 		if (graphicsDevice == nullptr)
@@ -244,6 +345,34 @@ namespace VkMana
 				}
 			}
 		}
+		return true;
+	}
+
+	bool DestroyFramebuffer(Framebuffer framebuffer)
+	{
+		if (framebuffer == nullptr)
+			return false;
+
+		auto device = framebuffer->GraphicsDevice->Device;
+		for (auto& target : framebuffer->ColorTargets)
+		{
+			device.destroy(target.ImageView);
+		}
+		device.destroy(framebuffer->DepthTarget.ImageView);
+
+		{
+			std::lock_guard lock(framebuffer->GraphicsDevice->Mutex);
+			for (auto i = 0; i < framebuffer->GraphicsDevice->Framebuffers.size(); ++i)
+			{
+				auto* gdBuffer = framebuffer->GraphicsDevice->Framebuffers[i].get();
+				if (gdBuffer == framebuffer)
+				{
+					framebuffer->GraphicsDevice->Framebuffers.erase(framebuffer->GraphicsDevice->Framebuffers.begin() + i);
+					break;
+				}
+			}
+		}
+
 		return true;
 	}
 
@@ -384,6 +513,8 @@ namespace VkMana
 
 		vk::CommandBufferBeginInfo beginInfo{};
 		commandList->CmdBuffer.begin(beginInfo);
+
+		ClearCachedCmdListState(commandList);
 	}
 
 	void CommandListEnd(CommandList commandList)
@@ -403,7 +534,74 @@ namespace VkMana
 		commandList->HasBegun = false;
 		commandList->HasEnded = true;
 
+		if (commandList->BoundFramebuffer != nullptr)
+		{
+			commandList->CmdBuffer.endRendering();
+		}
+
 		commandList->CmdBuffer.end();
+	}
+
+	void CommandListBindFramebuffer(CommandList commandList, Framebuffer framebuffer)
+	{
+		if (commandList == nullptr)
+		{
+			// #TODO: Error. Cannot record on null CommandList.
+			return;
+		}
+
+		if (!commandList->HasBegun)
+		{
+			// #TODO: Error. CommandList has already begun.
+			return;
+		}
+
+		if (commandList->BoundFramebuffer != nullptr)
+		{
+			commandList->CmdBuffer.endRendering();
+		}
+
+		// #TODO: If `framebuffer` is nullptr, bind main viewport (if exists).
+
+		Texture dimTex = nullptr;
+		if (!framebuffer->ColorTargets.empty())
+		{
+			dimTex = framebuffer->ColorTargets[0].TargetTexture;
+		}
+		else
+		{
+			dimTex = framebuffer->DepthTarget.TargetTexture;
+		}
+		auto renderWidth = dimTex->Width; // #TODO: Use correct MipLevel dimensions.
+		auto renderHeight = dimTex->Height;
+
+		std::vector<vk::RenderingAttachmentInfo> colorAttachments(framebuffer->ColorTargets.size());
+		for (auto i = 0; i < framebuffer->ColorTargets.size(); ++i)
+		{
+			const auto& target = framebuffer->ColorTargets[i];
+			auto& attachment = colorAttachments[i];
+			attachment.setImageView(target.ImageView);
+			attachment.setImageLayout(vk::ImageLayout::eColorAttachmentOptimal);
+			attachment.setLoadOp(vk::AttachmentLoadOp::eClear);
+			attachment.setStoreOp(vk::AttachmentStoreOp::eStore);
+
+			const auto& color = target.ClearColor;
+			attachment.setClearValue(vk::ClearColorValue(color.R, color.G, color.B, color.A));
+		}
+		vk::RenderingAttachmentInfo depthAttachment;
+		depthAttachment.setImageView(framebuffer->DepthTarget.ImageView);
+		depthAttachment.setImageLayout(vk::ImageLayout::eDepthAttachmentOptimal);
+		depthAttachment.setLoadOp(vk::AttachmentLoadOp::eClear);
+		depthAttachment.setStoreOp(vk::AttachmentStoreOp::eDontCare);
+
+		vk::RenderingInfo renderingInfo{};
+		renderingInfo.setColorAttachments(colorAttachments);
+		renderingInfo.setPDepthAttachment(framebuffer->DepthTarget.TargetTexture ? &depthAttachment : nullptr);
+		renderingInfo.setLayerCount(1);
+		renderingInfo.setRenderArea({ { 0, 0 }, { renderWidth, renderHeight } });
+
+		commandList->CmdBuffer.beginRendering(renderingInfo);
+		commandList->BoundFramebuffer = framebuffer;
 	}
 
 	void SubmitCommandList(CommandList commandList)
@@ -466,6 +664,11 @@ namespace VkMana
 					commandList->GraphicsDevice->AvailableFences.push(submittedFence.Fence);
 				}
 			}
+		}
+
+		void ClearCachedCmdListState(CommandList commandList)
+		{
+			commandList->BoundFramebuffer = nullptr;
 		}
 
 	} // namespace

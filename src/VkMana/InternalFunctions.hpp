@@ -352,4 +352,20 @@ namespace VkMana::Internal
 		return !!outFence;
 	}
 
+	bool CreateImageView(vk::ImageView& outView,
+		vk::Device device,
+		vk::Image image,
+		vk::ImageViewType type,
+		PixelFormat format,
+		vk::ImageSubresourceRange subresource)
+	{
+		vk::ImageViewCreateInfo viewInfo{};
+		viewInfo.setImage(image);
+		viewInfo.setViewType(type);
+		viewInfo.setFormat(ToVkFormat(format));
+		viewInfo.setSubresourceRange(subresource);
+		outView = device.createImageView(viewInfo);
+		return !!outView;
+	}
+
 } // namespace VkMana::Internal

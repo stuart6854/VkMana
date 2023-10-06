@@ -7,42 +7,16 @@ set(VULKAN_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/vulkan/include)
 target_sources(vulkan INTERFACE ${VULKAN_INCLUDE_DIR}/vulkan/vulkan.h)
 target_include_directories(vulkan INTERFACE ${VULKAN_INCLUDE_DIR})
 
-target_compile_definitions(vulkan INTERFACE VK_NO_PROTOTYPES VULKAN_HPP_DISPATCH_LOADER_DYNAMIC)
-
-if (ANDROID)
-    target_compile_definitions(vulkan INTERFACE VK_USE_PLATFORM_ANDROID_KHR)
-elseif (WIN32)
-    target_compile_definitions(vulkan INTERFACE VK_USE_PLATFORM_WIN32_KHR)
-elseif (APPLE)
-    target_compile_definitions(vulkan INTERFACE VK_USE_PLATFORM_METAL_EXT)
-elseif (UNIX)
-    # Choose WSI based on VKB_WSI_SELECTION
-    if (VKB_WSI_SELECTION STREQUAL XCB OR VKB_WSI_SELECTION STREQUAL XLIB OR VKB_WSI_SELECTION STREQUAL WAYLAND)
-        find_package(PkgConfig REQUIRED)
-    endif ()
-    if (VKB_WSI_SELECTION STREQUAL XCB)
-        pkg_check_modules(XCB xcb REQUIRED)
-        if (XCB_FOUND)
-            target_compile_definitions(vulkan INTERFACE VK_USE_PLATFORM_XCB_KHR)
-        endif ()
-    elseif (VKB_WSI_SELECTION STREQUAL XLIB)
-        pkg_check_modules(X11 x11 REQUIRED)
-        if (X11_FOUND)
-            target_compile_definitions(vulkan INTERFACE VK_USE_PLATFORM_XLIB_KHR)
-        endif ()
-    elseif (VKB_WSI_SELECTION STREQUAL WAYLAND)
-        pkg_check_modules(WAYLAND wayland-client REQUIRED)
-        if (WAYLAND_FOUND)
-            target_compile_definitions(vulkan INTERFACE VK_USE_PLATFORM_WAYLAND_KHR)
-        endif ()
-    elseif (VKB_WSI_SELECTION STREQUAL D2D)
-        set(DIRECT_TO_DISPLAY TRUE)
-        set(DIRECT_TO_DISPLAY TRUE PARENT_SCOPE)
-        target_compile_definitions(vulkan INTERFACE VK_USE_PLATFORM_DISPLAY_KHR)
-    else ()
-        message(FATAL_ERROR "Unknown WSI")
-    endif ()
-endif ()
+target_compile_definitions(vulkan
+        INTERFACE
+        VK_NO_PROTOTYPES
+        VULKAN_HPP_DISPATCH_LOADER_DYNAMIC
+        VK_USE_PLATFORM_WIN32_KHR
+        # VK_USE_PLATFORM_XLIB_KHR // May not work. vulkan.h tries to include "X11/Xlib.h"
+        VK_USE_PLATFORM_WAYLAND_KHR
+        # VK_USE_PLATFORM_METAL_EXT
+        # VK_USE_PLATFORM_ANDROID_KHR
+)
 
 # vma-hpp
 add_library(vma-hpp INTERFACE)
@@ -69,8 +43,3 @@ option(SDL_Sensor OFF)
 option(SDL_Locale OFF)
 add_subdirectory(sdl2)
 set_property(TARGET SDL2-static PROPERTY FOLDER "ThirdParty")
-#set(SDL_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/sdl2/include)
-#set(SDL_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/sdl2/src)
-#file(GLOB_RECURSE SDL_SOURCE_FILES ${SDL_SOURCE_DIR})
-#add_library(sdl2 ${SDL_SOURCE_FILES})
-#target_include_directories(sdl2 INTERFACE ${SDL_INCLUDE_DIR})

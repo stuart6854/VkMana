@@ -1,5 +1,6 @@
 #define SDL_MAIN_HANDLED
 #include <SDL.h>
+#include <SDL_syswm.h>
 #define VKMANA_USE_SDL2
 #include <VkMana/VkMana.hpp>
 
@@ -7,8 +8,25 @@
 #include <iostream>
 #include <thread>
 #include <string>
+#include <memory>
 
 // #TODO: Sdl2Window wrapper
+
+auto GetSwapchainProvider(SDL_Window* window) -> std::shared_ptr<VkMana::SurfaceProvider>
+{
+	SDL_SysWMinfo systemInfo;
+	SDL_VERSION(&systemInfo.version);
+	SDL_GetWindowWMInfo(window, &systemInfo);
+	switch (systemInfo.subsystem)
+	{
+		case SDL_SYSWM_WINDOWS:
+			auto surface = std::make_shared<VkMana::Win32Surface>();
+			surface->HInstance = systemInfo.info.win.hinstance;
+			surface->HWnd = systemInfo.info.win.window;
+			return surface;
+	}
+	return nullptr;
+}
 
 int main()
 {
@@ -21,12 +39,18 @@ int main()
 	}
 
 	auto windowFlags = SDL_WINDOW_VULKAN | SDL_WINDOW_RESIZABLE | SDL_WINDOW_SHOWN;
-	auto* sdlWindow = SDL_CreateWindow("Sample - Hello Triangle", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, 1270, 720, windowFlags);
+	auto* sdlWindow = SDL_CreateWindow("Sample - Hello Triangle", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, 1280, 720, windowFlags);
 
+	auto surfaceProvider = GetSwapchainProvider(sdlWindow);
 	VkMana::GraphicsDeviceCreateInfo gdInfo{};
 	gdInfo.Debug = true;
+	gdInfo.MainSwapchainCreateInfo.SurfaceProvider = surfaceProvider.get();
+	gdInfo.MainSwapchainCreateInfo.Width = 1280;
+	gdInfo.MainSwapchainCreateInfo.Height = 720;
+	gdInfo.MainSwapchainCreateInfo.ClearColor = VkMana::Rgba_CornflowerBlue;
+	gdInfo.MainSwapchainCreateInfo.vsync = true;
+	gdInfo.MainSwapchainCreateInfo.Srgb = true;
 	auto* graphicsDevice = VkMana::CreateGraphicsDevice(gdInfo);
-	//	auto* factory = graphicsDevice->GetFactory();
 
 	VkMana::BufferCreateInfo bufferInfo{};
 	bufferInfo.Size = 512;
@@ -81,6 +105,8 @@ int main()
 
 		VkMana::SubmitCommandList(cmdList);
 		//		graphicsDevice->SwapBuffers();
+
+		VkMana::SwapBuffers(graphicsDevice);
 
 		std::this_thread::sleep_for(std::chrono::milliseconds(33));
 	}

@@ -119,6 +119,8 @@ namespace VkMana::Internal
 		}
 
 		extensions.push_back(VK_KHR_SURFACE_EXTENSION_NAME);
+		extensions.push_back(VK_KHR_WIN32_SURFACE_EXTENSION_NAME); // #TODO: Check for extension support.
+		// extensions.push_back(VK_KHR_WAYLAND_SURFACE_EXTENSION_NAME); // #TODO: Check for extension support.
 
 		std::vector<const char*> layers;
 		if (debug)
@@ -232,6 +234,8 @@ namespace VkMana::Internal
 			queueInfo.setPQueuePriorities(&priority);
 		}
 
+		extensions.push_back(VK_KHR_SWAPCHAIN_EXTENSION_NAME);
+
 		vk::PhysicalDeviceDynamicRenderingFeatures dynRenderFeature{};
 		dynRenderFeature.setDynamicRendering(VK_TRUE);
 
@@ -262,6 +266,102 @@ namespace VkMana::Internal
 		allocInfo.setPVulkanFunctions(&functions);
 		outAllocator = vma::createAllocator(allocInfo);
 		return outAllocator;
+	}
+
+	auto SelectSurfaceFormat(vk::PhysicalDevice physicalDevice, vk::SurfaceKHR surface, bool colorSrgb)
+	{
+		auto supportedFormats = physicalDevice.getSurfaceFormatsKHR(surface);
+
+		auto desiredFormat = colorSrgb ? vk::Format::eB8G8R8A8Srgb : vk::Format::eB8G8R8A8Unorm;
+		if (supportedFormats.size() == 1 && supportedFormats[0].format == vk::Format::eUndefined)
+		{
+			return vk::SurfaceFormatKHR(desiredFormat, vk::ColorSpaceKHR::eSrgbNonlinear);
+		}
+
+		for (auto& supportedFormat : supportedFormats)
+		{
+			if (supportedFormat.colorSpace == vk::ColorSpaceKHR::eSrgbNonlinear && supportedFormat.format == desiredFormat)
+			{
+				return supportedFormat;
+			}
+		}
+
+		if (colorSrgb)
+		{
+			// #TODO: Error. sRGB swapchain surface format not supported.
+		}
+
+		return supportedFormats[0];
+	}
+
+	auto SelectPresentMode(vk::PhysicalDevice physicalDevice, vk::SurfaceKHR surface, bool vsync) -> vk::PresentModeKHR
+	{
+		auto supportedPresentModes = physicalDevice.getSurfacePresentModesKHR(surface);
+
+		if (vsync)
+		{
+			/* VSync On */
+
+			const auto it = std::find(supportedPresentModes.begin(), supportedPresentModes.end(), vk::PresentModeKHR::eFifoRelaxed);
+			if (it != supportedPresentModes.end())
+				return vk::PresentModeKHR::eFifoRelaxed; // Adaptive VSync
+
+			return vk::PresentModeKHR::eFifo;
+		}
+
+		/* VSync Off */
+
+		auto it = std::find(supportedPresentModes.begin(), supportedPresentModes.end(), vk::PresentModeKHR::eMailbox);
+		if (it != supportedPresentModes.end())
+		{
+			return vk::PresentModeKHR::eMailbox; // Fast VSync
+		}
+
+		it = std::find(supportedPresentModes.begin(), supportedPresentModes.end(), vk::PresentModeKHR::eImmediate);
+		if (it != supportedPresentModes.end())
+			return vk::PresentModeKHR::eImmediate;
+
+		return vk::PresentModeKHR::eFifo;
+	}
+
+	bool CreateSwapchain(vk::SwapchainKHR& outSwapchain,
+		vk::Format& outFormat,
+		vk::Device device,
+		vk::SurfaceKHR surface,
+		std::uint32_t width,
+		std::uint32_t height,
+		bool vsync,
+		vk::SwapchainKHR oldSwapchain,
+		bool colorSrgb,
+		vk::PhysicalDevice physicalDevice)
+	{
+		auto surfaceCaps = physicalDevice.getSurfaceCapabilitiesKHR(surface);
+
+		auto surfaceFormat = SelectSurfaceFormat(physicalDevice, surface, colorSrgb);
+		auto presentMode = SelectPresentMode(physicalDevice, surface, vsync);
+
+		std::uint32_t maxImageCount = surfaceCaps.maxImageCount == 0 ? std::uint32_t(-1) : surfaceCaps.maxImageCount;
+		std::uint32_t imageCount = std::min(surfaceCaps.minImageCount + 1, maxImageCount);
+
+		auto clampedWidth = std::clamp(width, surfaceCaps.minImageExtent.width, surfaceCaps.maxImageExtent.width);
+		auto clampedHeight = std::clamp(height, surfaceCaps.minImageExtent.height, surfaceCaps.maxImageExtent.height);
+
+		vk::SwapchainCreateInfoKHR swapchainInfo{};
+		swapchainInfo.setSurface(surface);
+		swapchainInfo.setImageFormat(surfaceFormat.format);
+		swapchainInfo.setImageColorSpace(surfaceFormat.colorSpace);
+		swapchainInfo.setImageExtent({ clampedWidth, clampedHeight });
+		swapchainInfo.setImageUsage(vk::ImageUsageFlagBits::eColorAttachment | vk::ImageUsageFlagBits::eTransferDst);
+		swapchainInfo.setImageArrayLayers(1);
+		swapchainInfo.setMinImageCount(imageCount);
+		swapchainInfo.setPresentMode(presentMode);
+		swapchainInfo.setPreTransform(vk::SurfaceTransformFlagBitsKHR::eIdentity);
+		swapchainInfo.setCompositeAlpha(vk::CompositeAlphaFlagBitsKHR::eOpaque);
+		swapchainInfo.setClipped(VK_FALSE);
+		swapchainInfo.setOldSwapchain(oldSwapchain);
+		outSwapchain = device.createSwapchainKHR(swapchainInfo);
+		outFormat = surfaceFormat.format;
+		return !!outSwapchain;
 	}
 
 	bool CreateDeviceBuffer(

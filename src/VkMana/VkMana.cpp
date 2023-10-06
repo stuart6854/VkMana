@@ -2,6 +2,8 @@
 
 #include "InternalFunctions.hpp"
 
+// #define VK_USE_PLATFORM_WIN32_KHR
+// #define VK_USE_PLATFORM_WAYLAND_KHR
 #include <vulkan/vulkan.hpp>
 #define VMA_IMPLEMENTATION
 #include <vk_mem_alloc.h>
@@ -35,11 +37,26 @@ namespace VkMana
 		Internal::QueueFamilyIndices QueueFamilyIndices;
 		vk::Queue GraphicsQueue;
 		vma::Allocator Allocator;
+		Swapchain MainSwapchain;
 		std::queue<vk::Fence> AvailableFences;
+		std::vector<std::unique_ptr<Swapchain_T>> Swapchains;
 		std::vector<std::unique_ptr<Framebuffer_T>> Framebuffers;
 		std::vector<std::unique_ptr<DeviceBuffer_T>> Buffers;
 		std::vector<std::unique_ptr<Texture_T>> Textures;
 		std::vector<std::unique_ptr<CommandList_T>> CmdLists;
+	};
+	struct Swapchain_T
+	{
+		GraphicsDevice GraphicsDevice = nullptr;
+		vk::SurfaceKHR Surface;
+		vk::SwapchainKHR Swapchain;
+		std::uint32_t Width = 0;
+		std::uint32_t Height = 0;
+		bool VSync = false;
+		bool ColorSrgb = false;
+		vk::Format Format = vk::Format::eUndefined;
+		Framebuffer Framebuffer = nullptr;
+		vk::Fence AcquireFence;
 	};
 	struct DeviceBuffer_T
 	{
@@ -104,6 +121,8 @@ namespace VkMana
 
 	namespace
 	{
+		bool CreateSurface(vk::SurfaceKHR& outSurface, SurfaceProvider* surfaceProvider, vk::Instance instance);
+		auto CreateTexturesFromSwapchainImages(Swapchain swapchain) -> std::vector<Texture>;
 		void CheckSubmittedCmdBuffers(CommandList commandList);
 		void ClearCachedCmdListState(CommandList commandList);
 	} // namespace
@@ -152,7 +171,97 @@ namespace VkMana
 			return nullptr;
 		}
 
+		if (createInfo.MainSwapchainCreateInfo.SurfaceProvider != nullptr)
+		{
+			graphicsDevice.MainSwapchain = CreateSwapchain(&graphicsDevice, createInfo.MainSwapchainCreateInfo);
+			if (graphicsDevice.MainSwapchain == nullptr)
+			{
+				// #TODO: Error (Fatal?). Failed to create GraphicsDevice main swapchain.
+			}
+		}
+
 		return &graphicsDevice;
+	}
+
+	auto CreateSwapchain(GraphicsDevice graphicsDevice, const SwapchainCreateInfo& createInfo) -> Swapchain
+	{
+		if (graphicsDevice == nullptr)
+			return nullptr;
+
+		std::unique_lock lock(graphicsDevice->Mutex);
+
+		graphicsDevice->Swapchains.push_back(std::make_unique<Swapchain_T>());
+		auto& swapchain = *graphicsDevice->Swapchains.back();
+
+		swapchain.GraphicsDevice = graphicsDevice;
+
+		if (!CreateSurface(swapchain.Surface, createInfo.SurfaceProvider, swapchain.GraphicsDevice->Instance))
+		{
+			// #TODO: Error. Failed to create Vulkan surface.
+			DestroySwapchain(&swapchain);
+			return nullptr;
+		}
+
+		swapchain.Width = createInfo.Width;
+		swapchain.Height = createInfo.Height;
+		swapchain.VSync = createInfo.vsync;
+		swapchain.ColorSrgb = createInfo.Srgb;
+
+		auto oldSwapchain = swapchain.Swapchain;
+		if (!Internal::CreateSwapchain(swapchain.Swapchain,
+				swapchain.Format,
+				swapchain.GraphicsDevice->Device,
+				swapchain.Surface,
+				swapchain.Width,
+				swapchain.Height,
+				swapchain.VSync,
+				oldSwapchain,
+				swapchain.ColorSrgb,
+				swapchain.GraphicsDevice->PhysicalDevice))
+		{
+			// #TODO: Error. Failed to create Vulkan swapchain.
+			DestroySwapchain(&swapchain);
+			return nullptr;
+		}
+		swapchain.GraphicsDevice->Device.destroy(oldSwapchain);
+
+		if (!Internal::CreateFence(swapchain.AcquireFence, graphicsDevice->Device))
+		{
+			// #TODO: Error. Failed to create Vulkan fence.
+			DestroySwapchain(&swapchain);
+			return nullptr;
+		}
+
+		auto swapchainTextures = CreateTexturesFromSwapchainImages(&swapchain);
+
+		FramebufferCreateInfo fbInfo{};
+		for (auto& texture : swapchainTextures)
+		{
+			auto& colorTarget = fbInfo.ColorAttachments.emplace_back();
+			colorTarget.TargetTexture = texture;
+			colorTarget.MipLevel = 0;
+			colorTarget.ArrayLayer = 0;
+			colorTarget.ClearColor = createInfo.ClearColor;
+		}
+
+		lock.unlock();
+
+		swapchain.Framebuffer = CreateFramebuffer(swapchain.GraphicsDevice, fbInfo);
+		if (swapchain.Framebuffer == nullptr)
+		{
+			// #TODO: Error. Failed to create swapchain framebuffer.
+			DestroySwapchain(&swapchain);
+			return nullptr;
+		}
+
+		auto result =
+			swapchain.GraphicsDevice->Device.acquireNextImageKHR(swapchain.Swapchain, std::uint64_t(-1), {}, swapchain.AcquireFence);
+		swapchain.Framebuffer->CurrentImageIndex = result.value;
+
+		void(graphicsDevice->Device.waitForFences(swapchain.AcquireFence, VK_TRUE, std::uint64_t(-1)));
+		graphicsDevice->Device.resetFences(swapchain.AcquireFence);
+
+		return &swapchain;
 	}
 
 	auto CreateBuffer(GraphicsDevice graphicsDevice, const BufferCreateInfo& createInfo) -> DeviceBuffer
@@ -426,6 +535,31 @@ namespace VkMana
 		return true;
 	}
 
+	bool DestroySwapchain(Swapchain swapchain)
+	{
+		if (swapchain == nullptr)
+			return false;
+
+		DestroyFramebuffer(swapchain->Framebuffer);
+		swapchain->GraphicsDevice->Device.destroy(swapchain->AcquireFence);
+		swapchain->GraphicsDevice->Device.destroy(swapchain->Swapchain);
+		swapchain->GraphicsDevice->Instance.destroy(swapchain->Surface);
+
+		{
+			std::lock_guard lock(swapchain->GraphicsDevice->Mutex);
+			for (auto i = 0; i < swapchain->GraphicsDevice->Swapchains.size(); ++i)
+			{
+				auto* gdSwapchain = swapchain->GraphicsDevice->Swapchains[i].get();
+				if (gdSwapchain == swapchain)
+				{
+					swapchain->GraphicsDevice->Swapchains.erase(swapchain->GraphicsDevice->Swapchains.begin() + i);
+					break;
+				}
+			}
+		}
+		return true;
+	}
+
 	bool DestroyGraphicDevice(GraphicsDevice graphicsDevice)
 	{
 		if (graphicsDevice == nullptr)
@@ -440,6 +574,8 @@ namespace VkMana
 			{
 				DestroyCommandList(cmdList.get());
 			}
+
+			DestroySwapchain(graphicsDevice->MainSwapchain);
 
 			std::lock_guard lock(graphicsDevice->Mutex);
 			while (!graphicsDevice->AvailableFences.empty())
@@ -478,6 +614,38 @@ namespace VkMana
 		}
 
 		graphicsDevice->Device.waitIdle();
+	}
+
+	void SwapBuffers(GraphicsDevice graphicsDevice, Swapchain swapchain)
+	{
+		if (graphicsDevice == nullptr)
+		{
+			// #TODO: Error. GraphicsDevice is null.
+			return;
+		}
+
+		if (swapchain == nullptr && graphicsDevice->MainSwapchain != nullptr)
+		{
+			swapchain = graphicsDevice->MainSwapchain;
+		}
+		if (swapchain == nullptr)
+		{
+			// #TODO: Error (Warning?). No swapchain to swap buffers for.
+			return;
+		}
+
+		vk::PresentInfoKHR presentInfo{};
+		presentInfo.setSwapchains(swapchain->Swapchain);
+		presentInfo.setImageIndices(swapchain->Framebuffer->CurrentImageIndex);
+		void(graphicsDevice->GraphicsQueue.presentKHR(presentInfo));
+		// #TODO: Handle present result.
+
+		auto result =
+			swapchain->GraphicsDevice->Device.acquireNextImageKHR(swapchain->Swapchain, std::uint64_t(-1), {}, swapchain->AcquireFence);
+		swapchain->Framebuffer->CurrentImageIndex = result.value;
+
+		void(graphicsDevice->Device.waitForFences(swapchain->AcquireFence, VK_TRUE, std::uint64_t(-1)));
+		graphicsDevice->Device.resetFences(swapchain->AcquireFence);
 	}
 
 	void CommandListBegin(CommandList commandList)
@@ -649,6 +817,49 @@ namespace VkMana
 
 	namespace
 	{
+		bool CreateSurface(vk::SurfaceKHR& outSurface, SurfaceProvider* surfaceProvider, vk::Instance instance)
+		{
+			if (auto* win32Provider = dynamic_cast<Win32Surface*>(surfaceProvider))
+			{
+				vk::Win32SurfaceCreateInfoKHR surfaceInfo{};
+				surfaceInfo.setHinstance(win32Provider->HInstance);
+				surfaceInfo.setHwnd(win32Provider->HWnd);
+				outSurface = instance.createWin32SurfaceKHR(surfaceInfo);
+			}
+			if (auto* waylandProvider = dynamic_cast<WaylandSurface*>(surfaceProvider))
+			{
+				vk::WaylandSurfaceCreateInfoKHR surfaceInfo{};
+				surfaceInfo.setDisplay(waylandProvider->Display);
+				surfaceInfo.setSurface(waylandProvider->Surface);
+				outSurface = instance.createWaylandSurfaceKHR(surfaceInfo);
+			}
+
+			return !!outSurface;
+		}
+
+		auto CreateTexturesFromSwapchainImages(Swapchain swapchain) -> std::vector<Texture>
+		{
+			auto swapchainImages = swapchain->GraphicsDevice->Device.getSwapchainImagesKHR(swapchain->Swapchain);
+
+			std::vector<Texture> textures(swapchainImages.size());
+			for (auto i = 0; i < swapchainImages.size(); ++i)
+			{
+				swapchain->GraphicsDevice->Textures.push_back(std::make_unique<Texture_T>());
+				auto& texture = *swapchain->GraphicsDevice->Textures.back();
+				texture.graphicsDevice = swapchain->GraphicsDevice;
+				texture.Image = swapchainImages[i];
+				texture.Width = swapchain->Width;
+				texture.Height = swapchain->Height;
+				texture.Depth = 1;
+				texture.MipLevels = 1;
+				texture.ArrayLayers = 1;
+				texture.Format = swapchain->Format;
+				texture.Usage = TextureUsage::RenderTarget;
+				textures[i] = &texture;
+			}
+			return textures;
+		}
+
 		void CheckSubmittedCmdBuffers(CommandList commandList)
 		{
 			while (!commandList->SubmittedCmdBuffers.empty())

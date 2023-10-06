@@ -6,6 +6,7 @@ Checks: >
   performance-*,
   portability-*,
   readability-*,
+  -*-identifier-length,
   -*-special-member-functions,
   -*-braces-around-statements,
   -*-signed-bitwise,

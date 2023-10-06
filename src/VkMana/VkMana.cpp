@@ -61,7 +61,7 @@ namespace VkMana
 		std::uint32_t Depth = 0;
 		std::uint32_t MipLevels = 0;
 		std::uint32_t ArrayLayers = 0;
-		PixelFormat Format = {};
+		vk::Format Format = {};
 		TextureUsage Usage = {};
 		// TextureType Type = {};
 	};
@@ -193,7 +193,7 @@ namespace VkMana
 		texture.Depth = createInfo.Depth;
 		texture.MipLevels = createInfo.MipLevels;
 		texture.ArrayLayers = createInfo.ArrayLayers;
-		texture.Format = createInfo.Format;
+		texture.Format = Internal::ToVkFormat(createInfo.Format);
 		texture.Usage = createInfo.Usage;
 
 		if (!Internal::CreateTexture(texture.Image,

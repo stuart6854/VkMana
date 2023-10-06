@@ -293,14 +293,14 @@ namespace VkMana::Internal
 		std::uint32_t depth,
 		std::uint32_t mipLevels,
 		std::uint32_t arrayLayers,
-		PixelFormat format,
+		vk::Format format,
 		TextureUsage usage)
 	{
 		vk::ImageCreateInfo imageInfo{};
 		imageInfo.setExtent({ width, height, depth });
 		imageInfo.setMipLevels(mipLevels);
 		imageInfo.setArrayLayers(arrayLayers);
-		imageInfo.setFormat(ToVkFormat(format));
+		imageInfo.setFormat(format);
 
 		if (usage == TextureUsage::Sampled)
 			imageInfo.setUsage(vk::ImageUsageFlagBits::eSampled);
@@ -356,13 +356,13 @@ namespace VkMana::Internal
 		vk::Device device,
 		vk::Image image,
 		vk::ImageViewType type,
-		PixelFormat format,
+		vk::Format format,
 		vk::ImageSubresourceRange subresource)
 	{
 		vk::ImageViewCreateInfo viewInfo{};
 		viewInfo.setImage(image);
 		viewInfo.setViewType(type);
-		viewInfo.setFormat(ToVkFormat(format));
+		viewInfo.setFormat(format);
 		viewInfo.setSubresourceRange(subresource);
 		outView = device.createImageView(viewInfo);
 		return !!outView;

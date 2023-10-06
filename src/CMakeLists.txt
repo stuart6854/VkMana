@@ -1,8 +1,9 @@
 add_library(VkMana
-    VkMana/VkMana.cpp
+        VkMana/VkMana.cpp
+        VkMana/Ext/RenderDoc.cpp
 )
 
-target_include_directories(VkMana PUBLIC ../include)
+target_include_directories(VkMana PRIVATE . PUBLIC ../include)
 
 target_link_libraries(VkMana PUBLIC vulkan vma-hpp)
 

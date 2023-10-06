@@ -166,17 +166,24 @@ namespace VkMana
 		auto& texture = *graphicsDevice->Textures.back();
 
 		texture.graphicsDevice = graphicsDevice;
+		texture.Width = createInfo.Width;
+		texture.Height = createInfo.Height;
+		texture.Depth = createInfo.Depth;
+		texture.MipLevels = createInfo.MipLevels;
+		texture.ArrayLayers = createInfo.ArrayLayers;
+		texture.Format = createInfo.Format;
+		texture.Usage = createInfo.Usage;
 
 		if (!Internal::CreateTexture(texture.Image,
 				texture.Allocation,
 				graphicsDevice->Allocator,
-				createInfo.Width,
-				createInfo.Height,
-				createInfo.Depth,
-				createInfo.MipLevels,
-				createInfo.ArrayLayers,
-				createInfo.Format,
-				createInfo.Usage))
+				texture.Width,
+				texture.Height,
+				texture.Depth,
+				texture.MipLevels,
+				texture.ArrayLayers,
+				texture.Format,
+				texture.Usage))
 		{
 			// #TODO: Error. Failed to create Vulkan texture.
 			DestroyTexture(&texture);

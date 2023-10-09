@@ -1,5 +1,7 @@
 add_library(VkMana
         VkMana/VkMana.cpp
+        VkMana/VkManaImpl.cpp
+        VkMana/VulkanUtils.cpp
         VkMana/Ext/RenderDoc.cpp
 )
 

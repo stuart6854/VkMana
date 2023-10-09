@@ -1,183 +1,27 @@
 #include "VkMana/VkMana.hpp"
 
-#include "InternalFunctions.hpp"
+#include "VkManaImpl.hpp"
 
-// #define VK_USE_PLATFORM_WIN32_KHR
-// #define VK_USE_PLATFORM_WAYLAND_KHR
 #include <vulkan/vulkan.hpp>
 #define VMA_IMPLEMENTATION
 #include <vk_mem_alloc.h>
-#include <vk_mem_alloc.hpp>
 
-#include <queue>
-#include <mutex>
 #include <memory>
-
-VULKAN_HPP_DEFAULT_DISPATCH_LOADER_DYNAMIC_STORAGE
 
 namespace VkMana
 {
-	struct Context_T
-	{
-		std::mutex Mutex;
-		std::vector<std::unique_ptr<GraphicsDevice_T>> GraphicsDevices;
-	};
-	auto GetContext() -> Context_T&
-	{
-		static Context_T sContext = {};
-		return sContext;
-	}
-
-	struct GraphicsDevice_T
-	{
-		std::mutex Mutex;
-		vk::Instance Instance;
-		vk::PhysicalDevice PhysicalDevice;
-		vk::Device Device;
-		Internal::QueueFamilyIndices QueueFamilyIndices;
-		vk::Queue GraphicsQueue;
-		vma::Allocator Allocator;
-		Swapchain MainSwapchain;
-		std::queue<vk::Fence> AvailableFences;
-		std::vector<std::unique_ptr<Swapchain_T>> Swapchains;
-		std::vector<std::unique_ptr<Framebuffer_T>> Framebuffers;
-		std::vector<std::unique_ptr<DeviceBuffer_T>> Buffers;
-		std::vector<std::unique_ptr<Texture_T>> Textures;
-		std::vector<std::unique_ptr<CommandList_T>> CmdLists;
-	};
-	struct Swapchain_T
-	{
-		GraphicsDevice GraphicsDevice = nullptr;
-		vk::SurfaceKHR Surface;
-		vk::SwapchainKHR Swapchain;
-		std::uint32_t Width = 0;
-		std::uint32_t Height = 0;
-		bool VSync = false;
-		bool ColorSrgb = false;
-		vk::Format Format = vk::Format::eUndefined;
-		Framebuffer Framebuffer = nullptr;
-		vk::Fence AcquireFence;
-	};
-	struct DeviceBuffer_T
-	{
-		std::mutex Mutex;
-		GraphicsDevice graphicsDevice = nullptr;
-		vk::Buffer Buffer;
-		vma::Allocation Allocation;
-		std::uint64_t Size = 0;
-		BufferUsage Usage = {};
-	};
-	struct Texture_T
-	{
-		std::mutex Mutex;
-		GraphicsDevice graphicsDevice = nullptr;
-		vk::Image Image;
-		vma::Allocation Allocation;
-		std::uint32_t Width = 0;
-		std::uint32_t Height = 0;
-		std::uint32_t Depth = 0;
-		std::uint32_t MipLevels = 0;
-		std::uint32_t ArrayLayers = 0;
-		vk::Format Format = {};
-		TextureUsage Usage = {};
-		// TextureType Type = {};
-	};
-	struct FramebufferAttachment_T
-	{
-		Texture TargetTexture = nullptr;
-		std::uint32_t MipLevel = 0;
-		std::uint32_t ArrayLayer = 0;
-		RgbaFloat ClearColor = Rgba_Black;
-		vk::ImageView ImageView;
-	};
-	struct Framebuffer_T
-	{
-		GraphicsDevice GraphicsDevice = nullptr;
-		Swapchain SwapchainTarget = nullptr; // nullptr = Offscreen.
-		std::vector<FramebufferAttachment_T> ColorTargets;
-		FramebufferAttachment_T DepthTarget;
-		std::uint32_t CurrentImageIndex = 0; // For swapchain target.
-
-		// vk::RenderPass RenderPass;
-	};
-	struct SubmittedCmdInfo
-	{
-		vk::Fence Fence;
-		vk::CommandBuffer CmdBuffer;
-	};
-	/** A CommandList should only be used by one thread. */
-	struct CommandList_T
-	{
-		GraphicsDevice GraphicsDevice = nullptr;
-		vk::CommandPool CmdPool;
-		vk::CommandBuffer CmdBuffer;
-		std::queue<vk::CommandBuffer> AvailableCmdLists;
-		std::queue<SubmittedCmdInfo> SubmittedCmdBuffers;
-		bool HasBegun = false;
-		bool HasEnded = false;
-
-		Framebuffer BoundFramebuffer = nullptr;
-	};
-
-	namespace
-	{
-		bool CreateSurface(vk::SurfaceKHR& outSurface, SurfaceProvider* surfaceProvider, vk::Instance instance);
-		auto CreateTexturesFromSwapchainImages(Swapchain swapchain) -> std::vector<Texture>;
-		void CheckSubmittedCmdBuffers(CommandList commandList);
-		void ClearCachedCmdListState(CommandList commandList);
-	} // namespace
-
 	auto CreateGraphicsDevice(const GraphicsDeviceCreateInfo& createInfo) -> GraphicsDevice
 	{
 		auto& context = GetContext();
 		std::lock_guard lock(context.Mutex);
 
-		VULKAN_HPP_DEFAULT_DISPATCHER.init();
-
 		context.GraphicsDevices.push_back(std::make_unique<GraphicsDevice_T>());
 		auto& graphicsDevice = *context.GraphicsDevices.back();
-		if (!Internal::CreateInstance(graphicsDevice.Instance, createInfo.Debug, {}))
+
+		if (!CreateGraphicsDevice(graphicsDevice, createInfo))
 		{
-			// #TODO: Error. Failed to create Vulkan instance.
 			DestroyGraphicDevice(&graphicsDevice);
 			return nullptr;
-		}
-		VULKAN_HPP_DEFAULT_DISPATCHER.init(graphicsDevice.Instance);
-
-		if (!Internal::CreatePhysicalDevice(graphicsDevice.PhysicalDevice, graphicsDevice.Instance))
-		{
-			// #TODO: Error. Failed to create Vulkan physical device.
-			DestroyGraphicDevice(&graphicsDevice);
-			return nullptr;
-		}
-
-		graphicsDevice.QueueFamilyIndices = Internal::GetQueueFamilyIndices(graphicsDevice.PhysicalDevice, {});
-
-		if (!CreateLogicalDevice(graphicsDevice.Device, graphicsDevice.PhysicalDevice, graphicsDevice.QueueFamilyIndices, {}))
-		{
-			// #TODO: Error. Failed to create Vulkan logical device.
-			DestroyGraphicDevice(&graphicsDevice);
-			return nullptr;
-		}
-		VULKAN_HPP_DEFAULT_DISPATCHER.init(graphicsDevice.Device);
-
-		graphicsDevice.GraphicsQueue = graphicsDevice.Device.getQueue(graphicsDevice.QueueFamilyIndices.Graphics, 0);
-
-		if (!Internal::CreateAllocator(
-				graphicsDevice.Allocator, graphicsDevice.Instance, graphicsDevice.PhysicalDevice, graphicsDevice.Device))
-		{
-			// #TODO: Error. Failed to create Vulkan allocator.
-			DestroyGraphicDevice(&graphicsDevice);
-			return nullptr;
-		}
-
-		if (createInfo.MainSwapchainCreateInfo.SurfaceProvider != nullptr)
-		{
-			graphicsDevice.MainSwapchain = CreateSwapchain(&graphicsDevice, createInfo.MainSwapchainCreateInfo);
-			if (graphicsDevice.MainSwapchain == nullptr)
-			{
-				// #TODO: Error (Fatal?). Failed to create GraphicsDevice main swapchain.
-			}
 		}
 
 		return &graphicsDevice;
@@ -193,73 +37,14 @@ namespace VkMana
 		graphicsDevice->Swapchains.push_back(std::make_unique<Swapchain_T>());
 		auto& swapchain = *graphicsDevice->Swapchains.back();
 
-		swapchain.GraphicsDevice = graphicsDevice;
-
-		if (!CreateSurface(swapchain.Surface, createInfo.SurfaceProvider, swapchain.GraphicsDevice->Instance))
-		{
-			// #TODO: Error. Failed to create Vulkan surface.
-			DestroySwapchain(&swapchain);
-			return nullptr;
-		}
-
-		swapchain.Width = createInfo.Width;
-		swapchain.Height = createInfo.Height;
-		swapchain.VSync = createInfo.vsync;
-		swapchain.ColorSrgb = createInfo.Srgb;
-
-		auto oldSwapchain = swapchain.Swapchain;
-		if (!Internal::CreateSwapchain(swapchain.Swapchain,
-				swapchain.Format,
-				swapchain.GraphicsDevice->Device,
-				swapchain.Surface,
-				swapchain.Width,
-				swapchain.Height,
-				swapchain.VSync,
-				oldSwapchain,
-				swapchain.ColorSrgb,
-				swapchain.GraphicsDevice->PhysicalDevice))
-		{
-			// #TODO: Error. Failed to create Vulkan swapchain.
-			DestroySwapchain(&swapchain);
-			return nullptr;
-		}
-		swapchain.GraphicsDevice->Device.destroy(oldSwapchain);
-
-		if (!Internal::CreateFence(swapchain.AcquireFence, graphicsDevice->Device))
-		{
-			// #TODO: Error. Failed to create Vulkan fence.
-			DestroySwapchain(&swapchain);
-			return nullptr;
-		}
-
-		auto swapchainTextures = CreateTexturesFromSwapchainImages(&swapchain);
-
-		FramebufferCreateInfo fbInfo{};
-		for (auto& texture : swapchainTextures)
-		{
-			auto& colorTarget = fbInfo.ColorAttachments.emplace_back();
-			colorTarget.TargetTexture = texture;
-			colorTarget.MipLevel = 0;
-			colorTarget.ArrayLayer = 0;
-			colorTarget.ClearColor = createInfo.ClearColor;
-		}
-
 		lock.unlock();
 
-		swapchain.Framebuffer = CreateFramebuffer(swapchain.GraphicsDevice, fbInfo);
-		if (swapchain.Framebuffer == nullptr)
+		swapchain.GraphicsDevice = graphicsDevice;
+		if (!CreateSwapchain(swapchain, createInfo))
 		{
-			// #TODO: Error. Failed to create swapchain framebuffer.
 			DestroySwapchain(&swapchain);
 			return nullptr;
 		}
-
-		auto result =
-			swapchain.GraphicsDevice->Device.acquireNextImageKHR(swapchain.Swapchain, std::uint64_t(-1), {}, swapchain.AcquireFence);
-		swapchain.Framebuffer->CurrentImageIndex = result.value;
-
-		void(graphicsDevice->Device.waitForFences(swapchain.AcquireFence, VK_TRUE, std::uint64_t(-1)));
-		graphicsDevice->Device.resetFences(swapchain.AcquireFence);
 
 		return &swapchain;
 	}
@@ -276,7 +61,16 @@ namespace VkMana
 
 		buffer.graphicsDevice = graphicsDevice;
 
-		if (!Internal::CreateDeviceBuffer(buffer.Buffer, buffer.Allocation, graphicsDevice->Allocator, createInfo.Size, createInfo.Usage))
+		if (createInfo.Usage == BufferUsage::Vertex)
+			buffer.Usage = vk::BufferUsageFlagBits::eVertexBuffer;
+		else if (createInfo.Usage == BufferUsage::Index)
+			buffer.Usage = vk::BufferUsageFlagBits::eIndexBuffer;
+		else if (createInfo.Usage == BufferUsage::Uniform)
+			buffer.Usage = vk::BufferUsageFlagBits::eUniformBuffer;
+		else if (createInfo.Usage == BufferUsage::Storage)
+			buffer.Usage = vk::BufferUsageFlagBits::eStorageBuffer;
+
+		if (!Vulkan::CreateDeviceBuffer(buffer.Buffer, buffer.Allocation, graphicsDevice->Allocator, createInfo.Size, buffer.Usage))
 		{
 			// #TODO: Error. Failed to create Vulkan device buffer.
 			DestroyBuffer(&buffer);
@@ -302,10 +96,20 @@ namespace VkMana
 		texture.Depth = createInfo.Depth;
 		texture.MipLevels = createInfo.MipLevels;
 		texture.ArrayLayers = createInfo.ArrayLayers;
-		texture.Format = Internal::ToVkFormat(createInfo.Format);
-		texture.Usage = createInfo.Usage;
+		texture.Format = ToVkFormat(createInfo.Format);
 
-		if (!Internal::CreateTexture(texture.Image,
+		if (createInfo.Usage == TextureUsage::Sampled)
+			texture.Usage = vk::ImageUsageFlagBits::eSampled;
+		else if (createInfo.Usage == TextureUsage::Storage)
+			texture.Usage = vk::ImageUsageFlagBits::eStorage;
+		else if (createInfo.Usage == TextureUsage::RenderTarget)
+			texture.Usage = vk::ImageUsageFlagBits::eColorAttachment;
+		else if (createInfo.Usage == TextureUsage::DepthStencil)
+			texture.Usage = vk::ImageUsageFlagBits::eDepthStencilAttachment;
+		//		else if (createInfo.Usage == TextureUsage::CubeMap)
+		//			texture.Usage = vk::ImageUsageFlagBits::eSampled;
+
+		if (!Vulkan::CreateTexture(texture.Image,
 				texture.Allocation,
 				graphicsDevice->Allocator,
 				texture.Width,
@@ -335,69 +139,10 @@ namespace VkMana
 		auto& framebuffer = *graphicsDevice->Framebuffers.back();
 
 		framebuffer.GraphicsDevice = graphicsDevice;
-
-		for (const auto& colorAttachmentInfo : createInfo.ColorAttachments)
+		if (!CreateFramebuffer(framebuffer, createInfo))
 		{
-			auto& colorTarget = framebuffer.ColorTargets.emplace_back();
-			if (colorAttachmentInfo.TargetTexture != nullptr)
-			{
-				if (colorAttachmentInfo.TargetTexture->Usage != TextureUsage::RenderTarget)
-				{
-					// #Error. Framebuffer color attachment texture must be a TextureUsage::RenderTarget texture.
-					return nullptr;
-				}
-
-				colorTarget.TargetTexture = colorAttachmentInfo.TargetTexture;
-				colorTarget.MipLevel = colorAttachmentInfo.MipLevel;
-				colorTarget.ArrayLayer = colorAttachmentInfo.ArrayLayer;
-				colorTarget.ClearColor = colorAttachmentInfo.ClearColor;
-				vk::ImageSubresourceRange subresource{};
-				subresource.aspectMask = vk::ImageAspectFlagBits::eColor;
-				subresource.baseMipLevel = colorTarget.MipLevel;
-				subresource.levelCount = 1;
-				subresource.baseArrayLayer = colorTarget.ArrayLayer;
-				subresource.layerCount = 1;
-				if (!Internal::CreateImageView(colorTarget.ImageView,
-						graphicsDevice->Device,
-						colorTarget.TargetTexture->Image,
-						vk::ImageViewType::e2D,
-						colorTarget.TargetTexture->Format,
-						subresource))
-				{
-					// #TODO: Error. Failed to create Vulkan image view.
-					DestroyFramebuffer(&framebuffer);
-					return nullptr;
-				}
-			}
-		}
-		if (createInfo.DepthAttachment.TargetTexture != nullptr)
-		{
-			if (framebuffer.DepthTarget.TargetTexture->Usage != TextureUsage::DepthStencil)
-			{
-				// #Error. Framebuffer depth attachment texture must be a TextureUsage::DepthStencil texture.
-				return nullptr;
-			}
-
-			framebuffer.DepthTarget.TargetTexture = createInfo.DepthAttachment.TargetTexture;
-			framebuffer.DepthTarget.MipLevel = createInfo.DepthAttachment.MipLevel;
-			framebuffer.DepthTarget.ArrayLayer = createInfo.DepthAttachment.ArrayLayer;
-			vk::ImageSubresourceRange subresource{};
-			subresource.aspectMask = vk::ImageAspectFlagBits::eDepth;
-			subresource.baseMipLevel = framebuffer.DepthTarget.MipLevel;
-			subresource.levelCount = 1;
-			subresource.baseArrayLayer = framebuffer.DepthTarget.ArrayLayer;
-			subresource.layerCount = 1;
-			if (!Internal::CreateImageView(framebuffer.DepthTarget.ImageView,
-					graphicsDevice->Device,
-					framebuffer.DepthTarget.TargetTexture->Image,
-					vk::ImageViewType::e2D,
-					framebuffer.DepthTarget.TargetTexture->Format,
-					subresource))
-			{
-				// #TODO: Error. Failed to create Vulkan image view.
-				DestroyFramebuffer(&framebuffer);
-				return nullptr;
-			}
+			DestroyFramebuffer(&framebuffer);
+			return nullptr;
 		}
 
 		return &framebuffer;
@@ -415,7 +160,7 @@ namespace VkMana
 
 		cmdList.GraphicsDevice = graphicsDevice;
 
-		if (!Internal::CreateCommandPool(cmdList.CmdPool, graphicsDevice->Device))
+		if (!Vulkan::CreateCommandPool(cmdList.CmdPool, graphicsDevice->Device))
 		{
 			// #TODO: Error. Failed to create Vulkan command pool.
 			DestroyCommandList(&cmdList);
@@ -672,7 +417,7 @@ namespace VkMana
 		}
 		else
 		{
-			if (!Internal::AllocateCommandBuffer(commandList->CmdBuffer, commandList->GraphicsDevice->Device, commandList->CmdPool))
+			if (!Vulkan::AllocateCommandBuffer(commandList->CmdBuffer, commandList->GraphicsDevice->Device, commandList->CmdPool))
 			{
 				// #TODO: Error. Failed to allocate Vulkan command buffer.
 				return;
@@ -682,7 +427,7 @@ namespace VkMana
 		vk::CommandBufferBeginInfo beginInfo{};
 		commandList->CmdBuffer.begin(beginInfo);
 
-		ClearCachedCmdListState(commandList);
+		ClearCachedCmdListState(*commandList);
 	}
 
 	void CommandListEnd(CommandList commandList)
@@ -705,6 +450,7 @@ namespace VkMana
 		if (commandList->BoundFramebuffer != nullptr)
 		{
 			commandList->CmdBuffer.endRendering();
+			// #TODO: Transition framebuffer to final layout
 		}
 
 		commandList->CmdBuffer.end();
@@ -727,7 +473,10 @@ namespace VkMana
 		if (commandList->BoundFramebuffer != nullptr)
 		{
 			commandList->CmdBuffer.endRendering();
+			// #TODO: Transition framebuffer to final layout
 		}
+
+		// #TODO: Transition framebuffer to intermediate layout
 
 		// #TODO: If `framebuffer` is nullptr, bind main viewport (if exists).
 
@@ -782,7 +531,7 @@ namespace VkMana
 
 		auto* graphicsDevice = commandList->GraphicsDevice;
 
-		CheckSubmittedCmdBuffers(commandList);
+		CheckSubmittedCmdBuffers(*commandList);
 
 		vk::Fence submitFence;
 		if (!graphicsDevice->AvailableFences.empty())
@@ -793,7 +542,7 @@ namespace VkMana
 		}
 		else
 		{
-			if (!Internal::CreateFence(submitFence, graphicsDevice->Device))
+			if (!Vulkan::CreateFence(submitFence, graphicsDevice->Device))
 			{
 				// #TODO: Error. Failed to create Vulkan fence.
 				return;
@@ -805,83 +554,9 @@ namespace VkMana
 		auto queue = graphicsDevice->GraphicsQueue;
 		queue.submit(submitInfo, submitFence);
 
-		/*auto& fenceSubmitInfo = graphicsDevice->SubmittedFences.emplace();
-		fenceSubmitInfo.Fence = submitFence;
-		fenceSubmitInfo.CmdList = commandList;
-		fenceSubmitInfo.CmdBuffer = commandList->CmdBuffer;*/
-
 		auto& submittedCmdInfo = commandList->SubmittedCmdBuffers.emplace();
 		submittedCmdInfo.Fence = submitFence;
 		submittedCmdInfo.CmdBuffer = commandList->CmdBuffer;
 	}
-
-	namespace
-	{
-		bool CreateSurface(vk::SurfaceKHR& outSurface, SurfaceProvider* surfaceProvider, vk::Instance instance)
-		{
-			if (auto* win32Provider = dynamic_cast<Win32Surface*>(surfaceProvider))
-			{
-				vk::Win32SurfaceCreateInfoKHR surfaceInfo{};
-				surfaceInfo.setHinstance(win32Provider->HInstance);
-				surfaceInfo.setHwnd(win32Provider->HWnd);
-				outSurface = instance.createWin32SurfaceKHR(surfaceInfo);
-			}
-			if (auto* waylandProvider = dynamic_cast<WaylandSurface*>(surfaceProvider))
-			{
-				vk::WaylandSurfaceCreateInfoKHR surfaceInfo{};
-				surfaceInfo.setDisplay(waylandProvider->Display);
-				surfaceInfo.setSurface(waylandProvider->Surface);
-				outSurface = instance.createWaylandSurfaceKHR(surfaceInfo);
-			}
-
-			return !!outSurface;
-		}
-
-		auto CreateTexturesFromSwapchainImages(Swapchain swapchain) -> std::vector<Texture>
-		{
-			auto swapchainImages = swapchain->GraphicsDevice->Device.getSwapchainImagesKHR(swapchain->Swapchain);
-
-			std::vector<Texture> textures(swapchainImages.size());
-			for (auto i = 0; i < swapchainImages.size(); ++i)
-			{
-				swapchain->GraphicsDevice->Textures.push_back(std::make_unique<Texture_T>());
-				auto& texture = *swapchain->GraphicsDevice->Textures.back();
-				texture.graphicsDevice = swapchain->GraphicsDevice;
-				texture.Image = swapchainImages[i];
-				texture.Width = swapchain->Width;
-				texture.Height = swapchain->Height;
-				texture.Depth = 1;
-				texture.MipLevels = 1;
-				texture.ArrayLayers = 1;
-				texture.Format = swapchain->Format;
-				texture.Usage = TextureUsage::RenderTarget;
-				textures[i] = &texture;
-			}
-			return textures;
-		}
-
-		void CheckSubmittedCmdBuffers(CommandList commandList)
-		{
-			while (!commandList->SubmittedCmdBuffers.empty())
-			{
-				auto submittedFence = commandList->SubmittedCmdBuffers.front();
-				if (commandList->GraphicsDevice->Device.getFenceStatus(submittedFence.Fence) == vk::Result::eSuccess)
-				{
-					commandList->SubmittedCmdBuffers.pop();
-
-					commandList->AvailableCmdLists.push(submittedFence.CmdBuffer);
-
-					std::lock_guard lock(commandList->GraphicsDevice->Mutex);
-					commandList->GraphicsDevice->AvailableFences.push(submittedFence.Fence);
-				}
-			}
-		}
-
-		void ClearCachedCmdListState(CommandList commandList)
-		{
-			commandList->BoundFramebuffer = nullptr;
-		}
-
-	} // namespace
 
 } // namespace VkMana

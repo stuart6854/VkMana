@@ -134,6 +134,10 @@ namespace VkMana::Vulkan
 		vk::PhysicalDeviceDynamicRenderingFeatures dynRenderFeature{};
 		dynRenderFeature.setDynamicRendering(VK_TRUE);
 
+		vk::PhysicalDeviceSynchronization2Features sync2Feature{};
+		sync2Feature.setSynchronization2(VK_TRUE);
+		sync2Feature.setPNext(&dynRenderFeature);
+
 		vk::PhysicalDeviceFeatures features{};
 		features.setFillModeNonSolid(VK_TRUE);
 		features.setWideLines(VK_TRUE);
@@ -142,7 +146,7 @@ namespace VkMana::Vulkan
 		deviceInfo.setQueueCreateInfos(queueInfos);
 		deviceInfo.setPEnabledExtensionNames(extensions);
 		deviceInfo.setPEnabledFeatures(&features);
-		deviceInfo.setPNext(&dynRenderFeature);
+		deviceInfo.setPNext(&sync2Feature);
 		outDevice = physicalDevice.createDevice(deviceInfo);
 		return !!outDevice;
 	}
@@ -344,6 +348,60 @@ namespace VkMana::Vulkan
 		viewInfo.setSubresourceRange(subresource);
 		outView = device.createImageView(viewInfo);
 		return !!outView;
+	}
+
+	bool TransitionImage(
+		vk::CommandBuffer cmd, vk::Image image, vk::ImageLayout oldLayout, vk::ImageLayout newLayout, vk::ImageSubresourceRange subresource)
+	{
+		vk::AccessFlags2 srcAccess;
+		vk::PipelineStageFlags2 srcStage;
+		if (oldLayout == vk::ImageLayout::eUndefined)
+		{
+			srcAccess = vk::AccessFlagBits2::eNone;
+			srcStage = vk::PipelineStageFlagBits2::eTopOfPipe;
+		}
+		else if (oldLayout == vk::ImageLayout::eColorAttachmentOptimal)
+		{
+			srcAccess = vk::AccessFlagBits2::eColorAttachmentWrite;
+			srcStage = vk::PipelineStageFlagBits2::eColorAttachmentOutput;
+		}
+		else if (oldLayout == vk::ImageLayout::eShaderReadOnlyOptimal)
+		{
+			srcAccess = vk::AccessFlagBits2::eShaderRead;
+			srcStage = vk::PipelineStageFlagBits2::eFragmentShader;
+		}
+		vk::AccessFlags2 dstAccess;
+		vk::PipelineStageFlags2 dstStage;
+		if (newLayout == vk::ImageLayout::eColorAttachmentOptimal)
+		{
+			dstAccess = vk::AccessFlagBits2::eColorAttachmentWrite;
+			dstStage = vk::PipelineStageFlagBits2::eColorAttachmentOutput;
+		}
+		else if (newLayout == vk::ImageLayout::eShaderReadOnlyOptimal)
+		{
+			dstAccess = vk::AccessFlagBits2::eShaderRead;
+			dstStage = vk::PipelineStageFlagBits2::eFragmentShader;
+		}
+		else if (newLayout == vk::ImageLayout::ePresentSrcKHR)
+		{
+			dstAccess = vk::AccessFlagBits2::eNone;
+			dstStage = vk::PipelineStageFlagBits2::eBottomOfPipe;
+		}
+
+		vk::ImageMemoryBarrier2 barrier{};
+		barrier.setImage(image);
+		barrier.setOldLayout(oldLayout);
+		barrier.setNewLayout(newLayout);
+		barrier.setSrcAccessMask(srcAccess);
+		barrier.setDstAccessMask(dstAccess);
+		barrier.setSrcStageMask(srcStage);
+		barrier.setDstStageMask(dstStage);
+		barrier.setSubresourceRange(subresource);
+
+		vk::DependencyInfo dependencyInfo{};
+		dependencyInfo.setImageMemoryBarriers(barrier);
+		cmd.pipelineBarrier2(dependencyInfo);
+		return true;
 	}
 
 } // namespace VkMana::Vulkan

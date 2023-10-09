@@ -70,4 +70,10 @@ namespace VkMana::Vulkan
 		vk::Format format,
 		vk::ImageSubresourceRange subresource);
 
+	bool TransitionImage(vk::CommandBuffer cmd,
+		vk::Image image,
+		vk::ImageLayout oldLayout,
+		vk::ImageLayout newLayout,
+		vk::ImageSubresourceRange subresource);
+
 } // namespace VkMana::Internal::Vulkan

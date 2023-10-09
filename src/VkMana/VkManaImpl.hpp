@@ -80,6 +80,8 @@ namespace VkMana
 		std::uint32_t ArrayLayer = 0;
 		RgbaFloat ClearColor = Rgba_Black;
 		vk::ImageView ImageView;
+		vk::ImageLayout IntermediateLayout; // Pre-Pass
+		vk::ImageLayout FinalLayout;		// Post-Pass
 	};
 	struct Framebuffer_T
 	{
@@ -115,6 +117,9 @@ namespace VkMana
 	bool CreateGraphicsDevice(GraphicsDevice_T& graphicsDevice, const GraphicsDeviceCreateInfo& createInfo);
 	bool CreateSwapchain(Swapchain_T& swapchain, const SwapchainCreateInfo& createInfo);
 	bool CreateFramebuffer(Framebuffer_T& framebuffer, const FramebufferCreateInfo& createInfo);
+
+	void TransitionFramebufferToIntermediate(CommandList_T& cmdList, Framebuffer_T& framebuffer);
+	void TransitionFramebufferToFinal(CommandList_T& cmdList, Framebuffer_T& framebuffer);
 
 	/*************************************************************
 	 * Conversions

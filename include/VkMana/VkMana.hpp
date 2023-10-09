@@ -108,6 +108,9 @@ namespace VkMana
 
 	void SwapBuffers(GraphicsDevice graphicsDevice, Swapchain swapchain = nullptr);
 
+	auto GraphicsDeviceGetMainSwapchain(GraphicsDevice graphicsDevice) -> Swapchain;
+	auto SwapchainGetFramebuffer(Swapchain swapchain) -> Framebuffer;
+
 	/*************************************************************
 	 * Command List Recording
 	 ************************************************************/

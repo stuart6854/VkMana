@@ -51,6 +51,8 @@ int main()
 	gdInfo.MainSwapchainCreateInfo.vsync = true;
 	gdInfo.MainSwapchainCreateInfo.Srgb = true;
 	auto* graphicsDevice = VkMana::CreateGraphicsDevice(gdInfo);
+	auto* mainSwapchain = VkMana::GraphicsDeviceGetMainSwapchain(graphicsDevice);
+	auto* swapchainFramebuffer = VkMana::SwapchainGetFramebuffer(mainSwapchain);
 
 	VkMana::BufferCreateInfo bufferInfo{};
 	bufferInfo.Size = 512;
@@ -100,7 +102,8 @@ int main()
 		// std::cout << " Fences: " << vulkanStats.NumFences << std::endl;
 
 		VkMana::CommandListBegin(cmdList);
-		VkMana::CommandListBindFramebuffer(cmdList, offscreenFramebuffer);
+		// VkMana::CommandListBindFramebuffer(cmdList, offscreenFramebuffer);
+		VkMana::CommandListBindFramebuffer(cmdList, swapchainFramebuffer);
 		VkMana::CommandListEnd(cmdList);
 
 		VkMana::SubmitCommandList(cmdList);

@@ -110,6 +110,11 @@ namespace VkMana
 			return false;
 		}
 
+		for(auto& target : swapchain.Framebuffer->ColorTargets)
+		{
+			target.FinalLayout = vk::ImageLayout::ePresentSrcKHR;
+		}
+
 		auto result =
 			swapchain.GraphicsDevice->Device.acquireNextImageKHR(swapchain.Swapchain, std::uint64_t(-1), {}, swapchain.AcquireFence);
 		swapchain.Framebuffer->CurrentImageIndex = result.value;
@@ -137,6 +142,8 @@ namespace VkMana
 				colorTarget.MipLevel = colorAttachmentInfo.MipLevel;
 				colorTarget.ArrayLayer = colorAttachmentInfo.ArrayLayer;
 				colorTarget.ClearColor = colorAttachmentInfo.ClearColor;
+				colorTarget.IntermediateLayout = vk::ImageLayout::eColorAttachmentOptimal;
+				colorTarget.FinalLayout = vk::ImageLayout::eShaderReadOnlyOptimal;
 				vk::ImageSubresourceRange subresource{};
 				subresource.aspectMask = vk::ImageAspectFlagBits::eColor;
 				subresource.baseMipLevel = colorTarget.MipLevel;
@@ -166,6 +173,8 @@ namespace VkMana
 			framebuffer.DepthTarget.TargetTexture = createInfo.DepthAttachment.TargetTexture;
 			framebuffer.DepthTarget.MipLevel = createInfo.DepthAttachment.MipLevel;
 			framebuffer.DepthTarget.ArrayLayer = createInfo.DepthAttachment.ArrayLayer;
+			framebuffer.DepthTarget.IntermediateLayout = vk::ImageLayout::eDepthAttachmentOptimal;
+			framebuffer.DepthTarget.FinalLayout = vk::ImageLayout::eShaderReadOnlyOptimal;
 			vk::ImageSubresourceRange subresource{};
 			subresource.aspectMask = vk::ImageAspectFlagBits::eDepth;
 			subresource.baseMipLevel = framebuffer.DepthTarget.MipLevel;
@@ -184,6 +193,69 @@ namespace VkMana
 			}
 		}
 		return true;
+	}
+
+	void TransitionFramebufferToIntermediate(CommandList_T& cmdList, Framebuffer_T& framebuffer)
+	{
+		for (const auto& attachment : framebuffer.ColorTargets)
+		{
+			if (attachment.IntermediateLayout != vk::ImageLayout::eUndefined)
+			{
+				vk::ImageSubresourceRange subresource{};
+				subresource.setAspectMask(vk::ImageAspectFlagBits::eColor);
+				subresource.setBaseMipLevel(attachment.MipLevel);
+				subresource.setLevelCount(1);
+				subresource.setBaseArrayLayer(attachment.ArrayLayer);
+				subresource.setLayerCount(1);
+				Vulkan::TransitionImage(cmdList.CmdBuffer, attachment.TargetTexture->Image, {}, attachment.IntermediateLayout, subresource);
+			}
+		}
+		if (framebuffer.DepthTarget.IntermediateLayout != vk::ImageLayout::eUndefined)
+		{
+			vk::ImageSubresourceRange subresource{};
+			subresource.setAspectMask(vk::ImageAspectFlagBits::eDepth);
+			subresource.setBaseMipLevel(framebuffer.DepthTarget.MipLevel);
+			subresource.setLevelCount(1);
+			subresource.setBaseArrayLayer(framebuffer.DepthTarget.ArrayLayer);
+			subresource.setLayerCount(1);
+			Vulkan::TransitionImage(cmdList.CmdBuffer,
+				framebuffer.DepthTarget.TargetTexture->Image,
+				{},
+				framebuffer.DepthTarget.IntermediateLayout,
+				subresource);
+		}
+	}
+
+	void TransitionFramebufferToFinal(CommandList_T& cmdList, Framebuffer_T& framebuffer)
+	{
+		for (const auto& attachment : framebuffer.ColorTargets)
+		{
+			if (attachment.FinalLayout != vk::ImageLayout::eUndefined)
+			{
+				vk::ImageSubresourceRange subresource{};
+				subresource.setAspectMask(vk::ImageAspectFlagBits::eColor);
+				subresource.setBaseMipLevel(attachment.MipLevel);
+				subresource.setLevelCount(1);
+				subresource.setBaseArrayLayer(attachment.ArrayLayer);
+				subresource.setLayerCount(1);
+				Vulkan::TransitionImage(
+					cmdList.CmdBuffer, attachment.TargetTexture->Image, attachment.IntermediateLayout, attachment.FinalLayout, subresource);
+			}
+		}
+		if (framebuffer.DepthTarget.FinalLayout != vk::ImageLayout::eUndefined)
+		{
+			vk::ImageSubresourceRange subresource{};
+			subresource.setAspectMask(vk::ImageAspectFlagBits::eDepth);
+			subresource.setBaseMipLevel(framebuffer.DepthTarget.MipLevel);
+			subresource.setLevelCount(1);
+			subresource.setBaseArrayLayer(framebuffer.DepthTarget.ArrayLayer);
+			subresource.setLayerCount(1);
+			Vulkan::TransitionImage(cmdList.CmdBuffer,
+				framebuffer.DepthTarget.TargetTexture->Image,
+				framebuffer.DepthTarget.IntermediateLayout,
+				framebuffer.DepthTarget.FinalLayout,
+				subresource);
+		}
 	}
 
 	auto ToVkFormat(PixelFormat format) -> vk::Format

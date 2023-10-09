@@ -393,6 +393,28 @@ namespace VkMana
 		graphicsDevice->Device.resetFences(swapchain->AcquireFence);
 	}
 
+	auto GraphicsDeviceGetMainSwapchain(GraphicsDevice graphicsDevice) -> Swapchain
+	{
+		if(graphicsDevice == nullptr)
+		{
+			// #TODO: Error.
+			return nullptr;
+		}
+
+		return graphicsDevice->MainSwapchain;
+	}
+
+	auto SwapchainGetFramebuffer(Swapchain swapchain) -> Framebuffer
+	{
+		if (swapchain == nullptr)
+		{
+			// #TODO: Error.
+			return nullptr;
+		}
+
+		return swapchain->Framebuffer;
+	}
+
 	void CommandListBegin(CommandList commandList)
 	{
 		if (commandList == nullptr)
@@ -450,7 +472,7 @@ namespace VkMana
 		if (commandList->BoundFramebuffer != nullptr)
 		{
 			commandList->CmdBuffer.endRendering();
-			// #TODO: Transition framebuffer to final layout
+			TransitionFramebufferToFinal(*commandList, *commandList->BoundFramebuffer);
 		}
 
 		commandList->CmdBuffer.end();
@@ -473,29 +495,30 @@ namespace VkMana
 		if (commandList->BoundFramebuffer != nullptr)
 		{
 			commandList->CmdBuffer.endRendering();
-			// #TODO: Transition framebuffer to final layout
+			TransitionFramebufferToFinal(*commandList, *commandList->BoundFramebuffer);
 		}
+		commandList->BoundFramebuffer = framebuffer;
 
-		// #TODO: Transition framebuffer to intermediate layout
+		TransitionFramebufferToIntermediate(*commandList, *commandList->BoundFramebuffer);
 
 		// #TODO: If `framebuffer` is nullptr, bind main viewport (if exists).
 
 		Texture dimTex = nullptr;
-		if (!framebuffer->ColorTargets.empty())
+		if (!commandList->BoundFramebuffer->ColorTargets.empty())
 		{
-			dimTex = framebuffer->ColorTargets[0].TargetTexture;
+			dimTex = commandList->BoundFramebuffer->ColorTargets[0].TargetTexture;
 		}
 		else
 		{
-			dimTex = framebuffer->DepthTarget.TargetTexture;
+			dimTex = commandList->BoundFramebuffer->DepthTarget.TargetTexture;
 		}
 		auto renderWidth = dimTex->Width; // #TODO: Use correct MipLevel dimensions.
 		auto renderHeight = dimTex->Height;
 
-		std::vector<vk::RenderingAttachmentInfo> colorAttachments(framebuffer->ColorTargets.size());
-		for (auto i = 0; i < framebuffer->ColorTargets.size(); ++i)
+		std::vector<vk::RenderingAttachmentInfo> colorAttachments(commandList->BoundFramebuffer->ColorTargets.size());
+		for (auto i = 0; i < commandList->BoundFramebuffer->ColorTargets.size(); ++i)
 		{
-			const auto& target = framebuffer->ColorTargets[i];
+			const auto& target = commandList->BoundFramebuffer->ColorTargets[i];
 			auto& attachment = colorAttachments[i];
 			attachment.setImageView(target.ImageView);
 			attachment.setImageLayout(vk::ImageLayout::eColorAttachmentOptimal);
@@ -506,19 +529,18 @@ namespace VkMana
 			attachment.setClearValue(vk::ClearColorValue(color.R, color.G, color.B, color.A));
 		}
 		vk::RenderingAttachmentInfo depthAttachment;
-		depthAttachment.setImageView(framebuffer->DepthTarget.ImageView);
+		depthAttachment.setImageView(commandList->BoundFramebuffer->DepthTarget.ImageView);
 		depthAttachment.setImageLayout(vk::ImageLayout::eDepthAttachmentOptimal);
 		depthAttachment.setLoadOp(vk::AttachmentLoadOp::eClear);
 		depthAttachment.setStoreOp(vk::AttachmentStoreOp::eDontCare);
 
 		vk::RenderingInfo renderingInfo{};
 		renderingInfo.setColorAttachments(colorAttachments);
-		renderingInfo.setPDepthAttachment(framebuffer->DepthTarget.TargetTexture ? &depthAttachment : nullptr);
+		renderingInfo.setPDepthAttachment(commandList->BoundFramebuffer->DepthTarget.TargetTexture ? &depthAttachment : nullptr);
 		renderingInfo.setLayerCount(1);
 		renderingInfo.setRenderArea({ { 0, 0 }, { renderWidth, renderHeight } });
 
 		commandList->CmdBuffer.beginRendering(renderingInfo);
-		commandList->BoundFramebuffer = framebuffer;
 	}
 
 	void SubmitCommandList(CommandList commandList)

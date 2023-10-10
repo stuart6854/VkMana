@@ -1,7 +1,5 @@
 /**
  * TODO:
- * - Texture from vk::Image (Private API. For swapchain images.)
- * - Swapchains
  * - Buffer Upload
  * - Texture Upload
  * - Push Constants

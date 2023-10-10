@@ -98,16 +98,16 @@ namespace VkMana
 		texture.ArrayLayers = createInfo.ArrayLayers;
 		texture.Format = ToVkFormat(createInfo.Format);
 
-		if (createInfo.Usage == TextureUsage::Sampled)
-			texture.Usage = vk::ImageUsageFlagBits::eSampled;
-		else if (createInfo.Usage == TextureUsage::Storage)
-			texture.Usage = vk::ImageUsageFlagBits::eStorage;
-		else if (createInfo.Usage == TextureUsage::RenderTarget)
-			texture.Usage = vk::ImageUsageFlagBits::eColorAttachment;
-		else if (createInfo.Usage == TextureUsage::DepthStencil)
-			texture.Usage = vk::ImageUsageFlagBits::eDepthStencilAttachment;
-		//		else if (createInfo.Usage == TextureUsage::CubeMap)
-		//			texture.Usage = vk::ImageUsageFlagBits::eSampled;
+		if ((createInfo.Usage & TextureUsage::Sampled) == TextureUsage::Sampled)
+			texture.Usage |= vk::ImageUsageFlagBits::eSampled;
+		if ((createInfo.Usage & TextureUsage::Storage) == TextureUsage::Storage)
+			texture.Usage |= vk::ImageUsageFlagBits::eStorage;
+		if ((createInfo.Usage & TextureUsage::RenderTarget) == TextureUsage::RenderTarget)
+			texture.Usage |= vk::ImageUsageFlagBits::eColorAttachment;
+		if ((createInfo.Usage & TextureUsage::DepthStencil) == TextureUsage::DepthStencil)
+			texture.Usage |= vk::ImageUsageFlagBits::eDepthStencilAttachment;
+		// if (createInfo.Usage == TextureUsage::CubeMap)
+		//   texture.Usage |= vk::ImageUsageFlagBits::eSampled;
 
 		if (!Vulkan::CreateTexture(texture.Image,
 				texture.Allocation,
@@ -395,7 +395,7 @@ namespace VkMana
 
 	auto GraphicsDeviceGetMainSwapchain(GraphicsDevice graphicsDevice) -> Swapchain
 	{
-		if(graphicsDevice == nullptr)
+		if (graphicsDevice == nullptr)
 		{
 			// #TODO: Error.
 			return nullptr;

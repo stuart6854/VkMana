@@ -1,9 +1,41 @@
 #pragma once
 
 #include <cstdint>
+#include <type_traits>
 
 namespace VkMana
 {
+// Define bitwise operators for an enum class, allowing usage as bitmasks.
+#define DEFINE_ENUM_CLASS_BITWISE_OPERATORS(Enum)                                                                                        \
+	inline constexpr Enum operator|(Enum Lhs, Enum Rhs)                                                                                  \
+	{                                                                                                                                    \
+		return static_cast<Enum>(static_cast<std::underlying_type_t<Enum>>(Lhs) | static_cast<std::underlying_type_t<Enum>>(Rhs));       \
+	}                                                                                                                                    \
+	inline constexpr Enum operator&(Enum Lhs, Enum Rhs)                                                                                  \
+	{                                                                                                                                    \
+		return static_cast<Enum>(static_cast<std::underlying_type_t<Enum>>(Lhs) & static_cast<std::underlying_type_t<Enum>>(Rhs));       \
+	}                                                                                                                                    \
+	inline constexpr Enum operator^(Enum Lhs, Enum Rhs)                                                                                  \
+	{                                                                                                                                    \
+		return static_cast<Enum>(static_cast<std::underlying_type_t<Enum>>(Lhs) ^ static_cast<std::underlying_type_t<Enum>>(Rhs));       \
+	}                                                                                                                                    \
+	inline constexpr Enum operator~(Enum E)                                                                                              \
+	{                                                                                                                                    \
+		return static_cast<Enum>(~static_cast<std::underlying_type_t<Enum>>(E));                                                         \
+	}                                                                                                                                    \
+	inline Enum& operator|=(Enum& Lhs, Enum Rhs)                                                                                         \
+	{                                                                                                                                    \
+		return Lhs = static_cast<Enum>(static_cast<std::underlying_type_t<Enum>>(Lhs) | static_cast<std::underlying_type_t<Enum>>(Lhs)); \
+	}                                                                                                                                    \
+	inline Enum& operator&=(Enum& Lhs, Enum Rhs)                                                                                         \
+	{                                                                                                                                    \
+		return Lhs = static_cast<Enum>(static_cast<std::underlying_type_t<Enum>>(Lhs) & static_cast<std::underlying_type_t<Enum>>(Lhs)); \
+	}                                                                                                                                    \
+	inline Enum& operator^=(Enum& Lhs, Enum Rhs)                                                                                         \
+	{                                                                                                                                    \
+		return Lhs = static_cast<Enum>(static_cast<std::underlying_type_t<Enum>>(Lhs) ^ static_cast<std::underlying_type_t<Enum>>(Lhs)); \
+	}
+
 	enum class BufferUsage : std::uint8_t
 	{
 		None,
@@ -116,9 +148,9 @@ namespace VkMana
 	enum class TextureUsage : std::uint8_t
 	{
 		None = 0,
-		/** Read-Only. Shader accessible. */
+		/** Shader accessible. Read-Only. */
 		Sampled = 1 << 0,
-		/** Read/Write. Shader accessible. */
+		/** Shader accessible. Read/Write. */
 		Storage = 1 << 1,
 		/** Color Target. */
 		RenderTarget = 1 << 2,
@@ -131,6 +163,7 @@ namespace VkMana
 		/** Texture supports automatic generation of mipmaps through CommandList. */
 		// GenerateMipMaps = 1 << 6,
 	};
+	DEFINE_ENUM_CLASS_BITWISE_OPERATORS(TextureUsage);
 
 	/*enum class TextureType : std::uint8_t
 	{

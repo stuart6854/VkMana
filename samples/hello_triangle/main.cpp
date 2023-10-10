@@ -63,7 +63,7 @@ int main()
 	textureInfo.Width = 2048;
 	textureInfo.Height = 2048;
 	textureInfo.Format = VkMana::PixelFormat::R8_G8_B8_A8_UNorm;
-	textureInfo.Usage = VkMana::TextureUsage::RenderTarget;
+	textureInfo.Usage = VkMana::TextureUsage::RenderTarget | VkMana::TextureUsage::Sampled;
 	auto texture = VkMana::CreateTexture(graphicsDevice, textureInfo);
 
 	VkMana::FramebufferCreateInfo framebufferCreateInfo{};
@@ -102,7 +102,7 @@ int main()
 		// std::cout << " Fences: " << vulkanStats.NumFences << std::endl;
 
 		VkMana::CommandListBegin(cmdList);
-		// VkMana::CommandListBindFramebuffer(cmdList, offscreenFramebuffer);
+		VkMana::CommandListBindFramebuffer(cmdList, offscreenFramebuffer);
 		VkMana::CommandListBindFramebuffer(cmdList, swapchainFramebuffer);
 		VkMana::CommandListEnd(cmdList);
 

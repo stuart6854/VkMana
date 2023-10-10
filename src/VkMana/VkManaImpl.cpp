@@ -110,7 +110,7 @@ namespace VkMana
 			return false;
 		}
 
-		for(auto& target : swapchain.Framebuffer->ColorTargets)
+		for (auto& target : swapchain.Framebuffer->ColorTargets)
 		{
 			target.FinalLayout = vk::ImageLayout::ePresentSrcKHR;
 		}
@@ -132,7 +132,7 @@ namespace VkMana
 			auto& colorTarget = framebuffer.ColorTargets.emplace_back();
 			if (colorAttachmentInfo.TargetTexture != nullptr)
 			{
-				if (colorAttachmentInfo.TargetTexture->Usage != vk::ImageUsageFlagBits::eColorAttachment)
+				if (!(colorAttachmentInfo.TargetTexture->Usage & vk::ImageUsageFlagBits::eColorAttachment))
 				{
 					// #TODO: Error. Framebuffer color attachment texture must be a TextureUsage::RenderTarget texture.
 					return false;
@@ -143,7 +143,10 @@ namespace VkMana
 				colorTarget.ArrayLayer = colorAttachmentInfo.ArrayLayer;
 				colorTarget.ClearColor = colorAttachmentInfo.ClearColor;
 				colorTarget.IntermediateLayout = vk::ImageLayout::eColorAttachmentOptimal;
-				colorTarget.FinalLayout = vk::ImageLayout::eShaderReadOnlyOptimal;
+
+				if (colorTarget.TargetTexture->Usage & vk::ImageUsageFlagBits::eSampled)
+					colorTarget.FinalLayout = vk::ImageLayout::eShaderReadOnlyOptimal;
+
 				vk::ImageSubresourceRange subresource{};
 				subresource.aspectMask = vk::ImageAspectFlagBits::eColor;
 				subresource.baseMipLevel = colorTarget.MipLevel;
@@ -164,7 +167,7 @@ namespace VkMana
 		}
 		if (createInfo.DepthAttachment.TargetTexture != nullptr)
 		{
-			if (framebuffer.DepthTarget.TargetTexture->Usage != vk::ImageUsageFlagBits::eDepthStencilAttachment)
+			if (!(framebuffer.DepthTarget.TargetTexture->Usage & vk::ImageUsageFlagBits::eDepthStencilAttachment))
 			{
 				// #TODO: Error. Framebuffer depth attachment texture must be a TextureUsage::DepthStencil texture.
 				return false;

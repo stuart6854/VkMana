@@ -47,7 +47,10 @@ namespace VkMana
 		Uniform,
 		/** Similar to Uniform buffer, but usually for much larger data. */
 		Storage,
+		/** Similar to Uniform buffer, but usually for much larger data. */
+		HostAccessible,
 	};
+	DEFINE_ENUM_CLASS_BITWISE_OPERATORS(BufferUsage);
 
 	enum class PixelFormat : std::uint8_t
 	{

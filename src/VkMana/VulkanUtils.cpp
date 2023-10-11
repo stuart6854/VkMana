@@ -263,8 +263,12 @@ namespace VkMana::Vulkan
 		return !!outSwapchain;
 	}
 
-	bool CreateDeviceBuffer(
-		vk::Buffer& outBuffer, vma::Allocation& outAllocation, vma::Allocator allocator, std::uint64_t size, vk::BufferUsageFlags usage)
+	bool CreateDeviceBuffer(vk::Buffer& outBuffer,
+		vma::Allocation& outAllocation,
+		vma::Allocator allocator,
+		std::uint64_t size,
+		vk::BufferUsageFlags usage,
+		vma::AllocationCreateFlags allocFlags)
 	{
 		vk::BufferCreateInfo bufferInfo{};
 		bufferInfo.setSize(size);
@@ -272,6 +276,7 @@ namespace VkMana::Vulkan
 
 		vma::AllocationCreateInfo allocInfo{};
 		allocInfo.setUsage(vma::MemoryUsage::eAutoPreferDevice);
+		allocInfo.setFlags(allocFlags);
 
 		std::tie(outBuffer, outAllocation) = allocator.createBuffer(bufferInfo, allocInfo);
 		return outBuffer != nullptr && outAllocation != nullptr;

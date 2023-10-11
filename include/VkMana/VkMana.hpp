@@ -109,6 +109,8 @@ namespace VkMana
 	auto GraphicsDeviceGetMainSwapchain(GraphicsDevice graphicsDevice) -> Swapchain;
 	auto SwapchainGetFramebuffer(Swapchain swapchain) -> Framebuffer;
 
+	void BufferUpdateData(DeviceBuffer buffer, std::uint64_t dstOffset, std::uint64_t dataSize, const void* data);
+
 	/*************************************************************
 	 * Command List Recording
 	 ************************************************************/

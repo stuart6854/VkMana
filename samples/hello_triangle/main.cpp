@@ -55,9 +55,12 @@ int main()
 	auto* swapchainFramebuffer = VkMana::SwapchainGetFramebuffer(mainSwapchain);
 
 	VkMana::BufferCreateInfo bufferInfo{};
-	bufferInfo.Size = 512;
-	bufferInfo.Usage = VkMana::BufferUsage::Storage;
+	bufferInfo.Size = sizeof(float) * 3 * 3;
+	bufferInfo.Usage = VkMana::BufferUsage::Vertex | VkMana::BufferUsage::HostAccessible;
 	auto* buffer = CreateBuffer(graphicsDevice, bufferInfo);
+
+	std::vector<float> vertices = { 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f };
+	VkMana::BufferUpdateData(buffer, 0, bufferInfo.Size, vertices.data());
 
 	VkMana::TextureCreateInfo textureInfo{};
 	textureInfo.Width = 2048;

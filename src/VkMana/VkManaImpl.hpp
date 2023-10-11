@@ -57,6 +57,7 @@ namespace VkMana
 		vma::Allocation Allocation;
 		std::uint64_t Size = 0;
 		vk::BufferUsageFlags Usage = {};
+		vma::AllocationCreateFlags AllocFlags = {};
 	};
 	struct Texture_T
 	{

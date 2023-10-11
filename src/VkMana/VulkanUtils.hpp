@@ -43,8 +43,12 @@ namespace VkMana::Vulkan
 		bool colorSrgb,
 		vk::PhysicalDevice physicalDevice);
 
-	bool CreateDeviceBuffer(
-		vk::Buffer& outBuffer, vma::Allocation& outAllocation, vma::Allocator allocator, std::uint64_t size, vk::BufferUsageFlags usage);
+	bool CreateDeviceBuffer(vk::Buffer& outBuffer,
+		vma::Allocation& outAllocation,
+		vma::Allocator allocator,
+		std::uint64_t size,
+		vk::BufferUsageFlags usage,
+		vma::AllocationCreateFlags allocFlags);
 
 	bool CreateTexture(vk::Image& outImage,
 		vma::Allocation& outAllocation,

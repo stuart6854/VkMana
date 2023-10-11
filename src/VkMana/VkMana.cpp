@@ -61,16 +61,22 @@ namespace VkMana
 
 		buffer.graphicsDevice = graphicsDevice;
 
-		if (createInfo.Usage == BufferUsage::Vertex)
+		if ((createInfo.Usage & BufferUsage::Vertex) == BufferUsage::Vertex)
 			buffer.Usage = vk::BufferUsageFlagBits::eVertexBuffer;
-		else if (createInfo.Usage == BufferUsage::Index)
+		if ((createInfo.Usage & BufferUsage::Index) == BufferUsage::Index)
 			buffer.Usage = vk::BufferUsageFlagBits::eIndexBuffer;
-		else if (createInfo.Usage == BufferUsage::Uniform)
+		if ((createInfo.Usage & BufferUsage::Uniform) == BufferUsage::Uniform)
+		{
 			buffer.Usage = vk::BufferUsageFlagBits::eUniformBuffer;
-		else if (createInfo.Usage == BufferUsage::Storage)
+			buffer.AllocFlags |= vma::AllocationCreateFlagBits::eHostAccessSequentialWrite;
+		}
+		if ((createInfo.Usage & BufferUsage::Storage) == BufferUsage::Storage)
 			buffer.Usage = vk::BufferUsageFlagBits::eStorageBuffer;
+		if ((createInfo.Usage & BufferUsage::HostAccessible) == BufferUsage::HostAccessible)
+			buffer.AllocFlags |= vma::AllocationCreateFlagBits::eHostAccessSequentialWrite;
 
-		if (!Vulkan::CreateDeviceBuffer(buffer.Buffer, buffer.Allocation, graphicsDevice->Allocator, createInfo.Size, buffer.Usage))
+		if (!Vulkan::CreateDeviceBuffer(
+				buffer.Buffer, buffer.Allocation, graphicsDevice->Allocator, createInfo.Size, buffer.Usage, buffer.AllocFlags))
 		{
 			// #TODO: Error. Failed to create Vulkan device buffer.
 			DestroyBuffer(&buffer);
@@ -413,6 +419,21 @@ namespace VkMana
 		}
 
 		return swapchain->Framebuffer;
+	}
+
+	void BufferUpdateData(DeviceBuffer buffer, std::uint64_t dstOffset, std::uint64_t dataSize, const void* data)
+	{
+		if (buffer == nullptr)
+		{
+			// #TODO: Error. Cannot update invalid buffer.
+			return;
+		}
+
+		// Host-Accessible
+		auto* mappedData = buffer->graphicsDevice->Allocator.mapMemory(buffer->Allocation);
+		auto* offsetData = static_cast<std::uint8_t*>(mappedData) + dstOffset;
+		std::memcpy(offsetData, data, dataSize);
+		buffer->graphicsDevice->Allocator.unmapMemory(buffer->Allocation);
 	}
 
 	void CommandListBegin(CommandList commandList)

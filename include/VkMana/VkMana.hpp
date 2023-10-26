@@ -50,7 +50,7 @@ namespace VkMana
 		SurfaceProvider* SurfaceProvider = nullptr;
 		std::uint32_t Width = 0;
 		std::uint32_t Height = 0;
-		bool vsync = false;
+		bool VSync = false;
 		bool Srgb = false;
 		RgbaFloat ClearColor = Rgba_Black;
 	};

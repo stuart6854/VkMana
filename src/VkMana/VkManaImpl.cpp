@@ -65,7 +65,7 @@ namespace VkMana
 
 		swapchain.Width = createInfo.Width;
 		swapchain.Height = createInfo.Height;
-		swapchain.VSync = createInfo.vsync;
+		swapchain.VSync = createInfo.VSync;
 		swapchain.ColorSrgb = createInfo.Srgb;
 
 		auto oldSwapchain = swapchain.Swapchain;

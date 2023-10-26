@@ -48,7 +48,7 @@ int main()
 	gdInfo.MainSwapchainCreateInfo.Width = 1280;
 	gdInfo.MainSwapchainCreateInfo.Height = 720;
 	gdInfo.MainSwapchainCreateInfo.ClearColor = VkMana::Rgba_CornflowerBlue;
-	gdInfo.MainSwapchainCreateInfo.vsync = true;
+	gdInfo.MainSwapchainCreateInfo.VSync = true;
 	gdInfo.MainSwapchainCreateInfo.Srgb = true;
 	auto* graphicsDevice = VkMana::CreateGraphicsDevice(gdInfo);
 	auto* mainSwapchain = VkMana::GraphicsDeviceGetMainSwapchain(graphicsDevice);

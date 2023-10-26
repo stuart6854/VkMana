@@ -1,7 +1,9 @@
 /**
  * TODO:
- * - Buffer Upload
- * - Texture Upload
+ * - Shaders
+ * - Pipelines
+ * - Buffer Upload (using staging buffer)
+ * - Texture Upload (using staging buffers)
  * - Push Constants
  * - Binding Sets (Shader resources)
  * - Fences (Public API)

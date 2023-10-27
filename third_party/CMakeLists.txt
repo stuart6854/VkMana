@@ -25,6 +25,13 @@ set(VMA_DIR ${CMAKE_CURRENT_SOURCE_DIR}/vma-hpp/VulkanMemoryAllocator/include)
 target_include_directories(vma-hpp INTERFACE ${VMA_HPP_DIR} ${VMA_DIR})
 target_link_libraries(vma-hpp INTERFACE vulkan)
 
+# ShaderC
+option(SHADERC_SKIP_INSTALL "Skip installation" ON)
+option(SHADERC_SKIP_TESTS "Skip building tests" ON)
+option(SHADERC_SKIP_EXAMPLES "Skip building examples" ON)
+option(SHADERC_SKIP_COPYRIGHT_CHECK "Skip copyright check" ON)
+add_subdirectory(shaderc)
+
 # sdl2
 option(SDL2_DISABLE_SDL2MAIN ON)
 option(SDL2_DISABLE_INSTALL ON)

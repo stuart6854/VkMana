@@ -33,6 +33,8 @@ namespace VkMana::Vulkan
 	auto SelectPresentMode(vk::PhysicalDevice physicalDevice, vk::SurfaceKHR surface, bool vsync) -> vk::PresentModeKHR;
 
 	bool CreateSwapchain(vk::SwapchainKHR& outSwapchain,
+		std::uint32_t& outWidth,
+		std::uint32_t& outHeight,
 		vk::Format& outFormat,
 		vk::Device device,
 		vk::SurfaceKHR surface,

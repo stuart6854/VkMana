@@ -224,6 +224,8 @@ namespace VkMana::Vulkan
 	}
 
 	bool CreateSwapchain(vk::SwapchainKHR& outSwapchain,
+		std::uint32_t& outWidth,
+		std::uint32_t& outHeight,
 		vk::Format& outFormat,
 		vk::Device device,
 		vk::SurfaceKHR surface,
@@ -259,6 +261,8 @@ namespace VkMana::Vulkan
 		swapchainInfo.setClipped(VK_FALSE);
 		swapchainInfo.setOldSwapchain(oldSwapchain);
 		outSwapchain = device.createSwapchainKHR(swapchainInfo);
+		outWidth = clampedWidth;
+		outHeight = clampedHeight;
 		outFormat = surfaceFormat.format;
 		return !!outSwapchain;
 	}

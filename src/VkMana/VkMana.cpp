@@ -536,11 +536,13 @@ namespace VkMana
 		auto renderWidth = dimTex->Width; // #TODO: Use correct MipLevel dimensions.
 		auto renderHeight = dimTex->Height;
 
-		std::vector<vk::RenderingAttachmentInfo> colorAttachments(commandList->BoundFramebuffer->ColorTargets.size());
-		for (auto i = 0; i < commandList->BoundFramebuffer->ColorTargets.size(); ++i)
+		std::vector<vk::RenderingAttachmentInfo> colorAttachments{};
+		if (commandList->BoundFramebuffer->SwapchainTarget)
 		{
-			const auto& target = commandList->BoundFramebuffer->ColorTargets[i];
-			auto& attachment = colorAttachments[i];
+			// Swapchain Target
+			const auto imageIndex = commandList->BoundFramebuffer->CurrentImageIndex;
+			const auto& target = commandList->BoundFramebuffer->ColorTargets[imageIndex];
+			auto& attachment = colorAttachments.emplace_back();
 			attachment.setImageView(target.ImageView);
 			attachment.setImageLayout(vk::ImageLayout::eColorAttachmentOptimal);
 			attachment.setLoadOp(vk::AttachmentLoadOp::eClear);
@@ -548,6 +550,23 @@ namespace VkMana
 
 			const auto& color = target.ClearColor;
 			attachment.setClearValue(vk::ClearColorValue(color.R, color.G, color.B, color.A));
+		}
+		else
+		{
+			// Offscreen Target
+			colorAttachments.resize(commandList->BoundFramebuffer->ColorTargets.size());
+			for (auto i = 0; i < commandList->BoundFramebuffer->ColorTargets.size(); ++i)
+			{
+				const auto& target = commandList->BoundFramebuffer->ColorTargets[i];
+				auto& attachment = colorAttachments[i];
+				attachment.setImageView(target.ImageView);
+				attachment.setImageLayout(vk::ImageLayout::eColorAttachmentOptimal);
+				attachment.setLoadOp(vk::AttachmentLoadOp::eClear);
+				attachment.setStoreOp(vk::AttachmentStoreOp::eStore);
+
+				const auto& color = target.ClearColor;
+				attachment.setClearValue(vk::ClearColorValue(color.R, color.G, color.B, color.A));
+			}
 		}
 		vk::RenderingAttachmentInfo depthAttachment;
 		depthAttachment.setImageView(commandList->BoundFramebuffer->DepthTarget.ImageView);

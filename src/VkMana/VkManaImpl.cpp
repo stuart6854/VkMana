@@ -70,6 +70,8 @@ namespace VkMana
 
 		auto oldSwapchain = swapchain.Swapchain;
 		if (!Vulkan::CreateSwapchain(swapchain.Swapchain,
+				swapchain.Width,
+				swapchain.Height,
 				swapchain.Format,
 				swapchain.GraphicsDevice->Device,
 				swapchain.Surface,
@@ -102,13 +104,13 @@ namespace VkMana
 			colorTarget.ArrayLayer = 0;
 			colorTarget.ClearColor = createInfo.ClearColor;
 		}
-
 		swapchain.Framebuffer = CreateFramebuffer(swapchain.GraphicsDevice, fbInfo);
 		if (swapchain.Framebuffer == nullptr)
 		{
 			// #TODO: Error. Failed to create swapchain framebuffer.
 			return false;
 		}
+		swapchain.Framebuffer->SwapchainTarget = &swapchain;
 
 		for (auto& target : swapchain.Framebuffer->ColorTargets)
 		{

@@ -1,5 +1,5 @@
 add_executable(sample_hello_triangle main.cpp)
 
-target_link_libraries(sample_hello_triangle PRIVATE VkMana SDL2-static)
+target_link_libraries(sample_hello_triangle PRIVATE VkMana SDL2-static glm)
 
 target_compile_features(sample_hello_triangle PRIVATE cxx_std_17)

@@ -51,3 +51,6 @@ option(SDL_Sensor OFF)
 option(SDL_Locale OFF)
 add_subdirectory(sdl2)
 set_property(TARGET SDL2-static PROPERTY FOLDER "ThirdParty")
+
+# GLM
+add_subdirectory(glm)

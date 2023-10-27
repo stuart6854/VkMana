@@ -140,6 +140,8 @@ namespace VkMana
 
 	auto ToVkShaderStage(ShaderStage stage) -> vk::ShaderStageFlagBits;
 	auto ToVkTopology(PrimitiveTopology topology) -> vk::PrimitiveTopology;
+	auto ToVkCullMode(CullMode cullMode) -> vk::CullModeFlags;
+	auto ToVkFrontFace(FrontFace frontFace) -> vk::FrontFace;
 
 	auto ToShaderCShaderKind(ShaderStage stage) -> shaderc_shader_kind;
 

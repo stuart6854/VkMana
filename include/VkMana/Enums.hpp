@@ -199,6 +199,24 @@ namespace VkMana
 		TriangleFan,
 	};
 
+	enum class CullMode : std::uint8_t
+	{
+		None,
+		Front,
+		Back,
+		FrontAndBack,
+	};
+
+	enum class FrontFace : std::uint8_t
+	{
+		Clockwise,
+		AntiClockwise,
+	};
+
+	enum class CompareOp : std::uint8_t
+	{
+	};
+
 	enum class IndexFormat : std::uint8_t
 	{
 		UInt16,

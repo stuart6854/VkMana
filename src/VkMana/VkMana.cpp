@@ -649,6 +649,83 @@ namespace VkMana
 		commandList->CmdBuffer.bindPipeline(pipeline->BindPoint, pipeline->Pipeline);
 	}
 
+	void CommandListSetViewport(CommandList commandList, const Viewport& viewport)
+	{
+		if (commandList == nullptr)
+		{
+			// #TODO: Error. Cannot record on null CommandList.
+			return;
+		}
+
+		if (!commandList->HasBegun)
+		{
+			// #TODO: Error. CommandList has already begun.
+			return;
+		}
+
+		vk::Viewport vkViewport{
+			viewport.X,
+			viewport.Y,
+			viewport.Width,
+			viewport.Height,
+			viewport.MinDepth,
+			viewport.MaxDepth,
+		};
+		commandList->CmdBuffer.setViewport(0, vkViewport);
+	}
+
+	void CommandListSetScissor(CommandList commandList, const Scissor& scissor)
+	{
+		if (commandList == nullptr)
+		{
+			// #TODO: Error. Cannot record on null CommandList.
+			return;
+		}
+
+		if (!commandList->HasBegun)
+		{
+			// #TODO: Error. CommandList has already begun.
+			return;
+		}
+
+		vk::Rect2D vkScissor{ { scissor.X, scissor.Y }, { scissor.Width, scissor.Height } };
+		commandList->CmdBuffer.setScissor(0, vkScissor);
+	}
+
+	void CommandListSetPipelineStateCullMode(CommandList commandList, CullMode cullMode)
+	{
+		if (commandList == nullptr)
+		{
+			// #TODO: Error. Cannot record on null CommandList.
+			return;
+		}
+
+		if (!commandList->HasBegun)
+		{
+			// #TODO: Error. CommandList has already begun.
+			return;
+		}
+
+		commandList->CmdBuffer.setCullMode(ToVkCullMode(cullMode));
+	}
+
+	void CommandListSetPipelineStateFrontFace(CommandList commandList, FrontFace frontFace)
+	{
+		if (commandList == nullptr)
+		{
+			// #TODO: Error. Cannot record on null CommandList.
+			return;
+		}
+
+		if (!commandList->HasBegun)
+		{
+			// #TODO: Error. CommandList has already begun.
+			return;
+		}
+
+		commandList->CmdBuffer.setFrontFace(ToVkFrontFace(frontFace));
+	}
+
 	void CommandListDraw(CommandList commandList, std::uint32_t vertexCount, std::uint32_t firstVertex)
 	{
 		if (commandList == nullptr)

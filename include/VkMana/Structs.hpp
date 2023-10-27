@@ -6,10 +6,19 @@ namespace VkMana
 {
 	struct Viewport
 	{
-		std::int32_t X;
-		std::int32_t Y;
-		std::int32_t Width;
-		std::int32_t Height;
+		float X = 0.0f;
+		float Y = 0.0f;
+		float Width = 0.0f;
+		float Height = 0.0f;
+		float MinDepth = 0.0f;
+		float MaxDepth = 1.0f;
+	};
+	struct Scissor
+	{
+		std::int32_t X = 0;
+		std::int32_t Y = 0;
+		std::uint32_t Width = 0;
+		std::uint32_t Height = 0;
 	};
 
 	struct RgbaFloat

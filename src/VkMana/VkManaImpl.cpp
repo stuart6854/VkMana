@@ -240,12 +240,12 @@ namespace VkMana
 			vk::DynamicState::eDepthBias,
 			vk::DynamicState::eCullMode,
 			vk::DynamicState::eFrontFace,
-			vk::DynamicState::ePrimitiveTopology,
-			vk::DynamicState::eDepthTestEnable,
-			vk::DynamicState::eDepthWriteEnable,
-			vk::DynamicState::eDepthCompareOp,
-			vk::DynamicState::eStencilOp,
-			vk::DynamicState::eDepthBiasEnable,
+			// vk::DynamicState::ePrimitiveTopology,
+			// vk::DynamicState::eDepthTestEnable,
+			// vk::DynamicState::eDepthWriteEnable,
+			// vk::DynamicState::eDepthCompareOp,
+			// vk::DynamicState::eStencilOp,
+			// vk::DynamicState::eDepthBiasEnable,
 		};
 		vk::PipelineDynamicStateCreateInfo dynamicStateInfo{};
 		dynamicStateInfo.setDynamicStates(dynamicStates);
@@ -467,6 +467,36 @@ namespace VkMana
 				return vk::PrimitiveTopology::eTriangleStrip;
 			case PrimitiveTopology::TriangleFan:
 				return vk::PrimitiveTopology::eTriangleFan;
+		}
+		// #TODO: Error. Assert.
+		return {};
+	}
+
+	auto ToVkCullMode(CullMode cullMode) -> vk::CullModeFlags
+	{
+		switch (cullMode)
+		{
+			case CullMode::None:
+				return vk::CullModeFlagBits::eNone;
+			case CullMode::Front:
+				return vk::CullModeFlagBits::eFront;
+			case CullMode::Back:
+				return vk::CullModeFlagBits::eBack;
+			case CullMode::FrontAndBack:
+				return vk::CullModeFlagBits::eFrontAndBack;
+		}
+		// #TODO: Error. Assert.
+		return {};
+	}
+
+	auto ToVkFrontFace(FrontFace frontFace) -> vk::FrontFace
+	{
+		switch (frontFace)
+		{
+			case FrontFace::Clockwise:
+				return vk::FrontFace::eClockwise;
+			case FrontFace::AntiClockwise:
+				return vk::FrontFace::eCounterClockwise;
 		}
 		// #TODO: Error. Assert.
 		return {};

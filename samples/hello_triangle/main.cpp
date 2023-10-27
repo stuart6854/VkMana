@@ -54,6 +54,9 @@ void main()
 }
 )";
 
+constexpr auto WindowWidth = 1280;
+constexpr auto WindowHeight = 720;
+
 int main()
 {
 	std::cout << "Sample - Hello Triangle" << '\n';
@@ -65,14 +68,15 @@ int main()
 	}
 
 	auto windowFlags = SDL_WINDOW_VULKAN | SDL_WINDOW_RESIZABLE | SDL_WINDOW_SHOWN;
-	auto* sdlWindow = SDL_CreateWindow("Sample - Hello Triangle", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, 1280, 720, windowFlags);
+	auto* sdlWindow = SDL_CreateWindow(
+		"Sample - Hello Triangle", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, WindowWidth, WindowHeight, windowFlags);
 
 	auto surfaceProvider = GetSwapchainProvider(sdlWindow);
 	VkMana::GraphicsDeviceCreateInfo gdInfo{};
 	gdInfo.Debug = true;
 	gdInfo.MainSwapchainCreateInfo.SurfaceProvider = surfaceProvider.get();
-	gdInfo.MainSwapchainCreateInfo.Width = 1280;
-	gdInfo.MainSwapchainCreateInfo.Height = 720;
+	gdInfo.MainSwapchainCreateInfo.Width = WindowWidth;
+	gdInfo.MainSwapchainCreateInfo.Height = WindowHeight;
 	gdInfo.MainSwapchainCreateInfo.ClearColor = VkMana::Rgba_CornflowerBlue;
 	gdInfo.MainSwapchainCreateInfo.VSync = true;
 	gdInfo.MainSwapchainCreateInfo.Srgb = true;
@@ -156,6 +160,10 @@ int main()
 		VkMana::CommandListBindFramebuffer(cmdList, offscreenFramebuffer);
 		VkMana::CommandListBindFramebuffer(cmdList, swapchainFramebuffer);
 		VkMana::CommandListBindPipeline(cmdList, gfxPipeline);
+		VkMana::CommandListSetViewport(cmdList, { 0, 0, WindowWidth, WindowHeight });
+		VkMana::CommandListSetScissor(cmdList, { 0, 0, WindowWidth, WindowHeight });
+		VkMana::CommandListSetPipelineStateCullMode(cmdList, VkMana::CullMode::None);
+		VkMana::CommandListSetPipelineStateFrontFace(cmdList, VkMana::FrontFace::AntiClockwise);
 		VkMana::CommandListDraw(cmdList, 3, 0);
 		VkMana::CommandListEnd(cmdList);
 
@@ -166,6 +174,8 @@ int main()
 
 		std::this_thread::sleep_for(std::chrono::milliseconds(33));
 	}
+
+	VkMana::WaitForIdle(graphicsDevice);
 
 	VkMana::DestroyPipeline(gfxPipeline);
 	VkMana::DestroyFramebuffer(offscreenFramebuffer);

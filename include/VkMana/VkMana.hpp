@@ -145,6 +145,12 @@ namespace VkMana
 
 	void CommandListBindPipeline(CommandList commandList, Pipeline pipeline);
 
+	void CommandListSetViewport(CommandList commandList, const Viewport& viewport);
+	void CommandListSetScissor(CommandList commandList, const Scissor& scissor);
+
+	void CommandListSetPipelineStateCullMode(CommandList commandList, CullMode cullMode);
+	void CommandListSetPipelineStateFrontFace(CommandList commandList, FrontFace frontFace);
+
 	void CommandListDraw(CommandList commandList, std::uint32_t vertexCount, std::uint32_t firstVertex);
 
 	void SubmitCommandList(CommandList commandList);

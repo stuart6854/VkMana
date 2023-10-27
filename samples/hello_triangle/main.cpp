@@ -28,6 +28,32 @@ auto GetSwapchainProvider(SDL_Window* window) -> std::shared_ptr<VkMana::Surface
 	return nullptr;
 }
 
+const std::string TriangleVertexShaderSrc = R"(
+#version 450
+
+void main()
+{
+	const vec3 positions[3] = vec3[3](
+		vec3(1.0, 1.0, 0.0),
+		vec3(-1.0, 1.0, 0.0),
+		vec3(0.0, -1.0, 0.0)
+	);
+
+	//output the position of each vertex
+	gl_Position = vec4(positions[gl_VertexIndex], 1.0f);
+}
+)";
+const std::string TriangleFragmentShaderSrc = R"(
+#version 450
+
+layout (location = 0) out vec4 outFragColor;
+
+void main()
+{
+	outFragColor = vec4(1.0, 0.0, 0.0, 1.0);
+}
+)";
+
 int main()
 {
 	std::cout << "Sample - Hello Triangle" << '\n';
@@ -75,6 +101,28 @@ int main()
 	};
 	auto* offscreenFramebuffer = VkMana::CreateFramebuffer(graphicsDevice, framebufferCreateInfo);
 
+	VkMana::GraphicsPipelineCreateInfo gfxPipelineInfo{};
+	gfxPipelineInfo.Shaders = {
+		VkMana::ShaderCreateInfo{
+			VkMana::ShaderStage::Vertex,
+			{},
+			TriangleVertexShaderSrc,
+			VkMana::ShaderCompileSettings{
+				true,
+			},
+		},
+		VkMana::ShaderCreateInfo{
+			VkMana::ShaderStage::Fragment,
+			{},
+			TriangleFragmentShaderSrc,
+			VkMana::ShaderCompileSettings{
+				true,
+			},
+		},
+	};
+	gfxPipelineInfo.Topology = VkMana::PrimitiveTopology::TriangleList;
+	auto* gfxPipeline = VkMana::CreateGraphicsPipeline(graphicsDevice, gfxPipelineInfo);
+
 	auto cmdList = VkMana::CreateCommandList(graphicsDevice);
 
 	std::uint64_t nowTime = SDL_GetPerformanceCounter();
@@ -117,6 +165,7 @@ int main()
 		std::this_thread::sleep_for(std::chrono::milliseconds(33));
 	}
 
+	VkMana::DestroyPipeline(gfxPipeline);
 	VkMana::DestroyFramebuffer(offscreenFramebuffer);
 	VkMana::DestroyCommandList(cmdList);
 	VkMana::DestroyTexture(texture);

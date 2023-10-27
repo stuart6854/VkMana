@@ -154,6 +154,26 @@ namespace VkMana
 		return &framebuffer;
 	}
 
+	auto CreateGraphicsPipeline(GraphicsDevice graphicsDevice, const GraphicsPipelineCreateInfo& createInfo) -> Pipeline
+	{
+		if (graphicsDevice == nullptr)
+			return nullptr;
+
+		std::lock_guard lock(graphicsDevice->Mutex);
+
+		graphicsDevice->Pipelines.push_back(std::make_unique<Pipeline_T>());
+		auto& pipeline = *graphicsDevice->Pipelines.back();
+
+		pipeline.GraphicsDevice = graphicsDevice;
+		if (!CreateGraphicsPipeline(pipeline, createInfo))
+		{
+			DestroyPipeline(&pipeline);
+			return nullptr;
+		}
+
+		return &pipeline;
+	}
+
 	auto CreateCommandList(GraphicsDevice graphicsDevice) -> CommandList
 	{
 		if (graphicsDevice == nullptr)
@@ -201,6 +221,29 @@ namespace VkMana
 				if (gdBuffer == commandList)
 				{
 					commandList->GraphicsDevice->CmdLists.erase(commandList->GraphicsDevice->CmdLists.begin() + i);
+					break;
+				}
+			}
+		}
+		return true;
+	}
+
+	bool DestroyPipeline(Pipeline pipeline)
+	{
+		if (pipeline == nullptr)
+			return false;
+
+		pipeline->GraphicsDevice->Device.destroy(pipeline->Pipeline);
+		pipeline->GraphicsDevice->Device.destroy(pipeline->Layout);
+
+		{
+			std::lock_guard lock(pipeline->GraphicsDevice->Mutex);
+			for (auto i = 0; i < pipeline->GraphicsDevice->Pipelines.size(); ++i)
+			{
+				auto* gdBuffer = pipeline->GraphicsDevice->Pipelines[i].get();
+				if (gdBuffer == pipeline)
+				{
+					pipeline->GraphicsDevice->Pipelines.erase(pipeline->GraphicsDevice->Pipelines.begin() + i);
 					break;
 				}
 			}

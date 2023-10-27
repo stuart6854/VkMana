@@ -176,6 +176,29 @@ namespace VkMana
 		Texture3D,
 	};*/
 
+	enum class ShaderStage : std::uint8_t
+	{
+		Vertex,
+		Fragment,
+		Compute,
+	};
+
+	enum class PrimitiveTopology : std::uint8_t
+	{
+		/** Separate point primitives. */
+		PointList,
+		/** Separate line primitives. */
+		LineList,
+		/** Connected line primitives (consecutive lines share a vertex). */
+		LineStrip,
+		/** Separate triangle primitives. */
+		TriangleList,
+		/** Connected triangle primitives (consecutive triangles share an edge). */
+		TriangleStrip,
+		/** Connected triangle primitives (all triangles share a common vertex). */
+		TriangleFan,
+	};
+
 	enum class IndexFormat : std::uint8_t
 	{
 		UInt16,

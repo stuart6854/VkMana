@@ -200,6 +200,84 @@ namespace VkMana
 		return true;
 	}
 
+	bool CreateGraphicsPipeline(Pipeline_T& pipeline, const GraphicsPipelineCreateInfo& createInfo)
+	{
+		// #TODO: Proper layout creation.
+		pipeline.Layout = pipeline.GraphicsDevice->Device.createPipelineLayout({});
+
+		const std::string ShaderEntryPoint = "main";
+		std::vector<vk::UniqueShaderModule> shaderModules(createInfo.Shaders.size());
+		std::vector<vk::PipelineShaderStageCreateInfo> shaderStages(createInfo.Shaders.size());
+		for (auto i = 0; i < createInfo.Shaders.size(); ++i)
+		{
+			const auto& shaderInfo = createInfo.Shaders[i];
+			if (!CreateShader(shaderModules[i], pipeline.GraphicsDevice->Device, shaderInfo))
+			{
+				// #TODO: Error. Failed to create shader module for {} stage.
+				return false;
+			}
+			auto& stageInfo = shaderStages[i];
+			stageInfo.setModule(shaderModules[i].get());
+			stageInfo.setStage(ToVkShaderStage(shaderInfo.Stage));
+			stageInfo.setPName(ShaderEntryPoint.c_str());
+		}
+
+		vk::PipelineVertexInputStateCreateInfo vertexInputStateInfo{};
+		vk::PipelineInputAssemblyStateCreateInfo inputAssemblyStateInfo{};
+		inputAssemblyStateInfo.setTopology(ToVkTopology(createInfo.Topology));
+
+		vk::PipelineTessellationStateCreateInfo tessellationStateInfo{};
+		vk::PipelineViewportStateCreateInfo viewportStateInfo{ {}, 1, nullptr, 1, nullptr };
+		vk::PipelineRasterizationStateCreateInfo rasterizationStateInfo{};
+		vk::PipelineMultisampleStateCreateInfo multisampleStateInfo{};
+		vk::PipelineDepthStencilStateCreateInfo depthStencilStateInfo{};
+		vk::PipelineColorBlendStateCreateInfo colorBlendStateInfo{};
+
+		std::vector<vk::DynamicState> dynamicStates = {
+			vk::DynamicState::eViewport,
+			vk::DynamicState::eScissor,
+			vk::DynamicState::eLineWidth,
+			vk::DynamicState::eDepthBias,
+			vk::DynamicState::eCullMode,
+			vk::DynamicState::eFrontFace,
+			vk::DynamicState::ePrimitiveTopology,
+			vk::DynamicState::eDepthTestEnable,
+			vk::DynamicState::eDepthWriteEnable,
+			vk::DynamicState::eDepthCompareOp,
+			vk::DynamicState::eStencilOp,
+			vk::DynamicState::eDepthBiasEnable,
+		};
+		vk::PipelineDynamicStateCreateInfo dynamicStateInfo{};
+		dynamicStateInfo.setDynamicStates(dynamicStates);
+
+		std::vector colorAttachmentFormats = { vk::Format::eR8G8B8A8Srgb };
+		vk::PipelineRenderingCreateInfo renderingInfo{};
+		renderingInfo.setColorAttachmentFormats(colorAttachmentFormats);
+		renderingInfo.setDepthAttachmentFormat(vk::Format::eUndefined);
+
+		vk::GraphicsPipelineCreateInfo pipelineInfo{};
+		pipelineInfo.setStages(shaderStages);
+		pipelineInfo.setPVertexInputState(&vertexInputStateInfo);
+		pipelineInfo.setPInputAssemblyState(&inputAssemblyStateInfo);
+		pipelineInfo.setPTessellationState(&tessellationStateInfo);
+		pipelineInfo.setPViewportState(&viewportStateInfo);
+		pipelineInfo.setPRasterizationState(&rasterizationStateInfo);
+		pipelineInfo.setPMultisampleState(&multisampleStateInfo);
+		pipelineInfo.setPDepthStencilState(&depthStencilStateInfo);
+		pipelineInfo.setPColorBlendState(&colorBlendStateInfo);
+		pipelineInfo.setPDynamicState(&dynamicStateInfo);
+		pipelineInfo.setLayout(pipeline.Layout);
+
+		auto result = pipeline.GraphicsDevice->Device.createGraphicsPipeline({}, pipelineInfo);
+		if (result.result != vk::Result::eSuccess)
+		{
+			// #TODO: Error. Failed to create Graphics Pipeline.
+			return false;
+		}
+		pipeline.Pipeline = result.value;
+		return true;
+	}
+
 	void TransitionFramebufferToIntermediate(CommandList_T& cmdList, Framebuffer_T& framebuffer)
 	{
 		for (const auto& attachment : framebuffer.ColorTargets)
@@ -358,6 +436,59 @@ namespace VkMana
 		}
 	}
 
+	auto ToVkShaderStage(ShaderStage stage) -> vk::ShaderStageFlagBits
+	{
+		switch (stage)
+		{
+			case ShaderStage::Vertex:
+				return vk::ShaderStageFlagBits::eVertex;
+			case ShaderStage::Fragment:
+				return vk::ShaderStageFlagBits::eFragment;
+			case ShaderStage::Compute:
+				return vk::ShaderStageFlagBits::eCompute;
+		}
+		// #TODO: Error. Assert.
+		return {};
+	}
+
+	auto ToVkTopology(PrimitiveTopology topology) -> vk::PrimitiveTopology
+	{
+		switch (topology)
+		{
+			case PrimitiveTopology::PointList:
+				return vk::PrimitiveTopology::ePointList;
+			case PrimitiveTopology::LineList:
+				return vk::PrimitiveTopology::eLineList;
+			case PrimitiveTopology::LineStrip:
+				return vk::PrimitiveTopology::eLineStrip;
+			case PrimitiveTopology::TriangleList:
+				return vk::PrimitiveTopology::eTriangleList;
+			case PrimitiveTopology::TriangleStrip:
+				return vk::PrimitiveTopology::eTriangleStrip;
+			case PrimitiveTopology::TriangleFan:
+				return vk::PrimitiveTopology::eTriangleFan;
+		}
+		// #TODO: Error. Assert.
+		return {};
+	}
+
+	auto ToShaderCShaderKind(ShaderStage stage) -> shaderc_shader_kind
+	{
+		switch (stage)
+		{
+			case ShaderStage::Vertex:
+				return shaderc_vertex_shader;
+			case ShaderStage::Fragment:
+				return shaderc_fragment_shader;
+			case ShaderStage::Compute:
+				return shaderc_compute_shader;
+			default:
+				break;
+		}
+		// #TODO: Error. Assert.
+		return {};
+	}
+
 	bool CreateSurface(vk::SurfaceKHR& outSurface, SurfaceProvider* surfaceProvider, vk::Instance instance)
 	{
 		if (auto* win32Provider = dynamic_cast<Win32Surface*>(surfaceProvider))
@@ -399,6 +530,55 @@ namespace VkMana
 			textures[i] = &texture;
 		}
 		return textures;
+	}
+
+	bool CompileShader(
+		std::vector<std::uint32_t>& outSpirv, ShaderStage stage, const std::string& shaderSource, ShaderCompileSettings compileSettings)
+	{
+		shaderc::CompileOptions compileOptions{};
+		if (compileSettings.Debug)
+			compileOptions.SetGenerateDebugInfo();
+		else
+			compileOptions.SetOptimizationLevel(shaderc_optimization_level_performance);
+
+		for (const auto& define : compileSettings.Defines)
+			compileOptions.AddMacroDefinition(define);
+
+		compileOptions.SetSourceLanguage(shaderc_source_language_glsl);
+
+		auto shaderKind = ToShaderCShaderKind(stage);
+
+		shaderc::Compiler compiler{};
+		auto result = compiler.CompileGlslToSpv(shaderSource, shaderKind, "", compileOptions);
+
+		if (result.GetCompilationStatus() != shaderc_compilation_status_success)
+		{
+			// #TODO: Error. (result.GetErrorMessage())
+			return false;
+		}
+
+		// #TODO: Trace/Info - Log compile metrics/stats (Time, etc.)
+
+		outSpirv.assign(result.cbegin(), result.cend());
+		return true;
+	}
+
+	bool CreateShader(vk::UniqueShaderModule& outShader, vk::Device device, ShaderCreateInfo createInfo)
+	{
+		if (!createInfo.GlslSource.empty())
+		{
+			if (!CompileShader(createInfo.SpirvCode, createInfo.Stage, createInfo.GlslSource, createInfo.CompileSettings))
+			{
+				// #TODO: Error. Failed to compile GLSL to Spirv.
+				return false;
+			}
+		}
+
+		vk::ShaderModuleCreateInfo moduleInfo{};
+		moduleInfo.setCode(createInfo.SpirvCode);
+
+		outShader = device.createShaderModuleUnique(moduleInfo);
+		return *outShader;
 	}
 
 	void CheckSubmittedCmdBuffers(CommandList_T& commandList)

@@ -5,6 +5,7 @@
 
 #include <vulkan/vulkan.hpp>
 #include <vk_mem_alloc.hpp>
+#include <shaderc/shaderc.hpp>
 
 #include <cstdint>
 #include <queue>
@@ -32,6 +33,7 @@ namespace VkMana
 		std::queue<vk::Fence> AvailableFences;
 		std::vector<std::unique_ptr<Swapchain_T>> Swapchains;
 		std::vector<std::unique_ptr<Framebuffer_T>> Framebuffers;
+		std::vector<std::unique_ptr<Pipeline_T>> Pipelines;
 		std::vector<std::unique_ptr<DeviceBuffer_T>> Buffers;
 		std::vector<std::unique_ptr<Texture_T>> Textures;
 		std::vector<std::unique_ptr<CommandList_T>> CmdLists;
@@ -94,6 +96,13 @@ namespace VkMana
 
 		// vk::RenderPass RenderPass;
 	};
+	struct Pipeline_T
+	{
+		GraphicsDevice GraphicsDevice = nullptr;
+		vk::PipelineLayout Layout = nullptr;
+		vk::Pipeline Pipeline = nullptr;
+		vk::PipelineBindPoint BindPoint = vk::PipelineBindPoint::eGraphics;
+	};
 	struct SubmittedCmdInfo
 	{
 		vk::Fence Fence;
@@ -118,6 +127,7 @@ namespace VkMana
 	bool CreateGraphicsDevice(GraphicsDevice_T& graphicsDevice, const GraphicsDeviceCreateInfo& createInfo);
 	bool CreateSwapchain(Swapchain_T& swapchain, const SwapchainCreateInfo& createInfo);
 	bool CreateFramebuffer(Framebuffer_T& framebuffer, const FramebufferCreateInfo& createInfo);
+	bool CreateGraphicsPipeline(Pipeline_T& pipeline, const GraphicsPipelineCreateInfo& createInfo);
 
 	void TransitionFramebufferToIntermediate(CommandList_T& cmdList, Framebuffer_T& framebuffer);
 	void TransitionFramebufferToFinal(CommandList_T& cmdList, Framebuffer_T& framebuffer);
@@ -128,6 +138,11 @@ namespace VkMana
 
 	auto ToVkFormat(PixelFormat format) -> vk::Format;
 
+	auto ToVkShaderStage(ShaderStage stage) -> vk::ShaderStageFlagBits;
+	auto ToVkTopology(PrimitiveTopology topology) -> vk::PrimitiveTopology;
+
+	auto ToShaderCShaderKind(ShaderStage stage) -> shaderc_shader_kind;
+
 	/*************************************************************
 	 * Utilities
 	 ************************************************************/
@@ -135,6 +150,11 @@ namespace VkMana
 	bool CreateSurface(vk::SurfaceKHR& outSurface, SurfaceProvider* surfaceProvider, vk::Instance instance);
 
 	auto CreateTexturesFromSwapchainImages(Swapchain_T& swapchain) -> std::vector<Texture>;
+
+	bool CompileShader(
+		std::vector<std::uint32_t>& outSpirv, ShaderStage stage, const std::string& shaderSource, ShaderCompileSettings compileSettings);
+
+	bool CreateShader(vk::UniqueShaderModule& outShader, vk::Device device, ShaderCreateInfo createInfo);
 
 	void CheckSubmittedCmdBuffers(CommandList_T& commandList);
 

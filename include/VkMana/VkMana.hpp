@@ -18,6 +18,7 @@
 #include "Structs.hpp"
 
 #include <cstdint>
+#include <string>
 #include <vector>
 
 // Win32
@@ -43,6 +44,7 @@ namespace VkMana
 	VKMANA_DEFINE_HANDLE(DeviceBuffer);
 	VKMANA_DEFINE_HANDLE(Texture);
 	VKMANA_DEFINE_HANDLE(Framebuffer);
+	VKMANA_DEFINE_HANDLE(Pipeline);
 	VKMANA_DEFINE_HANDLE(CommandList);
 
 	struct SurfaceProvider;
@@ -89,15 +91,34 @@ namespace VkMana
 		std::vector<FramebufferAttachmentCreateInfo> ColorAttachments;
 		FramebufferAttachmentCreateInfo DepthAttachment;
 	};
+	struct ShaderCompileSettings
+	{
+		bool Debug = false; // Should code be compiled with debug settings enabled.
+		std::vector<std::string> Defines;
+	};
+	struct ShaderCreateInfo
+	{
+		ShaderStage Stage;
+		std::vector<std::uint32_t> SpirvCode;  // Pre-Compile Spirv shader code.
+		std::string GlslSource;				   // GLSL shader code to be compiled.
+		ShaderCompileSettings CompileSettings; // GLSL compile settings.
+	};
+	struct GraphicsPipelineCreateInfo
+	{
+		std::vector<ShaderCreateInfo> Shaders;
+		PrimitiveTopology Topology;
+	};
 
 	auto CreateGraphicsDevice(const GraphicsDeviceCreateInfo& createInfo) -> GraphicsDevice;
 	auto CreateSwapchain(GraphicsDevice graphicsDevice, const SwapchainCreateInfo& createInfo) -> Swapchain;
 	auto CreateBuffer(GraphicsDevice graphicsDevice, const BufferCreateInfo& createInfo) -> DeviceBuffer;
 	auto CreateTexture(GraphicsDevice graphicsDevice, const TextureCreateInfo& createInfo) -> Texture;
 	auto CreateFramebuffer(GraphicsDevice graphicsDevice, const FramebufferCreateInfo& createInfo) -> Framebuffer;
+	auto CreateGraphicsPipeline(GraphicsDevice graphicsDevice, const GraphicsPipelineCreateInfo& createInfo) -> Pipeline;
 	auto CreateCommandList(GraphicsDevice graphicsDevice) -> CommandList;
 
 	bool DestroyCommandList(CommandList commandList);
+	bool DestroyPipeline(Pipeline pipeline);
 	bool DestroyFramebuffer(Framebuffer framebuffer);
 	bool DestroyTexture(Texture texture);
 	bool DestroyBuffer(DeviceBuffer buffer);

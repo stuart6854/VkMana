@@ -120,6 +120,7 @@ namespace VkMana
 		bool HasEnded = false;
 
 		Framebuffer BoundFramebuffer = nullptr;
+		Pipeline BoundPipeline = nullptr;
 	};
 
 	auto GetContext() -> Context_T&;

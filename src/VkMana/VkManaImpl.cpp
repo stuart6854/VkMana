@@ -202,8 +202,10 @@ namespace VkMana
 
 	bool CreateGraphicsPipeline(Pipeline_T& pipeline, const GraphicsPipelineCreateInfo& createInfo)
 	{
-		// #TODO: Proper layout creation.
-		pipeline.Layout = pipeline.GraphicsDevice->Device.createPipelineLayout({});
+		vk::PushConstantRange constantRange{ ToVkShaderStage(createInfo.Constant.ShaderStages), 0, createInfo.Constant.Size };
+		vk::PipelineLayoutCreateInfo layoutInfo{};
+		layoutInfo.setPushConstantRanges(constantRange);
+		pipeline.Layout = pipeline.GraphicsDevice->Device.createPipelineLayout(layoutInfo);
 
 		const std::string ShaderEntryPoint = "main";
 		std::vector<vk::UniqueShaderModule> shaderModules(createInfo.Shaders.size());
@@ -631,6 +633,7 @@ namespace VkMana
 	void ClearCachedCmdListState(CommandList_T& commandList)
 	{
 		commandList.BoundFramebuffer = nullptr;
+		commandList.BoundPipeline = nullptr;
 	}
 
 } // namespace VkMana

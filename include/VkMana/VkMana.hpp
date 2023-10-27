@@ -101,9 +101,15 @@ namespace VkMana
 		std::string GlslSource;				   // GLSL shader code to be compiled.
 		ShaderCompileSettings CompileSettings; // GLSL compile settings.
 	};
+	struct PipelineConstant
+	{
+		ShaderStage ShaderStages = ShaderStage::None;
+		std::uint32_t Size = 0;
+	};
 	struct GraphicsPipelineCreateInfo
 	{
 		std::vector<ShaderCreateInfo> Shaders;
+		PipelineConstant Constant;
 		PrimitiveTopology Topology;
 	};
 
@@ -148,6 +154,9 @@ namespace VkMana
 
 	void CommandListSetPipelineStateCullMode(CommandList commandList, CullMode cullMode);
 	void CommandListSetPipelineStateFrontFace(CommandList commandList, FrontFace frontFace);
+
+	void CommandListSetPipelineConstants(
+		CommandList commandList, ShaderStage shaderStages, std::uint32_t offset, std::uint32_t size, const void* data);
 
 	void CommandListDraw(CommandList commandList, std::uint32_t vertexCount, std::uint32_t firstVertex);
 

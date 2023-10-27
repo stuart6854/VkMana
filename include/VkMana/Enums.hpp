@@ -178,10 +178,12 @@ namespace VkMana
 
 	enum class ShaderStage : std::uint8_t
 	{
-		Vertex,
-		Fragment,
-		Compute,
+		None = 0,
+		Vertex = 1 << 0,
+		Fragment = 1 << 1,
+		Compute = 1 << 2,
 	};
+	DEFINE_ENUM_CLASS_BITWISE_OPERATORS(ShaderStage);
 
 	enum class PrimitiveTopology : std::uint8_t
 	{

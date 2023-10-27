@@ -4,6 +4,10 @@
 #define VKMANA_USE_SDL2
 #include <VkMana/VkMana.hpp>
 
+#include <glm/ext/matrix_float4x4.hpp>
+#include <glm/ext/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
+
 #include <chrono>
 #include <iostream>
 #include <thread>
@@ -31,16 +35,21 @@ auto GetSwapchainProvider(SDL_Window* window) -> std::shared_ptr<VkMana::Surface
 const std::string TriangleVertexShaderSrc = R"(
 #version 450
 
+layout(push_constant) uniform Constant
+{
+	mat4 modelMatrix;
+} uConstants;
+
 void main()
 {
 	const vec3 positions[3] = vec3[3](
-		vec3(1.0, 1.0, 0.0),
-		vec3(-1.0, 1.0, 0.0),
-		vec3(0.0, -1.0, 0.0)
+		vec3(0.5, 0.5, 0.0),
+		vec3(-0.5, 0.5, 0.0),
+		vec3(0.0, -0.5, 0.0)
 	);
 
 	//output the position of each vertex
-	gl_Position = vec4(positions[gl_VertexIndex], 1.0f);
+	gl_Position = uConstants.modelMatrix * vec4(positions[gl_VertexIndex], 1.0f);
 }
 )";
 const std::string TriangleFragmentShaderSrc = R"(
@@ -124,10 +133,13 @@ int main()
 			},
 		},
 	};
+	gfxPipelineInfo.Constant = { VkMana::ShaderStage::Vertex, sizeof(glm::mat4) };
 	gfxPipelineInfo.Topology = VkMana::PrimitiveTopology::TriangleList;
 	auto* gfxPipeline = VkMana::CreateGraphicsPipeline(graphicsDevice, gfxPipelineInfo);
 
 	auto cmdList = VkMana::CreateCommandList(graphicsDevice);
+
+	float rot = 0.0f;
 
 	std::uint64_t nowTime = SDL_GetPerformanceCounter();
 	std::uint64_t lastTime = 0;
@@ -148,6 +160,9 @@ int main()
 			}
 		}
 
+		rot += 45.0f * deltaTime;
+		auto transform = glm::rotate(glm::mat4(1.0f), glm::radians(rot), glm::vec3(0, 1, 0));
+
 		auto title = std::string("Sample - Hello Triangle - ") + std::to_string(deltaTime) + "s";
 		SDL_SetWindowTitle(sdlWindow, title.c_str());
 
@@ -164,6 +179,7 @@ int main()
 		VkMana::CommandListSetScissor(cmdList, { 0, 0, WindowWidth, WindowHeight });
 		VkMana::CommandListSetPipelineStateCullMode(cmdList, VkMana::CullMode::None);
 		VkMana::CommandListSetPipelineStateFrontFace(cmdList, VkMana::FrontFace::AntiClockwise);
+		VkMana::CommandListSetPipelineConstants(cmdList, VkMana::ShaderStage::Vertex, 0, sizeof(glm::mat4), glm::value_ptr(transform));
 		VkMana::CommandListDraw(cmdList, 3, 0);
 		VkMana::CommandListEnd(cmdList);
 

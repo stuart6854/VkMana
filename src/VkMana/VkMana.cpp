@@ -647,6 +647,7 @@ namespace VkMana
 		}
 
 		commandList->CmdBuffer.bindPipeline(pipeline->BindPoint, pipeline->Pipeline);
+		commandList->BoundPipeline = pipeline;
 	}
 
 	void CommandListSetViewport(CommandList commandList, const Viewport& viewport)
@@ -724,6 +725,25 @@ namespace VkMana
 		}
 
 		commandList->CmdBuffer.setFrontFace(ToVkFrontFace(frontFace));
+	}
+
+	void CommandListSetPipelineConstants(
+		CommandList commandList, ShaderStage shaderStages, std::uint32_t offset, std::uint32_t size, const void* data)
+	{
+		if (commandList == nullptr)
+		{
+			// #TODO: Error. Cannot record on null CommandList.
+			return;
+		}
+
+		if (!commandList->HasBegun)
+		{
+			// #TODO: Error. CommandList has already begun.
+			return;
+		}
+
+		vk::ShaderStageFlags stages = ToVkShaderStage(shaderStages);
+		commandList->CmdBuffer.pushConstants(commandList->BoundPipeline->Layout, stages, offset, size, data);
 	}
 
 	void CommandListDraw(CommandList commandList, std::uint32_t vertexCount, std::uint32_t firstVertex)

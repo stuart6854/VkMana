@@ -30,6 +30,7 @@ option(SHADERC_SKIP_INSTALL "Skip installation" ON)
 option(SHADERC_SKIP_TESTS "Skip building tests" ON)
 option(SHADERC_SKIP_EXAMPLES "Skip building examples" ON)
 option(SHADERC_SKIP_COPYRIGHT_CHECK "Skip copyright check" ON)
+option(SHADERC_ENABLE_SHARED_CRT "Use the shared CRT instead of the static CRT" ON)
 add_subdirectory(shaderc)
 
 # sdl2

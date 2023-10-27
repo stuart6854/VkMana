@@ -626,6 +626,46 @@ namespace VkMana
 		commandList->CmdBuffer.beginRendering(renderingInfo);
 	}
 
+	void CommandListBindPipeline(CommandList commandList, Pipeline pipeline)
+	{
+		if (commandList == nullptr)
+		{
+			// #TODO: Error. Cannot record on null CommandList.
+			return;
+		}
+
+		if (!commandList->HasBegun)
+		{
+			// #TODO: Error. CommandList has already begun.
+			return;
+		}
+
+		if (pipeline == nullptr)
+		{
+			// #TODO: Error. Cannot bind null pipeline.
+			return;
+		}
+
+		commandList->CmdBuffer.bindPipeline(pipeline->BindPoint, pipeline->Pipeline);
+	}
+
+	void CommandListDraw(CommandList commandList, std::uint32_t vertexCount, std::uint32_t firstVertex)
+	{
+		if (commandList == nullptr)
+		{
+			// #TODO: Error. Cannot record on null CommandList.
+			return;
+		}
+
+		if (!commandList->HasBegun)
+		{
+			// #TODO: Error. CommandList has already begun.
+			return;
+		}
+
+		commandList->CmdBuffer.draw(vertexCount, 1, firstVertex, 0);
+	}
+
 	void SubmitCommandList(CommandList commandList)
 	{
 		if (commandList == nullptr)

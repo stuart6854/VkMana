@@ -143,6 +143,10 @@ namespace VkMana
 
 	void CommandListBindFramebuffer(CommandList commandList, Framebuffer framebuffer);
 
+	void CommandListBindPipeline(CommandList commandList, Pipeline pipeline);
+
+	void CommandListDraw(CommandList commandList, std::uint32_t vertexCount, std::uint32_t firstVertex);
+
 	void SubmitCommandList(CommandList commandList);
 
 	/*************************************************************

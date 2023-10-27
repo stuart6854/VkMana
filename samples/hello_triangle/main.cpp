@@ -155,6 +155,8 @@ int main()
 		VkMana::CommandListBegin(cmdList);
 		VkMana::CommandListBindFramebuffer(cmdList, offscreenFramebuffer);
 		VkMana::CommandListBindFramebuffer(cmdList, swapchainFramebuffer);
+		VkMana::CommandListBindPipeline(cmdList, gfxPipeline);
+		VkMana::CommandListDraw(cmdList, 3, 0);
 		VkMana::CommandListEnd(cmdList);
 
 		VkMana::SubmitCommandList(cmdList);

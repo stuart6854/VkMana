@@ -6,6 +6,7 @@
 
 #include <glm/ext/matrix_float4x4.hpp>
 #include <glm/ext/matrix_transform.hpp>
+#include <glm/ext/matrix_clip_space.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
 #include <chrono>
@@ -37,6 +38,8 @@ const std::string TriangleVertexShaderSrc = R"(
 
 layout(push_constant) uniform Constant
 {
+	mat4 projMatrix;
+	mat4 viewMatrix;
 	mat4 modelMatrix;
 } uConstants;
 
@@ -49,7 +52,7 @@ void main()
 	);
 
 	//output the position of each vertex
-	gl_Position = uConstants.modelMatrix * vec4(positions[gl_VertexIndex], 1.0f);
+	gl_Position = uConstants.projMatrix * uConstants.viewMatrix * uConstants.modelMatrix * vec4(positions[gl_VertexIndex], 1.0f);
 }
 )";
 const std::string TriangleFragmentShaderSrc = R"(
@@ -133,7 +136,7 @@ int main()
 			},
 		},
 	};
-	gfxPipelineInfo.Constant = { VkMana::ShaderStage::Vertex, sizeof(glm::mat4) };
+	gfxPipelineInfo.Constant = { VkMana::ShaderStage::Vertex, sizeof(glm::mat4) * 3 };
 	gfxPipelineInfo.Topology = VkMana::PrimitiveTopology::TriangleList;
 	auto* gfxPipeline = VkMana::CreateGraphicsPipeline(graphicsDevice, gfxPipelineInfo);
 
@@ -160,6 +163,8 @@ int main()
 			}
 		}
 
+		auto projection = glm::perspective(glm::radians(60.0f), float(WindowWidth) / WindowHeight, 0.1f, 1000.0f);
+		auto view = glm::translate(glm::mat4(1.0f), glm::vec3(0, 0, -2.0f));
 		rot += 45.0f * deltaTime;
 		auto transform = glm::rotate(glm::mat4(1.0f), glm::radians(rot), glm::vec3(0, 1, 0));
 
@@ -179,7 +184,11 @@ int main()
 		VkMana::CommandListSetScissor(cmdList, { 0, 0, WindowWidth, WindowHeight });
 		VkMana::CommandListSetPipelineStateCullMode(cmdList, VkMana::CullMode::None);
 		VkMana::CommandListSetPipelineStateFrontFace(cmdList, VkMana::FrontFace::AntiClockwise);
-		VkMana::CommandListSetPipelineConstants(cmdList, VkMana::ShaderStage::Vertex, 0, sizeof(glm::mat4), glm::value_ptr(transform));
+		VkMana::CommandListSetPipelineConstants(cmdList, VkMana::ShaderStage::Vertex, 0, sizeof(glm::mat4), glm::value_ptr(projection));
+		VkMana::CommandListSetPipelineConstants(
+			cmdList, VkMana::ShaderStage::Vertex, sizeof(glm::mat4), sizeof(glm::mat4), glm::value_ptr(view));
+		VkMana::CommandListSetPipelineConstants(
+			cmdList, VkMana::ShaderStage::Vertex, sizeof(glm::mat4) * 2, sizeof(glm::mat4), glm::value_ptr(transform));
 		VkMana::CommandListDraw(cmdList, 3, 0);
 		VkMana::CommandListEnd(cmdList);
 

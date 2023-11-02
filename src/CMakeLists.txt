@@ -1,9 +1,13 @@
 add_library(VkMana
+        VkMana/Context.cpp
+        VkMana/Device.cpp
+        VkMana/Buffer.cpp
+        VkMana/Image.cpp
 )
 
-target_include_directories(VkMana PRIVATE . PUBLIC ../include)
+target_include_directories(VkMana PUBLIC "./")
 
-target_link_libraries(VkMana PUBLIC vulkan vma-hpp #[[shaderc]])
+target_link_libraries(VkMana PUBLIC stuartcore Vulkan::Vulkan vma-hpp)
 
-target_compile_features(VkMana PRIVATE cxx_std_17)
+target_compile_features(VkMana PUBLIC cxx_std_20)
 target_compile_definitions(VkMana PRIVATE #[[WIN32_LEAN_AND_MEAN NOMINMAX]])

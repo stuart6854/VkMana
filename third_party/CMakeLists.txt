@@ -1,5 +1,3 @@
-add_subdirectory(stuart-core)
-
 find_package(Vulkan REQUIRED COMPONENTS shaderc_combined GLOBAL)
 
 # vma-hpp

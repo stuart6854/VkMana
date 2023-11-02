@@ -7,7 +7,7 @@ add_library(VkMana
 
 target_include_directories(VkMana PUBLIC "./")
 
-target_link_libraries(VkMana PUBLIC stuartcore Vulkan::Vulkan vma-hpp)
+target_link_libraries(VkMana PUBLIC Vulkan::Vulkan vma-hpp)
 
 target_compile_features(VkMana PUBLIC cxx_std_20)
 target_compile_definitions(VkMana PRIVATE #[[WIN32_LEAN_AND_MEAN NOMINMAX]])

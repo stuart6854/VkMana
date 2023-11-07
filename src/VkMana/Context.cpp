@@ -96,6 +96,7 @@ namespace VkMana
 
 		UNUSED(m_device.waitForFences(frame.FrameFence, true, UINT64_MAX));
 		m_device.resetFences(frame.FrameFence);
+		frame.CmdPool->ResetPool();
 	}
 
 	void Context::EndFrame()
@@ -135,6 +136,16 @@ namespace VkMana
 			// #TODO: Handle present result.
 		}
 	}
+
+	auto Context::RequestCmd() -> CmdBuffer
+	{
+		auto cmd = GetFrame().CmdPool->RequestCmd();
+		vk::CommandBufferBeginInfo beginInfo{};
+		cmd.begin(beginInfo);
+		return IntrusivePtr(new CommandBuffer(this, cmd));
+	}
+
+	void Context::Submit(CmdBuffer cmd) {}
 
 	void Context::PrintInstanceInfo()
 	{
@@ -294,6 +305,7 @@ namespace VkMana
 		for (auto& frame : m_frames)
 		{
 			frame.FrameFence = m_device.createFence({ vk::FenceCreateFlagBits::eSignaled });
+			frame.CmdPool = IntrusivePtr(new CommandPool(this, m_queueInfo.GraphicsFamilyIndex));
 		}
 
 		m_frameIndex = 0;

@@ -145,9 +145,9 @@ int main()
 			isRunning = false;
 
 		context.BeginFrame();
-		// auto cmd = device.RequestCmd();
+		auto cmd = context.RequestCmd();
 
-		// device.Submit(cmd);
+		context.Submit(cmd);
 
 		context.EndFrame();
 		context.Present();

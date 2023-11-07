@@ -1,6 +1,8 @@
 #pragma once
 
 #include "Vulkan_Common.hpp"
+#include "CommandPool.hpp"
+#include "CommandBuffer.hpp"
 #include "WSI.hpp"
 
 namespace VkMana
@@ -21,6 +23,16 @@ namespace VkMana
 		void BeginFrame();
 		void EndFrame();
 		void Present();
+
+		/* Commands & Submission (Per Frame) */
+
+		auto RequestCmd() -> CmdBuffer;
+
+		void Submit(CmdBuffer cmd);
+
+		/* Getters */
+
+		auto GetDevice() const -> auto { return m_device; }
 
 	private:
 		struct QueueInfo
@@ -43,6 +55,7 @@ namespace VkMana
 		struct PerFrame
 		{
 			vk::Fence FrameFence; // Waited on at start of frame & submitted at end of frame.
+			IntrusivePtr<CommandPool> CmdPool;
 		};
 		std::vector<PerFrame> m_frames;
 		uint32_t m_frameIndex;

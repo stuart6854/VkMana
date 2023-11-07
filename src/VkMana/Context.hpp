@@ -69,6 +69,7 @@ namespace VkMana
 			vk::SurfaceKHR Surface;
 			vk::SwapchainKHR Swapchain;
 			uint32_t ImageIndex = 0;
+			std::vector<vk::Semaphore> AcquireSemaphores;
 		};
 		static bool CreateSwapchain(vk::SwapchainKHR& outSwapchain,
 			vk::SurfaceKHR surface,
@@ -89,6 +90,9 @@ namespace VkMana
 		QueueInfo m_queueInfo{};
 
 		std::vector<SurfaceInfo> m_surfaces;
+
+		std::vector<vk::Semaphore> m_submitWaitSemaphores;
+		std::vector<vk::PipelineStageFlags> m_submitWaitStageMasks;
 	};
 
 } // namespace VkMana

@@ -74,6 +74,13 @@ namespace VkMana
 			return false;
 		}
 
+		auto swapchainImages = m_device.getSwapchainImagesKHR(newSurfaceInfo.Swapchain);
+		newSurfaceInfo.AcquireSemaphores.resize(swapchainImages.size());
+		for (auto i = 0; i < swapchainImages.size(); ++i)
+		{
+			newSurfaceInfo.AcquireSemaphores[i] = m_device.createSemaphore({});
+		}
+
 		return true;
 	}
 
@@ -97,6 +104,15 @@ namespace VkMana
 		UNUSED(m_device.waitForFences(frame.FrameFence, true, UINT64_MAX));
 		m_device.resetFences(frame.FrameFence);
 		frame.CmdPool->ResetPool();
+
+		for (auto& surfaceInfo : m_surfaces)
+		{
+			auto acquireSemaphore = m_device.createSemaphore({});
+			auto result = m_device.acquireNextImageKHR(surfaceInfo.Swapchain, UINT64_MAX, acquireSemaphore);
+			surfaceInfo.ImageIndex = result.value;
+			m_submitWaitSemaphores.push_back(acquireSemaphore);
+			m_submitWaitStageMasks.emplace_back(vk::PipelineStageFlagBits::eColorAttachmentOutput);
+		}
 	}
 
 	void Context::EndFrame()
@@ -145,7 +161,16 @@ namespace VkMana
 		return IntrusivePtr(new CommandBuffer(this, cmd));
 	}
 
-	void Context::Submit(CmdBuffer cmd) {}
+	void Context::Submit(CmdBuffer cmd)
+	{
+		vk::SubmitInfo submitInfo{};
+		submitInfo.setWaitSemaphores(m_submitWaitSemaphores);
+		submitInfo.setWaitDstStageMask(m_submitWaitStageMasks);
+		m_queueInfo.GraphicsQueue.submit(submitInfo);
+
+		m_submitWaitSemaphores.clear();
+		m_submitWaitStageMasks.clear();
+	}
 
 	void Context::PrintInstanceInfo()
 	{

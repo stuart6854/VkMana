@@ -1,490 +1,348 @@
 #include "Context.hpp"
 
+#define VMA_IMPLEMENTATION
+#include <vma/vk_mem_alloc.h>
+
 VULKAN_HPP_DEFAULT_DISPATCH_LOADER_DYNAMIC_STORAGE
 
 namespace VkMana
 {
-#ifdef VULKAN_DEBUG
-	static VKAPI_ATTR VkBool32 VKAPI_CALL VulkanMessengerCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
-		VkDebugUtilsMessageTypeFlagsEXT messageType,
-		const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData,
-		void* pUserData)
-	{
-		auto* context = static_cast<Context*>(pUserData);
-
-		switch (messageSeverity)
-		{
-			case VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT:
-				if (messageType == VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT)
-				{
-					LOG_ERR("[Vulkan]: Validation Error: {}", pCallbackData->pMessage);
-					// context->notify_validation_error(pCallbackData->pMessage);
-				}
-				else
-					LOG_ERR("[Vulkan]: Other Error: {}", pCallbackData->pMessage);
-				break;
-
-			case VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT:
-				if (messageType == VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT)
-					LOG_WARN("[Vulkan]: Validation Warning: {}", pCallbackData->pMessage);
-				else
-					LOG_WARN("[Vulkan]: Other Warning: {}", pCallbackData->pMessage);
-				break;
-
-	#if 0
-	case VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT:
-	case VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT:
-		if (messageType == VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT)
-			LOGI("[Vulkan]: Validation Info: {}", pCallbackData->pMessage);
-		else
-			LOGI("[Vulkan]: Other Info: {}", pCallbackData->pMessage);
-		break;
-	#endif
-
-			default:
-				return VK_FALSE;
-		}
-
-		bool log_object_names = false;
-		for (uint32_t i = 0; i < pCallbackData->objectCount; i++)
-		{
-			auto* name = pCallbackData->pObjects[i].pObjectName;
-			if (name)
-			{
-				log_object_names = true;
-				break;
-			}
-		}
-
-		if (log_object_names)
-		{
-			for (uint32_t i = 0; i < pCallbackData->objectCount; i++)
-			{
-				auto* name = pCallbackData->pObjects[i].pObjectName;
-				LOG_INFO("  Object #{}: {}", i, name ? name : "N/A");
-			}
-		}
-
-		return VK_FALSE;
-	}
-#endif
-
-	static std::uint32_t GetGPUScore(vk::PhysicalDevice gpu)
-	{
-		auto props = gpu.getProperties();
-
-		if (props.apiVersion < VK_API_VERSION_1_3)
-			return 0;
-
-		switch (props.deviceType)
-		{
-			case vk::PhysicalDeviceType::eDiscreteGpu:
-				return 3;
-			case vk::PhysicalDeviceType::eIntegratedGpu:
-				return 2;
-			case vk::PhysicalDeviceType::eCpu:
-				return 1;
-			default:
-				return 0;
-		}
-	}
-
-	QueueInfo::QueueInfo()
-	{
-		for (auto& index : FamilyIndices)
-			index = VK_QUEUE_FAMILY_IGNORED;
-	}
-
-	Context::Context() = default;
-
 	Context::~Context()
-	{
-		Destroy();
-	}
-
-	bool Context::InitInstance(const std::vector<const char*>& exts)
-	{
-		Destroy();
-
-		if (!CreateInstance(exts))
-		{
-			Destroy();
-			LOG_ERR("Failed to create Vulkan instance.");
-			return false;
-		}
-		return true;
-	}
-
-	bool Context::InitDevice(vk::PhysicalDevice gpu, vk::SurfaceKHR surface, const std::vector<const char*>& exts)
-	{
-		vk::PhysicalDeviceFeatures features{};
-		if (!CreateDevice(gpu, surface, exts, &features))
-		{
-			Destroy();
-			LOG_ERR("Failed to create Vulkan device.");
-			return false;
-		}
-
-		return true;
-	}
-
-	bool Context::InitInstanceAndDevice(const std::vector<const char*>& instanceExts, const std::vector<const char*>& deviceExts)
-	{
-		if (!InitInstance(instanceExts))
-			return false;
-		if (!InitDevice({}, {}, deviceExts))
-			return false;
-
-		return true;
-	}
-
-	bool Context::CreateInstance(const std::vector<const char*>& exts)
-	{
-		VULKAN_HPP_DEFAULT_DISPATCHER.init();
-
-		vk::ApplicationInfo appInfo{};
-		appInfo.setApiVersion(VK_API_VERSION_1_3);
-
-		vk::InstanceCreateInfo instanceInfo{};
-		instanceInfo.setPApplicationInfo(&appInfo);
-
-		std::vector<const char*> instanceExts;
-		std::vector<const char*> instanceLayers;
-		instanceExts.insert(instanceExts.end(), exts.begin(), exts.end());
-
-		auto supportedLayers = vk::enumerateInstanceLayerProperties();
-		auto supportedExts = vk::enumerateInstanceExtensionProperties();
-
-		LOG_INFO("Layer count: {}", supportedLayers.size());
-		for (auto& layer : supportedLayers)
-			LOG_INFO("Found layer: {}.", layer.layerName.data());
-
-		const auto hasExtension = [&](const char* name) -> bool {
-			auto itr = std::find_if(supportedExts.begin(), supportedExts.end(), [name](const vk::ExtensionProperties& e) -> bool {
-				return std::strcmp(e.extensionName, name) == 0;
-			});
-			return itr != supportedExts.end();
-		};
-
-		for (auto i = 0; i < instanceExts.size(); ++i)
-			if (!hasExtension(instanceExts[i]))
-				return false;
-
-		if (hasExtension(VK_EXT_DEBUG_UTILS_EXTENSION_NAME))
-		{
-			instanceExts.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
-			m_ext.SupportsDebugUtils = true;
-		}
-
-#ifdef VULKAN_DEBUG
-		const auto hasLayer = [&](const char* name) -> bool {
-			auto itr = std::find_if(supportedLayers.begin(), supportedLayers.end(), [name](const vk::LayerProperties& l) -> bool {
-				return std::strcmp(l.layerName, name) == 0;
-			});
-			return itr != supportedLayers.end();
-		};
-
-		vk::ValidationFeaturesEXT validationFeatures{};
-
-		if (hasLayer("VK_LAYER_KHRONOS_validation"))
-		{
-			instanceLayers.push_back("VK_LAYER_KHRONOS_validation");
-			LOG_INFO("Enabling VK_LAYER_KHRONOS_validation.");
-
-			auto layerExts = vk::enumerateInstanceExtensionProperties({ "VK_LAYER_KHRONOS_validation" });
-			if (std::find_if(layerExts.begin(),
-					layerExts.end(),
-					[](const vk::ExtensionProperties& e) {
-						return std::strcmp(e.extensionName, VK_EXT_VALIDATION_FEATURES_EXTENSION_NAME) == 0;
-					})
-				!= layerExts.end())
-			{
-				instanceExts.push_back(VK_EXT_VALIDATION_FEATURES_EXTENSION_NAME);
-				static const std::vector<vk::ValidationFeatureEnableEXT> validationSyncFeatures{
-					vk::ValidationFeatureEnableEXT::eSynchronizationValidation,
-				};
-				LOG_INFO("Enabling VK_EXT_validation_features for synchronization validation.");
-				validationFeatures.setEnabledValidationFeatures(validationSyncFeatures);
-				instanceInfo.setPNext(&validationFeatures);
-			}
-
-			if (!m_ext.SupportsDebugUtils && std::find_if(layerExts.begin(), layerExts.end(), [](const vk::ExtensionProperties& e) {
-					return std::strcmp(e.extensionName, VK_EXT_DEBUG_UTILS_EXTENSION_NAME) == 0;
-				}) != layerExts.end())
-			{
-				instanceExts.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
-				m_ext.SupportsDebugUtils = true;
-			}
-		}
-#endif
-
-		instanceInfo.setPEnabledExtensionNames(instanceExts);
-		instanceInfo.setPEnabledLayerNames(instanceLayers);
-
-		for (auto* extName : instanceExts)
-			LOG_INFO("Enabling instance extention: {}.", extName);
-
-		m_instance = vk::createInstance(instanceInfo);
-		if (!m_instance)
-			return false;
-
-		VULKAN_HPP_DEFAULT_DISPATCHER.init(m_instance);
-
-#ifdef VULKAN_DEBUG
-		if (m_ext.SupportsDebugUtils)
-		{
-			vk::DebugUtilsMessengerCreateInfoEXT debugInfo{};
-			debugInfo.setMessageSeverity(vk::DebugUtilsMessageSeverityFlagBitsEXT::eError | vk::DebugUtilsMessageSeverityFlagBitsEXT::eInfo
-				| vk::DebugUtilsMessageSeverityFlagBitsEXT::eVerbose | vk::DebugUtilsMessageSeverityFlagBitsEXT::eWarning);
-			debugInfo.setPfnUserCallback(&VulkanMessengerCallback);
-			debugInfo.setMessageType(vk::DebugUtilsMessageTypeFlagBitsEXT::eValidation | vk::DebugUtilsMessageTypeFlagBitsEXT::ePerformance
-				| vk::DebugUtilsMessageTypeFlagBitsEXT::eGeneral);
-			debugInfo.setPUserData(this);
-
-			m_debugMessenger = m_instance.createDebugUtilsMessengerEXT(debugInfo);
-		}
-#endif
-
-		return true;
-	}
-
-	bool Context::CreateDevice(vk::PhysicalDevice gpu,
-		vk::SurfaceKHR surface,
-		const std::vector<const char*>& requiredExts,
-		const vk::PhysicalDeviceFeatures* requiredFeatures)
-	{
-		m_physicalDevice = gpu;
-		if (!m_physicalDevice)
-		{
-			auto gpus = m_instance.enumeratePhysicalDevices();
-			if (gpus.empty())
-				return false;
-
-			for (auto gpu : gpus)
-			{
-				auto props = gpu.getProperties();
-				LOG_INFO("Found Vulkan GPU {}", props.deviceName.data());
-				LOG_INFO("	API: {}.{}.{}",
-					VK_VERSION_MAJOR(props.apiVersion),
-					VK_VERSION_MINOR(props.apiVersion),
-					VK_VERSION_PATCH(props.apiVersion));
-				LOG_INFO("	Driver: {}.{}.{}",
-					VK_VERSION_MAJOR(props.driverVersion),
-					VK_VERSION_MINOR(props.driverVersion),
-					VK_VERSION_PATCH(props.driverVersion));
-			}
-
-			std::uint32_t maxScore = 0;
-			// Prefer earlier entries in list
-			for (auto i = gpus.size(); i; --i)
-			{
-				auto score = GetGPUScore(gpus[i - 1]);
-				if (score >= maxScore && DoesPhysicalDeviceSupportSurface(gpus[i - 1], surface))
-				{
-					maxScore = score;
-					m_physicalDevice = gpus[i - 1];
-				}
-			}
-
-			if (!m_physicalDevice)
-			{
-				LOG_ERR("No GPU found which supports surface.");
-				return false;
-			}
-		}
-		else if (!DoesPhysicalDeviceSupportSurface(m_physicalDevice, surface))
-		{
-			LOG_ERR("Selected GPU does not support surface.");
-			return false;
-		}
-
-		auto supportedExts = m_physicalDevice.enumerateDeviceExtensionProperties();
-
-		auto hasExtension = [&](const char* name) -> bool {
-			auto itr = std::find_if(supportedExts.begin(), supportedExts.end(), [name](const vk::ExtensionProperties& e) {
-				return std::strcmp(e.extensionName, name) == 0;
-			});
-			return itr != supportedExts.end();
-		};
-
-		for (const auto& ext : requiredExts)
-			if (!hasExtension(ext))
-				return false;
-
-		std::vector<const char*> enabledExts;
-		bool requiresSwapchain = false;
-		for (auto i = 0; i < requiredExts.size(); ++i)
-		{
-			enabledExts.push_back(requiredExts[i]);
-			if (std::strcmp(requiredExts[i], VK_KHR_SWAPCHAIN_EXTENSION_NAME) == 0)
-				requiresSwapchain = true;
-		}
-
-		auto gpuProps = m_physicalDevice.getProperties();
-		LOG_INFO("Using Vulkan GPU: {}.", gpuProps.deviceName.data());
-
-		auto queueProps = m_physicalDevice.getQueueFamilyProperties();
-		std::vector<std::uint32_t> queueOffsets(queueProps.size());
-		std::vector<std::vector<float>> queuePriorities(queueProps.size());
-		std::array<std::uint32_t, QueueIndex_Count> queueIndices{};
-
-		const auto findVacantQueue = [&](std::uint32_t& family,
-										 std::uint32_t& index,
-										 vk::QueueFlags requiredFlags,
-										 vk::QueueFlags ignoreFlags,
-										 float priority) -> bool {
-			for (auto familyIndex = 0; familyIndex < queueProps.size(); ++familyIndex)
-			{
-				if (queueProps[familyIndex].queueFlags & ignoreFlags)
-					continue;
-
-				// A graphics queue candidate must support present for us to select it
-				if (requiredFlags & vk::QueueFlagBits::eGraphics && surface)
-				{
-					if (m_physicalDevice.getSurfaceSupportKHR(familyIndex, surface))
-						continue;
-				}
-
-				if (queueProps[familyIndex].queueCount && queueProps[familyIndex].queueFlags & requiredFlags)
-				{
-					family = familyIndex;
-					queueProps[familyIndex].queueCount--;
-					index = queueOffsets[familyIndex]++;
-					queuePriorities[familyIndex].push_back(priority);
-					return true;
-				}
-			}
-			return false;
-		};
-
-		if (!findVacantQueue(m_queueInfo.FamilyIndices[QueueIndex_Graphics],
-				queueIndices[QueueIndex_Graphics],
-				vk::QueueFlagBits::eGraphics | vk::QueueFlagBits::eCompute,
-				{},
-				0.5f))
-		{
-			LOG_ERR("Could not find suitable graphics queue.");
-			return false;
-		}
-
-		// Prefer another graphics queue since we can do async graphics that way.
-		// The compute queue is to be treated as high priority since we also do async graphics on it.
-		if (!findVacantQueue(m_queueInfo.FamilyIndices[QueueIndex_Compute],
-				queueIndices[QueueIndex_Compute],
-				vk::QueueFlagBits::eGraphics | vk::QueueFlagBits::eCompute,
-				{},
-				1.0f)
-			&& !findVacantQueue(
-				m_queueInfo.FamilyIndices[QueueIndex_Compute], queueIndices[QueueIndex_Compute], vk::QueueFlagBits::eCompute, {}, 1.0f))
-		{
-			// Fallback to the graphics queue if we must
-			m_queueInfo.FamilyIndices[QueueIndex_Compute] = m_queueInfo.FamilyIndices[QueueIndex_Graphics];
-			queueIndices[QueueIndex_Compute] = queueIndices[QueueIndex_Graphics];
-		}
-
-		// For transfer, try to find a queue which only supports transfer, e.g. DMA queue.
-		// If not, fallback to a dedicated compute queue.
-		// Finally, fallback to same queue as compute.
-		if (!findVacantQueue(m_queueInfo.FamilyIndices[QueueIndex_Transfer],
-				queueIndices[QueueIndex_Transfer],
-				vk::QueueFlagBits::eTransfer,
-				vk::QueueFlagBits::eGraphics | vk::QueueFlagBits::eCompute,
-				0.5f)
-			&& !findVacantQueue(m_queueInfo.FamilyIndices[QueueIndex_Transfer],
-				queueIndices[QueueIndex_Transfer],
-				vk::QueueFlagBits::eCompute,
-				vk::QueueFlagBits::eCompute,
-				0.5f))
-		{
-			// Fallback to the compute queue if we must
-			m_queueInfo.FamilyIndices[QueueIndex_Transfer] = m_queueInfo.FamilyIndices[QueueIndex_Compute];
-			queueIndices[QueueIndex_Transfer] = queueIndices[QueueIndex_Compute];
-		}
-
-		std::vector<vk::DeviceQueueCreateInfo> queueInfos{};
-		for (auto familyIndex = 0; familyIndex < queueProps.size(); ++familyIndex)
-		{
-			if (queueOffsets[familyIndex] == 0)
-				continue;
-
-			auto& info = queueInfos.emplace_back();
-			info.setQueueFamilyIndex(familyIndex);
-			info.setQueueCount(queueOffsets[familyIndex]);
-			info.setQueuePriorities(queuePriorities[familyIndex]);
-		}
-
-		vk::DeviceCreateInfo deviceInfo{};
-		deviceInfo.setPEnabledExtensionNames(enabledExts);
-		deviceInfo.setQueueCreateInfos(queueInfos);
-
-		for (auto* ext : enabledExts)
-			LOG_INFO("Enabling device extension: {}.", ext);
-
-		m_device = m_physicalDevice.createDevice(deviceInfo);
-		if (!m_device)
-		{
-			return false;
-		}
-
-		VULKAN_HPP_DEFAULT_DISPATCHER.init(m_device);
-
-		for (auto i = 0; i < QueueIndex_Count; ++i)
-		{
-			if (m_queueInfo.FamilyIndices[i] != VK_QUEUE_FAMILY_IGNORED)
-			{
-				m_queueInfo.Queues[i] = m_device.getQueue(m_queueInfo.FamilyIndices[i], queueIndices[i]);
-			}
-			else
-			{
-				m_queueInfo.Queues[i] = nullptr;
-			}
-		}
-
-#ifdef VULKAN_DEBUG
-		static const char* familyNames[QueueIndex_Count] = { "Graphics", "Compute", "Transfer" };
-
-		for (auto i = 0; i < QueueIndex_Count; ++i)
-			if (m_queueInfo.FamilyIndices[i] != VK_QUEUE_FAMILY_IGNORED)
-				LOG_INFO("{} queue: family {}, index {}.", familyNames[i], m_queueInfo.FamilyIndices[i], queueIndices[i]);
-#endif
-
-		return true;
-	}
-
-	void Context::Destroy()
 	{
 		if (m_device)
 			m_device.waitIdle();
 
+		while (!m_surfaces.empty())
+		{
+			RemoveSurface(m_surfaces.front().WSI);
+		}
+
 		if (m_device)
+		{
+			for (auto& frame : m_frames)
+			{
+				m_device.destroy(frame.FrameFence);
+			}
+
+			if (m_allocator)
+				m_allocator.destroy();
+
 			m_device.destroy();
-
-#ifdef VULKAN_DEBUG
-		if (m_debugMessenger)
-			m_instance.destroy(m_debugMessenger);
-		m_debugMessenger = nullptr;
-#endif
-
+		}
 		if (m_instance)
+		{
 			m_instance.destroy();
+		}
 	}
 
-	bool Context::DoesPhysicalDeviceSupportSurface(vk::PhysicalDevice gpu, vk::SurfaceKHR surface)
+	bool Context::Init(WSI* mainWSI)
 	{
-		if (!surface)
-			return true;
+		VULKAN_HPP_DEFAULT_DISPATCHER.init();
 
-		auto queueFamilyProps = gpu.getQueueFamilyProperties();
-		for (auto i = 0; i < queueFamilyProps.size(); ++i)
+		if (!InitInstance(m_instance))
+			return false;
+		if (!SelectGPU(m_gpu, m_instance))
+			return false;
+		if (!InitDevice(m_device, m_queueInfo, m_gpu))
+			return false;
+		if (!SetupFrames())
+			return false;
+
+		if (!AddSurface(mainWSI))
+			return false;
+
+		return true;
+	}
+
+	bool Context::AddSurface(WSI* wsi)
+	{
+		auto& newSurfaceInfo = m_surfaces.emplace_back();
+		newSurfaceInfo.WSI = wsi;
+		newSurfaceInfo.Surface = wsi->CreateSurface(m_instance);
+		if (!CreateSwapchain(newSurfaceInfo.Swapchain,
+				newSurfaceInfo.Surface,
+				m_gpu,
+				m_device,
+				wsi->GetSurfaceWidth(),
+				wsi->GetSurfaceHeight(),
+				wsi->IsVSync(),
+				true,
+				{}))
 		{
-			// A graphics queue must support present
-			if (queueFamilyProps[i].queueFlags & vk::QueueFlagBits::eGraphics)
+			m_instance.destroy(newSurfaceInfo.Surface);
+			m_surfaces.erase(m_surfaces.end() - 1);
+			return false;
+		}
+
+		return true;
+	}
+
+	void Context::RemoveSurface(WSI* wsi)
+	{
+		auto it = std::ranges::find_if(m_surfaces, [&](const SurfaceInfo& surfaceInfo) { return surfaceInfo.WSI == wsi; });
+		if (it != m_surfaces.end())
+			return;
+
+		auto& surfaceInfo = *it;
+		m_device.destroy(surfaceInfo.Swapchain);
+		m_instance.destroy(surfaceInfo.Surface);
+
+		m_surfaces.erase(it);
+	}
+
+	void Context::BeginFrame()
+	{
+		auto& frame = GetFrame();
+
+		UNUSED(m_device.waitForFences(frame.FrameFence, true, UINT64_MAX));
+		m_device.resetFences(frame.FrameFence);
+	}
+
+	void Context::EndFrame()
+	{
+		auto& frame = GetFrame();
+
+		m_queueInfo.GraphicsQueue.submit({}, frame.FrameFence);
+
+		m_frameIndex = (m_frameIndex + 1) % m_frames.size();
+	}
+
+	void Context::Present()
+	{
+		std::vector<vk::SwapchainKHR> swapchains;
+		std::vector<uint32_t> imageIndices;
+		swapchains.reserve(m_surfaces.size());
+		imageIndices.reserve(m_surfaces.size());
+		for (auto& surface : m_surfaces)
+		{
+			swapchains.push_back(surface.Swapchain);
+			imageIndices.push_back(surface.ImageIndex);
+		}
+
+		std::vector<vk::Result> results(swapchains.size());
+
+		vk::PresentInfoKHR presentInfo{};
+		presentInfo.setWaitSemaphores({});
+		presentInfo.setSwapchains(swapchains);
+		presentInfo.setImageIndices(imageIndices);
+		presentInfo.setResults(results);
+
+		UNUSED(m_queueInfo.GraphicsQueue.presentKHR(presentInfo));
+		for (auto i = 0; i < results.size(); ++i)
+		{
+			auto result = results[i];
+			auto& surface = m_surfaces[i];
+			// #TODO: Handle present result.
+		}
+	}
+
+	void Context::PrintInstanceInfo()
+	{
+		auto layers = vk::enumerateInstanceLayerProperties();
+		LOG_INFO("{} Instance Layers:", layers.size());
+		for (auto& layer : layers)
+			LOG_INFO("  - {}", layer.layerName.data());
+
+		auto exts = vk::enumerateInstanceExtensionProperties();
+		LOG_INFO("{} Instance Extensions:", exts.size());
+		for (auto& ext : exts)
+			LOG_INFO("  - {}", ext.extensionName.data());
+	}
+
+	void Context::PrintDeviceInfo(vk::PhysicalDevice gpu)
+	{
+		auto exts = gpu.enumerateDeviceExtensionProperties();
+		LOG_INFO("{} Device Extensions:", exts.size());
+		for (auto& ext : exts)
+			LOG_INFO("  - {}", ext.extensionName.data());
+	}
+
+	bool Context::FindQueueFamily(uint32_t outFamilyIndex, vk::PhysicalDevice gpu, vk::QueueFlags flags)
+	{
+		auto families = gpu.getQueueFamilyProperties();
+		for (auto i = 0; i < families.size(); ++i)
+		{
+			if (families[i].queueFlags & flags)
 			{
-				if (gpu.getSurfaceSupportKHR(i, surface))
-					return true;
+				outFamilyIndex = i;
+				return true;
 			}
 		}
+
 		return false;
+	}
+
+	bool Context::InitInstance(vk::Instance& outInstance)
+	{
+		// PrintInstanceInfo();
+
+		vk::ApplicationInfo appInfo{};
+
+		std::vector<const char*> enabledLayers{
+#ifdef _DEBUG
+			"VK_LAYER_KHRONOS_validation",
+			"VK_LAYER_KHRONOS_synchronization2",
+#endif
+		};
+		std::vector<const char*> enabledExtensions{
+			VK_KHR_SURFACE_EXTENSION_NAME,
+#ifdef _WIN32
+			VK_KHR_WIN32_SURFACE_EXTENSION_NAME,
+#endif
+		};
+
+		vk::InstanceCreateInfo instanceInfo{};
+		instanceInfo.setPApplicationInfo(&appInfo);
+		instanceInfo.setPEnabledLayerNames(enabledLayers);
+		instanceInfo.setPEnabledExtensionNames(enabledExtensions);
+		outInstance = vk::createInstance(instanceInfo);
+
+		VULKAN_HPP_DEFAULT_DISPATCHER.init(outInstance);
+
+		LOG_INFO("Enabled Instance layers:");
+		for (const auto* layer : enabledLayers)
+			LOG_INFO("  - {}", layer);
+
+		LOG_INFO("Enabled Instance extensions:");
+		for (const auto* ext : enabledExtensions)
+			LOG_INFO("  - {}", ext);
+
+		return outInstance != VK_NULL_HANDLE;
+	}
+
+	bool Context::SelectGPU(vk::PhysicalDevice& outGPU, vk::Instance instance)
+	{
+		auto gpus = instance.enumeratePhysicalDevices();
+		if (gpus.empty())
+			return false;
+
+		// #TODO: Prefer dedicated gpu with most device memory.
+		outGPU = gpus[0];
+
+		auto gpuProps = outGPU.getProperties();
+		LOG_INFO("GPU - {}", gpuProps.deviceName.data());
+		LOG_INFO("  API - {}.{}.{}",
+			VK_API_VERSION_MAJOR(gpuProps.apiVersion),
+			VK_API_VERSION_MINOR(gpuProps.apiVersion),
+			VK_API_VERSION_PATCH(gpuProps.apiVersion));
+		LOG_INFO("  Driver - {}.{}.{}",
+			VK_API_VERSION_MAJOR(gpuProps.driverVersion),
+			VK_API_VERSION_MINOR(gpuProps.driverVersion),
+			VK_API_VERSION_PATCH(gpuProps.driverVersion));
+
+		return outGPU != VK_NULL_HANDLE;
+	}
+
+	bool Context::InitDevice(vk::Device& outDevice, QueueInfo& outQueueInfo, vk::PhysicalDevice gpu)
+	{
+		// PrintDeviceInfo(gpu);
+
+		/* Extensions */
+
+		std::vector<const char*> enabledExtensions{
+			VK_KHR_SWAPCHAIN_EXTENSION_NAME,
+		};
+
+		/* Queues */
+
+		if (!FindQueueFamily(outQueueInfo.GraphicsFamilyIndex, gpu, vk::QueueFlagBits::eGraphics | vk::QueueFlagBits::eTransfer))
+			return false;
+
+		float queuePriority = 0.5f;
+		std::vector<vk::DeviceQueueCreateInfo> queueInfos{};
+		auto& graphicsQueueInfo = queueInfos.emplace_back();
+		graphicsQueueInfo.setQueueFamilyIndex(outQueueInfo.GraphicsFamilyIndex);
+		graphicsQueueInfo.setQueuePriorities(queuePriority);
+		graphicsQueueInfo.setQueueCount(1);
+
+		/* Features */
+
+		vk::PhysicalDeviceFeatures enabledFeatures{};
+
+		/* Extension Features */
+
+		vk::PhysicalDeviceSynchronization2Features sync2Features{};
+		sync2Features.setSynchronization2(VK_TRUE);
+
+		vk::PhysicalDeviceDynamicRenderingFeatures dynRenderFeatures{};
+		dynRenderFeatures.setDynamicRendering(VK_TRUE);
+		dynRenderFeatures.setPNext(&sync2Features);
+
+		/* Device Create Info */
+
+		vk::DeviceCreateInfo deviceInfo{};
+		deviceInfo.setPEnabledExtensionNames(enabledExtensions);
+		deviceInfo.setQueueCreateInfos(queueInfos);
+		deviceInfo.setPEnabledFeatures(&enabledFeatures);
+		deviceInfo.setPNext(&dynRenderFeatures);
+		outDevice = gpu.createDevice(deviceInfo);
+
+		VULKAN_HPP_DEFAULT_DISPATCHER.init(outDevice);
+
+		outQueueInfo.GraphicsQueue = outDevice.getQueue(outQueueInfo.GraphicsFamilyIndex, 0);
+
+		LOG_INFO("Enabled Device extensions:");
+		for (const auto* ext : enabledExtensions)
+			LOG_INFO("  - {}", ext);
+
+		return outDevice != VK_NULL_HANDLE;
+	}
+
+	bool Context::SetupFrames()
+	{
+		m_frames.resize(2);
+		for (auto& frame : m_frames)
+		{
+			frame.FrameFence = m_device.createFence({ vk::FenceCreateFlagBits::eSignaled });
+		}
+
+		m_frameIndex = 0;
+
+		return true;
+	}
+
+	bool Context::CreateSwapchain(vk::SwapchainKHR& outSwapchain,
+		vk::SurfaceKHR surface,
+		vk::PhysicalDevice gpu,
+		vk::Device device,
+		uint32_t width,
+		uint32_t height,
+		bool vsync,
+		bool srgb,
+		vk::SwapchainKHR oldSwapchain)
+	{
+		if (!surface || !gpu || !device)
+			return false;
+
+		auto surfaceCaps = gpu.getSurfaceCapabilitiesKHR(surface);
+
+		uint32_t minImageCount = surfaceCaps.minImageCount + 1;
+		if (surfaceCaps.maxImageCount != 0 && minImageCount < surfaceCaps.maxImageCount)
+			minImageCount = surfaceCaps.maxImageCount;
+
+		auto surfaceFormat = vk::SurfaceFormatKHR(vk::Format::eB8G8R8A8Srgb);
+
+		width = std::clamp(width, surfaceCaps.minImageExtent.width, surfaceCaps.maxImageExtent.width);
+		height = std::clamp(height, surfaceCaps.minImageExtent.height, surfaceCaps.maxImageExtent.height);
+
+		auto presentMode = vk::PresentModeKHR::eFifo;
+
+		vk::SwapchainCreateInfoKHR swapchainInfo{};
+		swapchainInfo.setSurface(surface);
+		swapchainInfo.setMinImageCount(minImageCount);
+		swapchainInfo.setImageFormat(surfaceFormat.format);
+		swapchainInfo.setImageColorSpace(surfaceFormat.colorSpace);
+		swapchainInfo.setImageExtent({ width, height });
+		swapchainInfo.setImageArrayLayers(1);
+		swapchainInfo.setImageUsage(vk::ImageUsageFlagBits::eColorAttachment);
+		swapchainInfo.setPreTransform(vk::SurfaceTransformFlagBitsKHR::eIdentity);
+		swapchainInfo.setCompositeAlpha(vk::CompositeAlphaFlagBitsKHR::eOpaque);
+		swapchainInfo.setPresentMode(presentMode);
+		swapchainInfo.setClipped(VK_TRUE);
+		swapchainInfo.setOldSwapchain(oldSwapchain);
+		outSwapchain = device.createSwapchainKHR(swapchainInfo);
+
+		return outSwapchain != VK_NULL_HANDLE;
 	}
 
 } // namespace VkMana

@@ -1,7 +1,7 @@
 #pragma once
 
 #if defined(_WIN32) && !defined(VK_USE_PLATFORM_WIN32)
-	#define VK_USE_PLATFORM_WIN32
+	#define VK_USE_PLATFORM_WIN32_KHR
 #endif
 
 #if defined(VULKAN_H_) || defined(VULKAN_CORE_H_)
@@ -14,6 +14,7 @@
 	#endif
 #endif
 
+#include <vulkan/vulkan.h>
 #define VULKAN_HPP_DISPATCH_LOADER_DYNAMIC 1
 #include <vulkan/vulkan.hpp>
 #include <vma/vk_mem_alloc.h>

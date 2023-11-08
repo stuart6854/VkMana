@@ -111,6 +111,11 @@ namespace VkMana
 		m_cmd.setScissor(0, scissor);
 	}
 
+	void CommandBuffer::SetPushConstants(vk::ShaderStageFlags shaderStages, uint32_t offset, uint32_t size, const void* data)
+	{
+		m_cmd.pushConstants(m_pipeline->GetLayout(), shaderStages, offset, size, data);
+	}
+
 	void CommandBuffer::Draw(uint32_t vertexCount, uint32_t firstVertex)
 	{
 		m_cmd.draw(vertexCount, 1, firstVertex, 0);

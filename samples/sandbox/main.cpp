@@ -16,10 +16,17 @@
 #include <iostream>
 #include <string>
 
-const std::string TriangleVertexShaderSrc = R"(
+const std::string VertexShaderSrc = R"(
 #version 450
 
 layout(location = 0) out vec4 outColor;
+
+layout(push_constant) uniform PushConstants
+{
+	mat4 projMatrix;
+	mat4 viewMatrix;
+	mat4 modelMatrix;
+} uConsts;
 
 void main()
 {
@@ -35,11 +42,11 @@ void main()
 		vec4(0.0, 0.0, 1.0, 1.0)
 	);
 
-	gl_Position = vec4(positions[gl_VertexIndex], 1.0f);
+	gl_Position = uConsts.projMatrix * uConsts.viewMatrix * uConsts.modelMatrix * vec4(positions[gl_VertexIndex], 1.0f);
 	outColor = colors[gl_VertexIndex];
 }
 )";
-const std::string TriangleFragmentShaderSrc = R"(
+const std::string FragmentShaderSrc = R"(
 #version 450
 
 layout (location = 0) in vec4 inColor;
@@ -53,6 +60,7 @@ void main()
 
 constexpr auto WindowWidth = 1280;
 constexpr auto WindowHeight = 720;
+constexpr auto WindowAspect = float(WindowWidth) / float(WindowHeight);
 
 /*auto CreateBuffer(VkMana::Device& device) -> VkMana::BufferHandle
 {
@@ -163,19 +171,19 @@ int main()
 	VkMana::PipelineLayoutCreateInfo pipelineLayoutInfo{
 		.PushConstantRange = { vk::ShaderStageFlagBits::eVertex, 0, 192 },
 		.SetLayouts = {
-			setLayout.Get(),
+			// setLayout.Get(),
 		},
 	};
 	auto pipelineLayout = context.CreatePipelineLayout(pipelineLayoutInfo);
 
 	std::vector<uint32_t> vertSpirv;
-	if (!VkMana::CompileShader(vertSpirv, TriangleVertexShaderSrc, shaderc_vertex_shader, true))
+	if (!VkMana::CompileShader(vertSpirv, VertexShaderSrc, shaderc_vertex_shader, true))
 	{
 		LOG_ERR("Failed to compiler VERTEX shader.");
 		return 1;
 	}
 	std::vector<uint32_t> fragSpirv;
-	if (!VkMana::CompileShader(fragSpirv, TriangleFragmentShaderSrc, shaderc_fragment_shader, true))
+	if (!VkMana::CompileShader(fragSpirv, FragmentShaderSrc, shaderc_fragment_shader, true))
 	{
 		LOG_ERR("Failed to compiler FRAGMENT shader.");
 		return 1;
@@ -190,14 +198,20 @@ int main()
 	};
 	auto pipeline = context.CreateGraphicsPipeline(pipelineInfo);
 
-	auto bufferInfo = VkMana::BufferCreateInfo::Uniform(1024);
-	auto ubo = context.CreateBuffer(bufferInfo);
+	struct PushConstants
+	{
+		glm::mat4 projMatrix = glm::perspective(glm::radians(60.0f), WindowAspect, 0.1f, 600.0f);
+		glm::mat4 viewMatrix = glm::lookAtRH(glm::vec3(0, 1, -2), glm::vec3(0, 0, 0), glm::vec3(0, 1, 0));
+		glm::mat4 modelMatrix = glm::mat4(1.0f);
+	} pushConsts;
 
 	bool isRunning = true;
 	while (isRunning)
 	{
 		if (!wsi.IsAlive())
 			isRunning = false;
+
+		pushConsts.modelMatrix = glm::rotate(pushConsts.modelMatrix, glm::radians(1.0f), glm::vec3(0, 1, 0));
 
 		context.BeginFrame();
 		auto cmd = context.RequestCmd();
@@ -219,6 +233,7 @@ int main()
 		cmd->BindPipeline(pipeline.Get());
 		cmd->SetViewport(0, 0, WindowWidth, WindowHeight);
 		cmd->SetScissor(0, 0, WindowWidth, WindowHeight);
+		cmd->SetPushConstants(vk::ShaderStageFlagBits::eVertex, 0, sizeof(PushConstants), &pushConsts);
 		cmd->Draw(3, 0);
 		cmd->EndRenderPass();
 

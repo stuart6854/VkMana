@@ -34,6 +34,7 @@ namespace VkMana
 		void BindPipeline(Pipeline* pipeline);
 		void SetViewport(float x, float y, float width, float height, float minDepth = 0.0f, float maxDepth = 1.0f);
 		void SetScissor(int32_t x, int32_t y, uint32_t width, uint32_t height);
+		void SetPushConstants(vk::ShaderStageFlags shaderStages, uint32_t offset, uint32_t size, const void* data);
 
 		void Draw(uint32_t vertexCount, uint32_t firstVertex);
 

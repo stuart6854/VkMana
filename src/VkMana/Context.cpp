@@ -49,6 +49,14 @@ namespace VkMana
 			return false;
 		if (!InitDevice(m_device, m_queueInfo, m_gpu))
 			return false;
+
+		vma::AllocatorCreateInfo allocInfo{};
+		allocInfo.setInstance(m_instance);
+		allocInfo.setPhysicalDevice(m_gpu);
+		allocInfo.setDevice(m_device);
+		allocInfo.setVulkanApiVersion(VK_API_VERSION_1_3);
+		m_allocator = vma::createAllocator(allocInfo);
+
 		if (!SetupFrames())
 			return false;
 

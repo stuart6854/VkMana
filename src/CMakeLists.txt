@@ -2,6 +2,8 @@ add_library(VkMana
         VkMana/Context.cpp
         VkMana/CommandPool.cpp
         VkMana/CommandBuffer.cpp
+        VkMana/Garbage.cpp
+        VkMana/Garbage.hpp
 )
 
 target_include_directories(VkMana PUBLIC "./")

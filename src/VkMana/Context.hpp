@@ -4,6 +4,7 @@
 #include "CommandPool.hpp"
 #include "CommandBuffer.hpp"
 #include "WSI.hpp"
+#include "Garbage.hpp"
 
 namespace VkMana
 {
@@ -56,6 +57,8 @@ namespace VkMana
 		{
 			vk::Fence FrameFence; // Waited on at start of frame & submitted at end of frame.
 			IntrusivePtr<CommandPool> CmdPool;
+
+			IntrusivePtr<Garbage> Garbage;
 		};
 		std::vector<PerFrame> m_frames;
 		uint32_t m_frameIndex;
@@ -69,7 +72,6 @@ namespace VkMana
 			vk::SurfaceKHR Surface;
 			vk::SwapchainKHR Swapchain;
 			uint32_t ImageIndex = 0;
-			std::vector<vk::Semaphore> AcquireSemaphores;
 		};
 		static bool CreateSwapchain(vk::SwapchainKHR& outSwapchain,
 			vk::SurfaceKHR surface,

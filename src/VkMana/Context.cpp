@@ -77,11 +77,6 @@ namespace VkMana
 		}
 
 		auto swapchainImages = m_device.getSwapchainImagesKHR(newSurfaceInfo.Swapchain);
-		newSurfaceInfo.AcquireSemaphores.resize(swapchainImages.size());
-		for (auto i = 0; i < swapchainImages.size(); ++i)
-		{
-			newSurfaceInfo.AcquireSemaphores[i] = m_device.createSemaphore({});
-		}
 
 		return true;
 	}
@@ -107,6 +102,8 @@ namespace VkMana
 		m_device.resetFences(frame.FrameFence);
 		frame.CmdPool->ResetPool();
 
+		frame.Garbage->EmptyBins();
+
 		for (auto& surfaceInfo : m_surfaces)
 		{
 			surfaceInfo.WSI->PollEvents();
@@ -114,8 +111,10 @@ namespace VkMana
 			auto acquireSemaphore = m_device.createSemaphore({});
 			auto result = m_device.acquireNextImageKHR(surfaceInfo.Swapchain, UINT64_MAX, acquireSemaphore);
 			surfaceInfo.ImageIndex = result.value;
+
 			m_submitWaitSemaphores.push_back(acquireSemaphore);
 			m_submitWaitStageMasks.emplace_back(vk::PipelineStageFlagBits::eColorAttachmentOutput);
+			frame.Garbage->Bin(acquireSemaphore);
 		}
 	}
 
@@ -339,6 +338,7 @@ namespace VkMana
 		{
 			frame.FrameFence = m_device.createFence({ vk::FenceCreateFlagBits::eSignaled });
 			frame.CmdPool = IntrusivePtr(new CommandPool(this, m_queueInfo.GraphicsFamilyIndex));
+			frame.Garbage = IntrusivePtr(new Garbage(this));
 		}
 
 		m_frameIndex = 0;

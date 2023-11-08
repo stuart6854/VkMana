@@ -7,14 +7,19 @@
 #include <VkMana/Context.hpp>
 #include <VkMana/ShaderCompiler.hpp>
 
+#define TINYOBJLOADER_IMPLEMENTATION
+#include <tiny_obj_loader.h>
+
 #include <glm/ext/matrix_float4x4.hpp>
 #include <glm/ext/matrix_transform.hpp>
 #include <glm/ext/matrix_clip_space.hpp>
 #include <glm/gtc/type_ptr.hpp>
+#include <glm/gtx/hash.hpp>
 
-#include <chrono>
 #include <iostream>
+#include <filesystem>
 #include <string>
+#include <unordered_map>
 
 const std::string VertexShaderSrc = R"(
 #version 450
@@ -62,6 +67,93 @@ constexpr auto WindowTitle = "VkMana - Sandbox";
 constexpr auto WindowWidth = 1280;
 constexpr auto WindowHeight = 720;
 constexpr auto WindowAspect = float(WindowWidth) / float(WindowHeight);
+
+struct Vertex
+{
+	glm::vec3 Position;
+	glm::vec3 Normal;
+	glm::vec2 TexCoord;
+
+	bool operator==(const Vertex& other) const
+	{
+		return Position == other.Position && Normal == other.Normal && TexCoord == other.TexCoord;
+	}
+};
+
+namespace std
+{
+	template <>
+	struct hash<Vertex>
+	{
+		size_t operator()(Vertex const& vertex) const
+		{
+			return ((hash<glm::vec3>()(vertex.Position) ^ (hash<glm::vec3>()(vertex.Normal) << 1)) >> 1)
+				^ (hash<glm::vec2>()(vertex.TexCoord) << 1);
+		}
+	};
+} // namespace std
+
+struct Mesh
+{
+	VkMana::BufferHandle VertexBuffer;
+	VkMana::BufferHandle IndexBuffer;
+	uint32_t IndexCount;
+};
+
+bool LoadObjMesh(Mesh& outMesh, VkMana::Context& context, const std::string& filename)
+{
+	std::vector<Vertex> vertices;
+	std::vector<uint32_t> indices;
+
+	tinyobj::attrib_t attrib;
+	std::vector<tinyobj::shape_t> shapes;
+	std::vector<tinyobj::material_t> materials;
+	std::string warn, err;
+
+	if (!tinyobj::LoadObj(&attrib, &shapes, &materials, &warn, &err, filename.c_str()))
+	{
+		LOG_ERR("{}", err);
+		if (!warn.empty())
+			LOG_WARN("{}", warn);
+		return false;
+	}
+
+	std::unordered_map<Vertex, uint32_t> uniqueVertices{};
+
+	for (const auto& shape : shapes)
+	{
+		for (const auto& index : shape.mesh.indices)
+		{
+			Vertex vertex{};
+			vertex.Position = {
+				attrib.vertices[3 * index.vertex_index + 0],
+				attrib.vertices[3 * index.vertex_index + 1],
+				attrib.vertices[3 * index.vertex_index + 2],
+			};
+			vertex.TexCoord = {
+				attrib.texcoords[2 * index.vertex_index + 0],
+				attrib.texcoords[2 * index.vertex_index + 1],
+			};
+			if (!uniqueVertices.contains(vertex))
+			{
+				uniqueVertices[vertex] = vertices.size();
+				vertices.push_back(vertex);
+			}
+
+			indices.push_back(indices.size());
+		}
+	}
+
+	auto vtxBufferInfo = VkMana::BufferCreateInfo::Vertex(sizeof(Vertex) * vertices.size());
+	outMesh.VertexBuffer = context.CreateBuffer(vtxBufferInfo);
+
+	auto idxBufferInfo = VkMana::BufferCreateInfo::Index(sizeof(uint16_t) * indices.size());
+	outMesh.IndexBuffer = context.CreateBuffer(idxBufferInfo);
+
+	outMesh.IndexCount = indices.size();
+
+	return true;
+}
 
 /*auto CreateBuffer(VkMana::Device& device) -> VkMana::BufferHandle
 {
@@ -151,6 +243,7 @@ private:
 int main()
 {
 	LOG_INFO("VkMana - Sample - Sandbox");
+	LOG_INFO("Path: {}", std::filesystem::current_path().string());
 
 	auto* window = SDL_CreateWindow(
 		WindowTitle, SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, 1280, 720, SDL_WINDOW_VULKAN | SDL_WINDOW_RESIZABLE);
@@ -205,6 +298,13 @@ int main()
 		glm::mat4 viewMatrix = glm::lookAtRH(glm::vec3(0, 1, -2), glm::vec3(0, 0, 0), glm::vec3(0, 1, 0));
 		glm::mat4 modelMatrix = glm::mat4(1.0f);
 	} pushConsts;
+
+	Mesh mesh;
+	if (!LoadObjMesh(mesh, context, "assets/models/viking_room.obj"))
+	{
+		LOG_ERR("Failed to load mesh.");
+		return 1;
+	}
 
 	float lastFrameTime = SDL_GetTicks() / 1000.0f;
 	bool isRunning = true;

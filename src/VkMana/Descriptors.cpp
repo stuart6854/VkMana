@@ -17,4 +17,10 @@ namespace VkMana
 	{
 	}
 
+	DescriptorSet::DescriptorSet(Context* context, vk::DescriptorSet set)
+		: m_ctx(context)
+		, m_set(set)
+	{
+	}
+
 } // namespace VkMana

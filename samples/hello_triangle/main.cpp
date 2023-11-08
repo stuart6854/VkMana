@@ -178,7 +178,7 @@ int main()
 		 * Update Uniforms & Descriptors
 		 */
 
-		// auto globalSet = context.RequestDescriptorSet(layout);
+		auto globalSet = context.RequestDescriptorSet(setLayout.Get());
 		// globalSet->WriteBuffer(globalUniformBuffer);
 
 		/**

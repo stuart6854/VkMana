@@ -26,6 +26,8 @@ namespace VkMana
 			}
 			m_frames.clear();
 
+			m_device.destroy(m_descriptorPool);
+
 			if (m_allocator)
 				m_allocator.destroy();
 
@@ -52,6 +54,18 @@ namespace VkMana
 
 		if (!AddSurface(mainWSI))
 			return false;
+
+		std::vector<vk::DescriptorPoolSize> poolSizes{
+			{ vk::DescriptorType::eUniformBuffer, 10 },
+			{ vk::DescriptorType::eUniformBufferDynamic, 10 },
+			{ vk::DescriptorType::eStorageBuffer, 10 },
+			{ vk::DescriptorType::eStorageBufferDynamic, 10 },
+			{ vk::DescriptorType::eCombinedImageSampler, 10 },
+		};
+		vk::DescriptorPoolCreateInfo poolInfo{};
+		poolInfo.setPoolSizes(poolSizes);
+		poolInfo.setMaxSets(10);
+		m_descriptorPool = m_device.createDescriptorPool(poolInfo);
 
 		return true;
 	}
@@ -120,9 +134,13 @@ namespace VkMana
 
 		UNUSED(m_device.waitForFences(frame.FrameFence, true, UINT64_MAX));
 		m_device.resetFences(frame.FrameFence);
-		frame.CmdPool->ResetPool();
-
 		frame.Garbage->EmptyBins();
+
+		frame.CmdPool->ResetPool();
+		for (auto& [_, pool] : frame.DescriptorPoolMap)
+		{
+			pool->ResetPool();
+		}
 
 		for (auto& surfaceInfo : m_surfaces)
 		{
@@ -225,6 +243,20 @@ namespace VkMana
 		return info;
 	}
 
+	auto Context::RequestDescriptorSet(const SetLayout* layout) -> DescriptorSetHandle
+	{
+		auto& frame = GetFrame();
+
+		const auto it = frame.DescriptorPoolMap.find(layout->GetLayout());
+		if (it == frame.DescriptorPoolMap.end())
+			return nullptr;
+
+		auto& descriptorPool = it->second;
+
+		auto descriptorSet = descriptorPool->AcquireDescriptorSet();
+		return IntrusivePtr(new DescriptorSet(this, descriptorSet));
+	}
+
 	auto Context::CreateSetLayout(std::vector<vk::DescriptorSetLayoutBinding> bindings) -> SetLayoutHandle
 	{
 		std::sort(bindings.begin(), bindings.end(), [](const auto& a, const auto& b) { return a.binding < b.binding; });
@@ -233,11 +265,16 @@ namespace VkMana
 		for (auto& binding : bindings)
 			HashCombine(hash, binding);
 
+		// #TODO: Layout caching
+
 		vk::DescriptorSetLayoutCreateInfo layoutInfo{};
 		layoutInfo.setBindings(bindings);
 		auto layout = m_device.createDescriptorSetLayout(layoutInfo);
 
-		// #TODO: Layout caching
+		for (auto& frame : m_frames)
+		{
+			frame.DescriptorPoolMap[layout] = IntrusivePtr(new DescriptorPool(this, m_descriptorPool, layout));
+		}
 
 		return IntrusivePtr(new SetLayout(this, layout, hash));
 	}
@@ -260,12 +297,12 @@ namespace VkMana
 				HashCombine(hash, 0);
 		}
 
+		// #TODO: Layout caching
+
 		vk::PipelineLayoutCreateInfo layoutInfo{};
 		layoutInfo.setPushConstantRanges(info.PushConstantRange);
 		layoutInfo.setSetLayouts(setLayouts);
 		auto layout = m_device.createPipelineLayout(layoutInfo);
-
-		// #TODO: Layout caching
 
 		return IntrusivePtr(new PipelineLayout(this, layout, hash, info));
 	}

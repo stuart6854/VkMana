@@ -26,4 +26,20 @@ namespace VkMana
 	};
 	using SetLayoutHandle = IntrusivePtr<SetLayout>;
 
+	class DescriptorSet : public IntrusivePtrEnabled<DescriptorSet>
+	{
+	public:
+		~DescriptorSet() = default;
+
+	private:
+		friend class Context;
+
+		DescriptorSet(Context* context, vk::DescriptorSet set);
+
+	private:
+		Context* m_ctx;
+		vk::DescriptorSet m_set;
+	};
+	using DescriptorSetHandle = IntrusivePtr<DescriptorSet>;
+
 } // namespace VkMana

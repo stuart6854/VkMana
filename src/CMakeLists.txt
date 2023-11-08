@@ -4,6 +4,7 @@ add_library(VkMana
         VkMana/CommandPool.cpp
         VkMana/CommandBuffer.cpp
         VkMana/Descriptors.cpp
+        VkMana/DescriptorPool.cpp
         VkMana/Pipeline.cpp
         VkMana/Image.cpp
 )

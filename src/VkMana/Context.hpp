@@ -6,8 +6,11 @@
 #include "CommandBuffer.hpp"
 #include "WSI.hpp"
 #include "Descriptors.hpp"
+#include "DescriptorPool.hpp"
 #include "Pipeline.hpp"
 #include "Image.hpp"
+
+#include <unordered_map>
 
 namespace VkMana
 {
@@ -37,6 +40,8 @@ namespace VkMana
 		/* Resources */
 
 		auto GetSurfaceRenderPass(WSI* wsi) -> RenderPassInfo;
+
+		auto RequestDescriptorSet(const SetLayout* layout) -> DescriptorSetHandle;
 
 		auto CreateSetLayout(std::vector<vk::DescriptorSetLayoutBinding> bindings) -> SetLayoutHandle;
 		auto CreatePipelineLayout(const PipelineLayoutCreateInfo& info) -> PipelineLayoutHandle;
@@ -78,6 +83,8 @@ namespace VkMana
 			vk::Fence FrameFence; // Waited on at start of frame & submitted at end of frame.
 			IntrusivePtr<CommandPool> CmdPool;
 
+			std::unordered_map<vk::DescriptorSetLayout, DescriptorPoolHandle> DescriptorPoolMap;
+
 			IntrusivePtr<Garbage> Garbage;
 		};
 		std::vector<PerFrame> m_frames;
@@ -112,6 +119,7 @@ namespace VkMana
 		vk::PhysicalDevice m_gpu;
 		vk::Device m_device;
 		vma::Allocator m_allocator;
+		vk::DescriptorPool m_descriptorPool;
 
 		QueueInfo m_queueInfo{};
 

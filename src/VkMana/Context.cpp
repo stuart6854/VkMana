@@ -163,9 +163,13 @@ namespace VkMana
 
 	void Context::Submit(CmdBuffer cmd)
 	{
+		auto commandBuffer = cmd->GetCmd();
+		commandBuffer.end();
+
 		vk::SubmitInfo submitInfo{};
 		submitInfo.setWaitSemaphores(m_submitWaitSemaphores);
 		submitInfo.setWaitDstStageMask(m_submitWaitStageMasks);
+		submitInfo.setCommandBuffers(commandBuffer);
 		m_queueInfo.GraphicsQueue.submit(submitInfo);
 
 		m_submitWaitSemaphores.clear();

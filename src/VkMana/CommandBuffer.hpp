@@ -11,6 +11,8 @@ namespace VkMana
 	public:
 		~CommandBuffer() = default;
 
+		auto GetCmd() const -> auto { return m_cmd; }
+
 	private:
 		friend class Context;
 

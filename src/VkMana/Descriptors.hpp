@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Vulkan_Common.hpp"
+#include "Image.hpp"
 
 namespace VkMana
 {
@@ -35,6 +36,9 @@ namespace VkMana
 		friend class Context;
 
 		DescriptorSet(Context* context, vk::DescriptorSet set);
+
+		void Write(const ImageView* image, uint32_t binding);
+		// 	void Write(const Buffer* image, uint32_t binding, uint64_t offset, uint64_t range);
 
 	private:
 		Context* m_ctx;

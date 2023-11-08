@@ -179,7 +179,8 @@ int main()
 		 */
 
 		auto globalSet = context.RequestDescriptorSet(setLayout.Get());
-		// globalSet->WriteBuffer(globalUniformBuffer);
+		// globalSet->Write(imageView, sampler, 0);
+		// globalSet->Write(buffer, 1, 0, 512);
 
 		/**
 		 * Render

@@ -44,6 +44,11 @@ namespace VkMana
 		m_imageViews.push_back(view);
 	}
 
+	void Garbage::Bin(vk::Buffer buffer)
+	{
+		m_buffers.push_back(buffer);
+	}
+
 	void Garbage::Bin(vma::Allocation alloc)
 	{
 		m_allocs.push_back(alloc);
@@ -65,6 +70,8 @@ namespace VkMana
 			m_ctx->GetDevice().destroy(v);
 		for (auto& v : m_images)
 			m_ctx->GetDevice().destroy(v);
+		for (auto& v : m_buffers)
+			m_ctx->GetDevice().destroy(v);
 		for (auto& v : m_allocs)
 			m_ctx->GetAllocator().freeMemory(v);
 
@@ -75,6 +82,7 @@ namespace VkMana
 		m_pipelines.clear();
 		m_imageViews.clear();
 		m_images.clear();
+		m_buffers.clear();
 		m_allocs.clear();
 	}
 

@@ -165,6 +165,9 @@ int main()
 	};
 	auto pipelineLayout = context.CreatePipelineLayout(pipelineLayoutInfo);
 
+	auto bufferInfo = VkMana::BufferCreateInfo::Uniform(1024);
+	auto ubo = context.CreateBuffer(bufferInfo);
+
 	bool isRunning = true;
 	while (isRunning)
 	{

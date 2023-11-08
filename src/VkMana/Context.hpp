@@ -9,6 +9,7 @@
 #include "DescriptorPool.hpp"
 #include "Pipeline.hpp"
 #include "Image.hpp"
+#include "Buffer.hpp"
 
 #include <unordered_map>
 
@@ -47,12 +48,14 @@ namespace VkMana
 		auto CreatePipelineLayout(const PipelineLayoutCreateInfo& info) -> PipelineLayoutHandle;
 		auto CreateGraphicsPipeline(const GraphicsPipelineCreateInfo& info) -> PipelineHandle;
 		auto CreateImageView(const Image* image, const ImageViewCreateInfo& info) -> ImageViewHandle;
+		auto CreateBuffer(const BufferCreateInfo& info) -> BufferHandle;
 
 		void DestroySetLayout(vk::DescriptorSetLayout setLayout);
 		void DestroyPipelineLayout(vk::PipelineLayout pipelineLayout);
 		void DestroyPipeline(vk::Pipeline pipeline);
 		void DestroyImage(vk::Image image);
 		void DestroyImageView(vk::ImageView view);
+		void DestroyBuffer(vk::Buffer buffer);
 		void DestroyAllocation(vma::Allocation alloc);
 
 		/* Getters */

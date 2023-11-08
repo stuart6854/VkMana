@@ -340,6 +340,21 @@ namespace VkMana
 		return IntrusivePtr(new ImageView(this, image, view, info));
 	}
 
+	auto Context::CreateBuffer(const BufferCreateInfo& info) -> BufferHandle
+	{
+		vk::BufferCreateInfo bufferInfo{};
+		bufferInfo.setSize(info.Size);
+		bufferInfo.setUsage(info.Usage);
+
+		vma::AllocationCreateInfo allocInfo{};
+		allocInfo.setUsage(info.MemUsage);
+		allocInfo.setFlags(info.AllocFlags);
+
+		auto [buffer, allocation] = m_allocator.createBuffer(bufferInfo, allocInfo);
+
+		return IntrusivePtr(new Buffer(this, buffer, allocation, info));
+	}
+
 	void Context::DestroySetLayout(vk::DescriptorSetLayout setLayout)
 	{
 		GetFrame().Garbage->Bin(setLayout);
@@ -363,6 +378,11 @@ namespace VkMana
 	void Context::DestroyImageView(vk::ImageView view)
 	{
 		GetFrame().Garbage->Bin(view);
+	}
+
+	void Context::DestroyBuffer(vk::Buffer buffer)
+	{
+		GetFrame().Garbage->Bin(buffer);
 	}
 
 	void Context::DestroyAllocation(vma::Allocation alloc)

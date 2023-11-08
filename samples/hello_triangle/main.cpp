@@ -152,7 +152,18 @@ int main()
 		return 1;
 	}
 
-	// auto device = context.GetDevice();
+	std::vector<vk::DescriptorSetLayoutBinding> setBindings{
+		{ 0, vk::DescriptorType::eStorageBuffer, 1, vk::ShaderStageFlagBits::eAll },
+	};
+	auto setLayout = context.CreateSetLayout(setBindings);
+
+	VkMana::PipelineLayoutCreateInfo pipelineLayoutInfo{
+		.PushConstantRange = { vk::ShaderStageFlagBits::eVertex, 0, 64 },
+		.SetLayouts = {
+			setLayout.Get(),
+		},
+	};
+	auto pipelineLayout = context.CreatePipelineLayout(pipelineLayoutInfo);
 
 	bool isRunning = true;
 	while (isRunning)
@@ -167,9 +178,8 @@ int main()
 		 * Update Uniforms & Descriptors
 		 */
 
-		auto globalSet = context.RequestDescriptorSet(layout);
-		globalSet->WriteBuffer(globalUniformBuffer);
-
+		// auto globalSet = context.RequestDescriptorSet(layout);
+		// globalSet->WriteBuffer(globalUniformBuffer);
 
 		/**
 		 * Render

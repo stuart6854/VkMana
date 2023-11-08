@@ -225,13 +225,58 @@ namespace VkMana
 		return info;
 	}
 
+	auto Context::CreateSetLayout(std::vector<vk::DescriptorSetLayoutBinding> bindings) -> SetLayoutHandle
+	{
+		std::sort(bindings.begin(), bindings.end(), [](const auto& a, const auto& b) { return a.binding < b.binding; });
+
+		size_t hash = 0;
+		for (auto& binding : bindings)
+			HashCombine(hash, binding);
+
+		vk::DescriptorSetLayoutCreateInfo layoutInfo{};
+		layoutInfo.setBindings(bindings);
+		auto layout = m_device.createDescriptorSetLayout(layoutInfo);
+
+		// #TODO: Layout caching
+
+		return IntrusivePtr(new SetLayout(this, layout, hash));
+	}
+
+	auto Context::CreatePipelineLayout(const PipelineLayoutCreateInfo& info) -> PipelineLayoutHandle
+	{
+		size_t hash = 0;
+		HashCombine(hash, info.PushConstantRange);
+
+		std::vector<vk::DescriptorSetLayout> setLayouts(info.SetLayouts.size());
+		for (auto i = 0; i < info.SetLayouts.size(); ++i)
+		{
+			HashCombine(hash, i);
+			if (info.SetLayouts[i])
+			{
+				HashCombine(hash, info.SetLayouts[i]->GetHash());
+				setLayouts[i] = info.SetLayouts[i]->GetLayout();
+			}
+			else
+				HashCombine(hash, 0);
+		}
+
+		vk::PipelineLayoutCreateInfo layoutInfo{};
+		layoutInfo.setPushConstantRanges(info.PushConstantRange);
+		layoutInfo.setSetLayouts(setLayouts);
+		auto layout = m_device.createPipelineLayout(layoutInfo);
+
+		// #TODO: Layout caching
+
+		return IntrusivePtr(new PipelineLayout(this, layout, hash, info));
+	}
+
 	auto Context::CreateGraphicsPipeline(const GraphicsPipelineCreateInfo& info) -> PipelineHandle
 	{
 		vk::GraphicsPipelineCreateInfo pipelineInfo{};
+		pipelineInfo.setLayout(info.Layout->GetLayout());
+		auto pipeline = m_device.createGraphicsPipeline({}, pipelineInfo).value; // #TODO: Pipeline Cache
 
-		auto pipeline = m_device.createGraphicsPipeline({}, pipelineInfo); // #TODO: Pipeline Cache
-
-		return IntrusivePtr(new Pipeline(this, layout, pipeline, vk::PipelineBindPoint::eGraphics));
+		return IntrusivePtr(new Pipeline(this, info.Layout->GetLayout(), pipeline, vk::PipelineBindPoint::eGraphics));
 	}
 
 	auto Context::CreateImageView(const Image* image, const ImageViewCreateInfo& info) -> ImageViewHandle
@@ -248,6 +293,11 @@ namespace VkMana
 		auto view = m_device.createImageView(viewInfo);
 
 		return IntrusivePtr(new ImageView(this, image, view, info));
+	}
+
+	void Context::DestroySetLayout(vk::DescriptorSetLayout setLayout)
+	{
+		GetFrame().Garbage->Bin(setLayout);
 	}
 
 	void Context::DestroyPipelineLayout(vk::PipelineLayout pipelineLayout)

@@ -1,10 +1,19 @@
 #pragma once
 
 #include "Vulkan_Common.hpp"
+#include "Descriptors.hpp"
 
 namespace VkMana
 {
 	class Context;
+
+	struct PipelineLayoutCreateInfo
+	{
+		vk::PushConstantRange PushConstantRange;
+		std::vector<SetLayout*> SetLayouts;
+	};
+
+	class PipelineLayout;
 
 	/**
 	 * Dynamic State
@@ -20,8 +29,29 @@ namespace VkMana
 		vk::Format DepthTargetFormat = vk::Format::eUndefined;
 		vk::Format StencilTargetFormat = vk::Format::eUndefined;
 
-
+		PipelineLayout* Layout = nullptr;
 	};
+
+	class PipelineLayout : public IntrusivePtrEnabled<PipelineLayout>
+	{
+	public:
+		~PipelineLayout();
+
+		auto GetLayout() const -> auto { return m_layout; }
+		auto GetHash() const -> auto { return m_hash; }
+
+	private:
+		friend class Context;
+
+		PipelineLayout(Context* context, vk::PipelineLayout layout, size_t hash, const PipelineLayoutCreateInfo& info);
+
+	private:
+		Context* m_ctx;
+		vk::PipelineLayout m_layout;
+		size_t m_hash;
+		PipelineLayoutCreateInfo m_info;
+	};
+	using PipelineLayoutHandle = IntrusivePtr<PipelineLayout>;
 
 	class Pipeline : public IntrusivePtrEnabled<Pipeline>
 	{

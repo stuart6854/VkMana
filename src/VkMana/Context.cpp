@@ -107,6 +107,8 @@ namespace VkMana
 
 		for (auto& surfaceInfo : m_surfaces)
 		{
+			surfaceInfo.WSI->PollEvents();
+
 			auto acquireSemaphore = m_device.createSemaphore({});
 			auto result = m_device.acquireNextImageKHR(surfaceInfo.Swapchain, UINT64_MAX, acquireSemaphore);
 			surfaceInfo.ImageIndex = result.value;

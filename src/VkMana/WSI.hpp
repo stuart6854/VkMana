@@ -9,6 +9,8 @@ namespace VkMana
 	public:
 		virtual ~WSI() = default;
 
+		virtual void PollEvents() = 0;
+
 		virtual auto CreateSurface(vk::Instance instance) -> vk::SurfaceKHR = 0;
 		virtual auto GetSurfaceWidth() -> uint32_t = 0;
 		virtual auto GetSurfaceHeight() -> uint32_t = 0;

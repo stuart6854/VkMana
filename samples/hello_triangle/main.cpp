@@ -73,17 +73,32 @@ constexpr auto WindowHeight = 720;
 	return image;
 }*/
 
-struct SDL2WSI : VkMana::WSI
+class SDL2WSI : public VkMana::WSI
 {
+public:
 	explicit SDL2WSI(SDL_Window* window)
-		: Window(window)
+		: m_window(window)
 	{
+	}
+
+	void PollEvents() override
+	{
+		SDL_Event event;
+		while (SDL_PollEvent(&event))
+		{
+			switch (event.type)
+			{
+				case SDL_QUIT:
+					m_isAlive = false;
+					break;
+			}
+		}
 	}
 
 	auto CreateSurface(vk::Instance instance) -> vk::SurfaceKHR override
 	{
 		VkSurfaceKHR surface = nullptr;
-		if (SDL_Vulkan_CreateSurface(Window, instance, &surface))
+		if (SDL_Vulkan_CreateSurface(m_window, instance, &surface))
 			return surface;
 
 		return nullptr;
@@ -102,22 +117,23 @@ struct SDL2WSI : VkMana::WSI
 	{
 		int32_t w = 0;
 		int32_t h = 0;
-		SDL_Vulkan_GetDrawableSize(Window, &w, &h);
+		SDL_Vulkan_GetDrawableSize(m_window, &w, &h);
 		return w;
 	}
 	auto GetSurfaceHeight() -> uint32_t override
 	{
 		int32_t w = 0;
 		int32_t h = 0;
-		SDL_Vulkan_GetDrawableSize(Window, &w, &h);
+		SDL_Vulkan_GetDrawableSize(m_window, &w, &h);
 		return h;
 	}
 
 	bool IsVSync() override { return true; }
+	bool IsAlive() override { return m_isAlive; }
 
-	bool IsAlive() override { return true; }
-
-	SDL_Window* Window;
+private:
+	SDL_Window* m_window;
+	bool m_isAlive = true;
 };
 
 int main()

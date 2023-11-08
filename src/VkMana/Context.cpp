@@ -220,6 +220,7 @@ namespace VkMana
 		// PrintInstanceInfo();
 
 		vk::ApplicationInfo appInfo{};
+		appInfo.setApiVersion(VK_API_VERSION_1_3);
 
 		std::vector<const char*> enabledLayers{
 #ifdef _DEBUG

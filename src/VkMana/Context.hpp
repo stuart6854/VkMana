@@ -5,6 +5,7 @@
 #include "CommandPool.hpp"
 #include "CommandBuffer.hpp"
 #include "WSI.hpp"
+#include "Pipeline.hpp"
 #include "Image.hpp"
 
 namespace VkMana
@@ -36,8 +37,11 @@ namespace VkMana
 
 		auto GetSurfaceRenderPass(WSI* wsi) -> RenderPassInfo;
 
+		auto CreateGraphicsPipeline(const GraphicsPipelineCreateInfo& info) -> PipelineHandle;
 		auto CreateImageView(const Image* image, const ImageViewCreateInfo& info) -> ImageViewHandle;
 
+		void DestroyPipelineLayout(vk::PipelineLayout pipelineLayout);
+		void DestroyPipeline(vk::Pipeline pipeline);
 		void DestroyImage(vk::Image image);
 		void DestroyImageView(vk::ImageView view);
 		void DestroyAllocation(vma::Allocation alloc);

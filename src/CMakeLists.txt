@@ -4,6 +4,7 @@ add_library(VkMana
         VkMana/CommandPool.cpp
         VkMana/CommandBuffer.cpp
         VkMana/Image.cpp
+        VkMana/Pipeline.cpp
 )
 
 target_include_directories(VkMana PUBLIC "./")

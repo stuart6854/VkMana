@@ -19,6 +19,16 @@ namespace VkMana
 		m_fences.push_back(fence);
 	}
 
+	void Garbage::Bin(vk::PipelineLayout layout)
+	{
+		m_pipelineLayouts.push_back(layout);
+	}
+
+	void Garbage::Bin(vk::Pipeline pipeline)
+	{
+		m_pipelines.push_back(pipeline);
+	}
+
 	void Garbage::Bin(vk::Image image)
 	{
 		m_images.push_back(image);
@@ -40,6 +50,10 @@ namespace VkMana
 			m_ctx->GetDevice().destroy(v);
 		for (auto& v : m_fences)
 			m_ctx->GetDevice().destroy(v);
+		for (auto& v : m_pipelineLayouts)
+			m_ctx->GetDevice().destroy(v);
+		for (auto& v : m_pipelines)
+			m_ctx->GetDevice().destroy(v);
 		for (auto& v : m_imageViews)
 			m_ctx->GetDevice().destroy(v);
 		for (auto& v : m_images)
@@ -49,6 +63,8 @@ namespace VkMana
 
 		m_semaphores.clear();
 		m_fences.clear();
+		m_pipelineLayouts.clear();
+		m_pipelines.clear();
 		m_imageViews.clear();
 		m_images.clear();
 		m_allocs.clear();

@@ -163,6 +163,18 @@ int main()
 		context.BeginFrame();
 		auto cmd = context.RequestCmd();
 
+		/**
+		 * Update Uniforms & Descriptors
+		 */
+
+		auto globalSet = context.RequestDescriptorSet(layout);
+		globalSet->WriteBuffer(globalUniformBuffer);
+
+
+		/**
+		 * Render
+		 */
+
 		auto rpInfo = context.GetSurfaceRenderPass(&wsi);
 		cmd->BeginRenderPass(rpInfo);
 		cmd->EndRenderPass();

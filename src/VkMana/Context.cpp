@@ -225,6 +225,15 @@ namespace VkMana
 		return info;
 	}
 
+	auto Context::CreateGraphicsPipeline(const GraphicsPipelineCreateInfo& info) -> PipelineHandle
+	{
+		vk::GraphicsPipelineCreateInfo pipelineInfo{};
+
+		auto pipeline = m_device.createGraphicsPipeline({}, pipelineInfo); // #TODO: Pipeline Cache
+
+		return IntrusivePtr(new Pipeline(this, layout, pipeline, vk::PipelineBindPoint::eGraphics));
+	}
+
 	auto Context::CreateImageView(const Image* image, const ImageViewCreateInfo& info) -> ImageViewHandle
 	{
 		vk::ImageViewCreateInfo viewInfo{};
@@ -239,6 +248,16 @@ namespace VkMana
 		auto view = m_device.createImageView(viewInfo);
 
 		return IntrusivePtr(new ImageView(this, image, view, info));
+	}
+
+	void Context::DestroyPipelineLayout(vk::PipelineLayout pipelineLayout)
+	{
+		GetFrame().Garbage->Bin(pipelineLayout);
+	}
+
+	void Context::DestroyPipeline(vk::Pipeline pipeline)
+	{
+		GetFrame().Garbage->Bin(pipeline);
 	}
 
 	void Context::DestroyImage(vk::Image image)

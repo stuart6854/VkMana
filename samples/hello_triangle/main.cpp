@@ -178,6 +178,16 @@ int main()
 		LOG_ERR("Failed to compiler FRAGMENT shader.");
 		return 1;
 	}
+
+	VkMana::GraphicsPipelineCreateInfo pipelineInfo{
+		.Vertex = vertSpirv,
+		.Fragment = fragSpirv,
+		.Topology = vk::PrimitiveTopology::eTriangleList,
+		.ColorTargetFormats = { vk::Format::eB8G8R8A8Srgb },
+		.Layout = pipelineLayout.Get(),
+	};
+	auto pipeline = context.CreateGraphicsPipeline(pipelineInfo);
+
 	auto bufferInfo = VkMana::BufferCreateInfo::Uniform(1024);
 	auto ubo = context.CreateBuffer(bufferInfo);
 

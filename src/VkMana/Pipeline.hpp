@@ -23,6 +23,9 @@ namespace VkMana
 	 */
 	struct GraphicsPipelineCreateInfo
 	{
+		std::vector<uint32_t> Vertex;
+		std::vector<uint32_t> Fragment;
+
 		vk::PrimitiveTopology Topology;
 
 		std::vector<vk::Format> ColorTargetFormats;

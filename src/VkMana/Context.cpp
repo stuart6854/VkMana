@@ -317,7 +317,61 @@ namespace VkMana
 
 	auto Context::CreateGraphicsPipeline(const GraphicsPipelineCreateInfo& info) -> PipelineHandle
 	{
+		std::vector<vk::UniqueShaderModule> shaderModules;
+		std::vector<vk::PipelineShaderStageCreateInfo> shaderStages;
+
+		auto CreateShaderModule = [&](const auto& spirv, auto shaderStage) {
+			if (!spirv.empty())
+			{
+				vk::ShaderModuleCreateInfo moduleInfo{};
+				moduleInfo.setCode(spirv);
+				shaderModules.push_back(m_device.createShaderModuleUnique(moduleInfo));
+
+				auto& stageInfo = shaderStages.emplace_back();
+				stageInfo.setStage(shaderStage);
+				stageInfo.setModule(shaderModules.back().get());
+				stageInfo.setPName("main");
+			}
+		};
+
+		CreateShaderModule(info.Vertex, vk::ShaderStageFlagBits::eVertex);
+		CreateShaderModule(info.Fragment, vk::ShaderStageFlagBits::eFragment);
+
+		vk::PipelineVertexInputStateCreateInfo vertexInputState{};
+
+		vk::PipelineInputAssemblyStateCreateInfo inputAssemblyState{};
+		inputAssemblyState.setTopology(info.Topology);
+
+		vk::PipelineTessellationStateCreateInfo tessellationState{};
+
+		vk::PipelineViewportStateCreateInfo viewportState{};
+		viewportState.setViewportCount(1); // Dynamic State
+		viewportState.setScissorCount(1);  // Dynamic State
+
+		vk::PipelineRasterizationStateCreateInfo rasterizationState{};
+		rasterizationState.setLineWidth(1.0f);
+
+		vk::PipelineMultisampleStateCreateInfo multisampleState{};
+
+		vk::PipelineDepthStencilStateCreateInfo depthStencilState{};
+
+		vk::PipelineColorBlendStateCreateInfo colorBlendState{};
+
+		std::vector<vk::DynamicState> dynStates{ vk::DynamicState::eViewport, vk::DynamicState::eScissor };
+		vk::PipelineDynamicStateCreateInfo dynamicState{};
+		dynamicState.setDynamicStates(dynStates);
+
 		vk::GraphicsPipelineCreateInfo pipelineInfo{};
+		pipelineInfo.setStages(shaderStages);
+		pipelineInfo.setPVertexInputState(&vertexInputState);
+		pipelineInfo.setPInputAssemblyState(&inputAssemblyState);
+		pipelineInfo.setPTessellationState(&tessellationState);
+		pipelineInfo.setPViewportState(&viewportState);
+		pipelineInfo.setPRasterizationState(&rasterizationState);
+		pipelineInfo.setPMultisampleState(&multisampleState);
+		pipelineInfo.setPDepthStencilState(&depthStencilState);
+		pipelineInfo.setPColorBlendState(&colorBlendState);
+		pipelineInfo.setPDynamicState(&dynamicState);
 		pipelineInfo.setLayout(info.Layout->GetLayout());
 		auto pipeline = m_device.createGraphicsPipeline({}, pipelineInfo).value; // #TODO: Pipeline Cache
 

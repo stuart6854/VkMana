@@ -5,6 +5,7 @@
 #define VULKAN_DEBUG
 #include <VkMana/Logging.hpp>
 #include <VkMana/Context.hpp>
+#include <VkMana/ShaderCompiler.hpp>
 
 #include <glm/ext/matrix_float4x4.hpp>
 #include <glm/ext/matrix_transform.hpp>
@@ -165,6 +166,18 @@ int main()
 	};
 	auto pipelineLayout = context.CreatePipelineLayout(pipelineLayoutInfo);
 
+	std::vector<uint32_t> vertSpirv;
+	if (!VkMana::CompileShader(vertSpirv, TriangleVertexShaderSrc, shaderc_vertex_shader, true))
+	{
+		LOG_ERR("Failed to compiler VERTEX shader.");
+		return 1;
+	}
+	std::vector<uint32_t> fragSpirv;
+	if (!VkMana::CompileShader(fragSpirv, TriangleFragmentShaderSrc, shaderc_fragment_shader, true))
+	{
+		LOG_ERR("Failed to compiler FRAGMENT shader.");
+		return 1;
+	}
 	auto bufferInfo = VkMana::BufferCreateInfo::Uniform(1024);
 	auto ubo = context.CreateBuffer(bufferInfo);
 

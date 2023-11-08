@@ -93,6 +93,29 @@ namespace VkMana
 		}
 	}
 
+	void CommandBuffer::BindPipeline(Pipeline* pipeline)
+	{
+		m_cmd.bindPipeline(pipeline->GetBindPoint(), pipeline->GetPipeline());
+		m_pipeline = pipeline;
+	}
+
+	void CommandBuffer::SetViewport(float x, float y, float width, float height, float minDepth, float maxDepth)
+	{
+		vk::Viewport viewport{ x, y, width, height, minDepth, maxDepth };
+		m_cmd.setViewport(0, viewport);
+	}
+
+	void CommandBuffer::SetScissor(int32_t x, int32_t y, uint32_t width, uint32_t height)
+	{
+		vk::Rect2D scissor{ { x, y }, { width, height } };
+		m_cmd.setScissor(0, scissor);
+	}
+
+	void CommandBuffer::Draw(uint32_t vertexCount, uint32_t firstVertex)
+	{
+		m_cmd.draw(vertexCount, 1, firstVertex, 0);
+	}
+
 	void CommandBuffer::TransitionImage(const ImageTransitionInfo& info)
 	{
 		vk::PipelineStageFlags2 srcStage = {};

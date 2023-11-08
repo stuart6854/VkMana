@@ -19,12 +19,14 @@
 const std::string TriangleVertexShaderSrc = R"(
 #version 450
 
-layout(push_constant) uniform Constant
+layout(location = 0) out vec4 outColor;
+
+/*layout(push_constant) uniform Constant
 {
 	mat4 projMatrix;
 	mat4 viewMatrix;
 	mat4 modelMatrix;
-} uConstants;
+} uConstants;*/
 
 void main()
 {
@@ -34,18 +36,26 @@ void main()
 		vec3(0.0, -0.5, 0.0)
 	);
 
-	//output the position of each vertex
-	gl_Position = uConstants.projMatrix * uConstants.viewMatrix * uConstants.modelMatrix * vec4(positions[gl_VertexIndex], 1.0f);
+	const vec4 colors[3] = vec4[3](
+		vec4(1.0, 0.0, 0.0, 1.0),
+		vec4(0.0, 1.0, 0.0, 1.0),
+		vec4(0.0, 0.0, 1.0, 1.0)
+	);
+
+	// gl_Position = uConstants.projMatrix * uConstants.viewMatrix * uConstants.modelMatrix * vec4(positions[gl_VertexIndex], 1.0f);
+	gl_Position = vec4(positions[gl_VertexIndex], 1.0f);
+	outColor = colors[gl_VertexIndex];
 }
 )";
 const std::string TriangleFragmentShaderSrc = R"(
 #version 450
 
+layout (location = 0) in vec4 inColor;
 layout (location = 0) out vec4 outFragColor;
 
 void main()
 {
-	outFragColor = vec4(1.0, 0.0, 0.0, 1.0);
+	outFragColor = inColor;
 }
 )";
 
@@ -159,7 +169,7 @@ int main()
 	auto setLayout = context.CreateSetLayout(setBindings);
 
 	VkMana::PipelineLayoutCreateInfo pipelineLayoutInfo{
-		.PushConstantRange = { vk::ShaderStageFlagBits::eVertex, 0, 64 },
+		.PushConstantRange = { vk::ShaderStageFlagBits::eVertex, 0, 192 },
 		.SetLayouts = {
 			setLayout.Get(),
 		},
@@ -214,6 +224,10 @@ int main()
 
 		auto rpInfo = context.GetSurfaceRenderPass(&wsi);
 		cmd->BeginRenderPass(rpInfo);
+		cmd->BindPipeline(pipeline.Get());
+		cmd->SetViewport(0, 0, WindowWidth, WindowHeight);
+		cmd->SetScissor(0, 0, WindowWidth, WindowHeight);
+		cmd->Draw(3, 0);
 		cmd->EndRenderPass();
 
 		context.Submit(cmd);

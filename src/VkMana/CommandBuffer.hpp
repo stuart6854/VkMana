@@ -2,6 +2,7 @@
 
 #include "Vulkan_Common.hpp"
 #include "RenderPass.hpp"
+#include "Pipeline.hpp"
 
 // #TODO: Batch pipeline barriers (image transitions)
 
@@ -30,6 +31,12 @@ namespace VkMana
 		void BeginRenderPass(const RenderPassInfo& info);
 		void EndRenderPass();
 
+		void BindPipeline(Pipeline* pipeline);
+		void SetViewport(float x, float y, float width, float height, float minDepth = 0.0f, float maxDepth = 1.0f);
+		void SetScissor(int32_t x, int32_t y, uint32_t width, uint32_t height);
+
+		void Draw(uint32_t vertexCount, uint32_t firstVertex);
+
 		void TransitionImage(const ImageTransitionInfo& info);
 
 		/* Getters */
@@ -48,6 +55,7 @@ namespace VkMana
 		/* State */
 
 		RenderPassInfo m_renderPass;
+		Pipeline* m_pipeline;
 	};
 	using CmdBuffer = IntrusivePtr<CommandBuffer>;
 

@@ -163,6 +163,10 @@ int main()
 		context.BeginFrame();
 		auto cmd = context.RequestCmd();
 
+		auto rpInfo = context.GetSurfaceRenderPass(&wsi);
+		cmd->BeginRenderPass(rpInfo);
+		cmd->EndRenderPass();
+
 		context.Submit(cmd);
 
 		context.EndFrame();

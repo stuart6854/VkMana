@@ -15,6 +15,9 @@ namespace VkMana
 
 		void Bin(vk::Semaphore semaphore);
 		void Bin(vk::Fence fence);
+		void Bin(vk::Image image);
+		void Bin(vk::ImageView view);
+		void Bin(vma::Allocation alloc);
 
 		void EmptyBins();
 
@@ -27,6 +30,9 @@ namespace VkMana
 		Context* m_ctx;
 		std::vector<vk::Semaphore> m_semaphores;
 		std::vector<vk::Fence> m_fences;
+		std::vector<vk::Image> m_images;
+		std::vector<vk::ImageView> m_imageViews;
+		std::vector<vma::Allocation> m_allocs;
 	};
 
 } // namespace VkMana

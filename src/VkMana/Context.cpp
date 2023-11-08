@@ -61,15 +61,22 @@ namespace VkMana
 		auto& newSurfaceInfo = m_surfaces.emplace_back();
 		newSurfaceInfo.WSI = wsi;
 		newSurfaceInfo.Surface = wsi->CreateSurface(m_instance);
+
+		uint32_t imageWidth = 0;
+		uint32_t imageHeight = 0;
+		vk::Format imageFormat = vk::Format::eUndefined;
 		if (!CreateSwapchain(newSurfaceInfo.Swapchain,
-				newSurfaceInfo.Surface,
-				m_gpu,
+				imageWidth,
+				imageHeight,
+				imageFormat,
 				m_device,
 				wsi->GetSurfaceWidth(),
 				wsi->GetSurfaceHeight(),
 				wsi->IsVSync(),
 				true,
-				{}))
+				{},
+				newSurfaceInfo.Surface,
+				m_gpu))
 		{
 			m_instance.destroy(newSurfaceInfo.Surface);
 			m_surfaces.erase(m_surfaces.end() - 1);
@@ -77,6 +84,19 @@ namespace VkMana
 		}
 
 		auto swapchainImages = m_device.getSwapchainImagesKHR(newSurfaceInfo.Swapchain);
+		newSurfaceInfo.Images.resize(swapchainImages.size());
+		for (auto i = 0; i < swapchainImages.size(); ++i)
+		{
+			ImageCreateInfo info{
+				.Width = imageWidth,
+				.Height = imageHeight,
+				.Depth = 1,
+				.MipLevels = 1,
+				.ArrayLayers = 1,
+				.Format = imageFormat,
+			};
+			newSurfaceInfo.Images[i] = IntrusivePtr(new Image(this, swapchainImages[i], info));
+		}
 
 		return true;
 	}
@@ -177,6 +197,63 @@ namespace VkMana
 
 		m_submitWaitSemaphores.clear();
 		m_submitWaitStageMasks.clear();
+	}
+
+	auto Context::GetSurfaceRenderPass(WSI* wsi) -> RenderPassInfo
+	{
+		auto it = std::ranges::find_if(m_surfaces, [&](const SurfaceInfo& surfaceInfo) { return surfaceInfo.WSI == wsi; });
+		if (it == m_surfaces.end())
+			return {};
+
+		auto& surfaceInfo = *it;
+
+		auto& image = surfaceInfo.Images.at(surfaceInfo.ImageIndex);
+
+		RenderPassInfo info{
+			.Targets = {
+				RenderPassTarget{
+					.Image = image->GetImageView(ImageViewType::RenderTarget),
+					.IsDepthStencil = false,
+					.Clear = true,
+					.Store = true,
+					.ClearValue = { 0.0f, 0.0f, 0.0f, 0.0f },
+					.PreLayout = vk::ImageLayout::eUndefined,
+					.PostLayout = vk::ImageLayout::ePresentSrcKHR,
+				},
+			},
+		};
+		return info;
+	}
+
+	auto Context::CreateImageView(const Image* image, const ImageViewCreateInfo& info) -> ImageViewHandle
+	{
+		vk::ImageViewCreateInfo viewInfo{};
+		viewInfo.setImage(image->GetImage());
+		viewInfo.setFormat(image->GetFormat());
+		viewInfo.setViewType(vk::ImageViewType::e2D);
+		viewInfo.subresourceRange.setAspectMask(image->GetAspect());
+		viewInfo.subresourceRange.setBaseMipLevel(info.BaseMipLevel);
+		viewInfo.subresourceRange.setLevelCount(info.MipLevelCount);
+		viewInfo.subresourceRange.setBaseArrayLayer(info.BaseArrayLayer);
+		viewInfo.subresourceRange.setLayerCount(info.ArrayLayerCount);
+		auto view = m_device.createImageView(viewInfo);
+
+		return IntrusivePtr(new ImageView(this, image, view, info));
+	}
+
+	void Context::DestroyImage(vk::Image image)
+	{
+		GetFrame().Garbage->Bin(image);
+	}
+
+	void Context::DestroyImageView(vk::ImageView view)
+	{
+		GetFrame().Garbage->Bin(view);
+	}
+
+	void Context::DestroyAllocation(vma::Allocation alloc)
+	{
+		GetFrame().Garbage->Bin(alloc);
 	}
 
 	void Context::PrintInstanceInfo()
@@ -348,14 +425,17 @@ namespace VkMana
 	}
 
 	bool Context::CreateSwapchain(vk::SwapchainKHR& outSwapchain,
-		vk::SurfaceKHR surface,
-		vk::PhysicalDevice gpu,
+		uint32_t& outWidth,
+		uint32_t& outHeight,
+		vk::Format& outFormat,
 		vk::Device device,
 		uint32_t width,
 		uint32_t height,
 		bool vsync,
 		bool srgb,
-		vk::SwapchainKHR oldSwapchain)
+		vk::SwapchainKHR oldSwapchain,
+		vk::SurfaceKHR surface,
+		vk::PhysicalDevice gpu)
 	{
 		if (!surface || !gpu || !device)
 			return false;
@@ -387,6 +467,10 @@ namespace VkMana
 		swapchainInfo.setClipped(VK_TRUE);
 		swapchainInfo.setOldSwapchain(oldSwapchain);
 		outSwapchain = device.createSwapchainKHR(swapchainInfo);
+
+		outWidth = width;
+		outHeight = height;
+		outFormat = surfaceFormat.format;
 
 		return outSwapchain != VK_NULL_HANDLE;
 	}

@@ -1,10 +1,11 @@
 #pragma once
 
 #include "Vulkan_Common.hpp"
+#include "Garbage.hpp"
 #include "CommandPool.hpp"
 #include "CommandBuffer.hpp"
 #include "WSI.hpp"
-#include "Garbage.hpp"
+#include "Image.hpp"
 
 namespace VkMana
 {
@@ -31,9 +32,20 @@ namespace VkMana
 
 		void Submit(CmdBuffer cmd);
 
+		/* Resources */
+
+		auto GetSurfaceRenderPass(WSI* wsi) -> RenderPassInfo;
+
+		auto CreateImageView(const Image* image, const ImageViewCreateInfo& info) -> ImageViewHandle;
+
+		void DestroyImage(vk::Image image);
+		void DestroyImageView(vk::ImageView view);
+		void DestroyAllocation(vma::Allocation alloc);
+
 		/* Getters */
 
 		auto GetDevice() const -> auto { return m_device; }
+		auto GetAllocator() const -> auto { return m_allocator; }
 
 	private:
 		struct QueueInfo
@@ -72,16 +84,20 @@ namespace VkMana
 			vk::SurfaceKHR Surface;
 			vk::SwapchainKHR Swapchain;
 			uint32_t ImageIndex = 0;
+			std::vector<ImageHandle> Images;
 		};
 		static bool CreateSwapchain(vk::SwapchainKHR& outSwapchain,
-			vk::SurfaceKHR surface,
-			vk::PhysicalDevice gpu,
+			uint32_t& outWidth,
+			uint32_t& outHeight,
+			vk::Format& outFormat,
 			vk::Device device,
 			uint32_t width,
 			uint32_t height,
 			bool vsync,
 			bool srgb,
-			vk::SwapchainKHR oldSwapchain);
+			vk::SwapchainKHR oldSwapchain,
+			vk::SurfaceKHR surface,
+			vk::PhysicalDevice gpu);
 
 	private:
 		vk::Instance m_instance;

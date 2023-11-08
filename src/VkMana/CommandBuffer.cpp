@@ -1,7 +1,167 @@
 #include "CommandBuffer.hpp"
 
+#include "Image.hpp"
+
 namespace VkMana
 {
+	void CommandBuffer::BeginRenderPass(const RenderPassInfo& info)
+	{
+		uint32_t width = UINT32_MAX;
+		uint32_t height = UINT32_MAX;
+
+		std::vector<vk::RenderingAttachmentInfo> colorAttachments;
+		vk::RenderingAttachmentInfo depthStencilAttachment;
+		bool hasDepthStencil = false;
+		for (const auto& target : info.Targets)
+		{
+			if (target.IsDepthStencil)
+			{
+				// Depth/Stencil
+				auto& attachment = depthStencilAttachment;
+				attachment.setImageView(target.Image->GetView());
+				attachment.setLoadOp(target.Clear ? vk::AttachmentLoadOp::eClear : vk::AttachmentLoadOp::eDontCare);
+				attachment.setStoreOp(target.Store ? vk::AttachmentStoreOp::eStore : vk::AttachmentStoreOp::eDontCare);
+				attachment.setClearValue(vk::ClearDepthStencilValue(target.ClearValue[0], uint32_t(target.ClearValue[1])));
+				attachment.setImageLayout(vk::ImageLayout::eDepthStencilAttachmentOptimal);
+				hasDepthStencil = true;
+
+				ImageTransitionInfo transitionInfo{
+					.Image = target.Image->GetImage(),
+					.OldLayout = target.PreLayout,
+					.NewLayout = vk::ImageLayout::eDepthStencilAttachmentOptimal,
+				};
+				TransitionImage(transitionInfo);
+			}
+			else
+			{
+				// Color
+				auto& attachment = colorAttachments.emplace_back();
+				attachment.setImageView(target.Image->GetView());
+				attachment.setLoadOp(target.Clear ? vk::AttachmentLoadOp::eClear : vk::AttachmentLoadOp::eDontCare);
+				attachment.setStoreOp(target.Store ? vk::AttachmentStoreOp::eStore : vk::AttachmentStoreOp::eDontCare);
+				attachment.setClearValue(vk::ClearColorValue(target.ClearValue));
+				attachment.setImageLayout(vk::ImageLayout::eColorAttachmentOptimal);
+
+				ImageTransitionInfo transitionInfo{
+					.Image = target.Image->GetImage(),
+					.OldLayout = target.PreLayout,
+					.NewLayout = vk::ImageLayout::eColorAttachmentOptimal,
+				};
+				TransitionImage(transitionInfo);
+			}
+
+			width = std::min(width, target.Image->GetImage()->GetWidth());
+			height = std::min(height, target.Image->GetImage()->GetHeight());
+		}
+
+		vk::RenderingInfo renderingInfo{};
+		renderingInfo.setRenderArea({ { 0, 0 }, { width, height } });
+		renderingInfo.setLayerCount(1);
+		renderingInfo.setColorAttachments(colorAttachments);
+		if (hasDepthStencil)
+			renderingInfo.setPDepthAttachment(&depthStencilAttachment); // #TODO: Stencil Attachment.
+
+		m_cmd.beginRendering(renderingInfo);
+
+		m_renderPass = info;
+	}
+
+	void CommandBuffer::EndRenderPass()
+	{
+		m_cmd.endRendering();
+
+		for (const auto& target : m_renderPass.Targets)
+		{
+			if (target.IsDepthStencil)
+			{
+				ImageTransitionInfo transitionInfo{
+					.Image = target.Image->GetImage(),
+					.OldLayout = vk::ImageLayout::eDepthStencilAttachmentOptimal,
+					.NewLayout = target.PostLayout,
+				};
+				TransitionImage(transitionInfo);
+			}
+			else
+			{
+				ImageTransitionInfo transitionInfo{
+					.Image = target.Image->GetImage(),
+					.OldLayout = vk::ImageLayout::eColorAttachmentOptimal,
+					.NewLayout = target.PostLayout,
+				};
+				TransitionImage(transitionInfo);
+			}
+		}
+	}
+
+	void CommandBuffer::TransitionImage(const ImageTransitionInfo& info)
+	{
+		vk::PipelineStageFlags2 srcStage = {};
+		vk::AccessFlags2 srcAccess = {};
+		switch (info.OldLayout)
+		{
+			case vk::ImageLayout::eUndefined:
+				srcStage = vk::PipelineStageFlagBits2::eTopOfPipe;
+				srcAccess = vk::AccessFlagBits2::eNone;
+				break;
+			case vk::ImageLayout::eColorAttachmentOptimal:
+				srcStage = vk::PipelineStageFlagBits2::eColorAttachmentOutput;
+				srcAccess = vk::AccessFlagBits2::eColorAttachmentWrite;
+				break;
+			case vk::ImageLayout::eDepthStencilAttachmentOptimal:
+				srcStage = vk::PipelineStageFlagBits2::eLateFragmentTests;
+				srcAccess = vk::AccessFlagBits2::eDepthStencilAttachmentWrite;
+				break;
+			case vk::ImageLayout::eShaderReadOnlyOptimal:
+				srcStage = vk::PipelineStageFlagBits2::eFragmentShader;
+				srcAccess = vk::AccessFlagBits2::eShaderRead;
+				break;
+			default:
+				break;
+		}
+
+		vk::PipelineStageFlags2 dstStage = {};
+		vk::AccessFlags2 dstAccess = {};
+		switch (info.NewLayout)
+		{
+			case vk::ImageLayout::eColorAttachmentOptimal:
+				srcStage = vk::PipelineStageFlagBits2::eColorAttachmentOutput;
+				srcAccess = vk::AccessFlagBits2::eColorAttachmentWrite;
+				break;
+			case vk::ImageLayout::eDepthStencilAttachmentOptimal:
+				srcStage = vk::PipelineStageFlagBits2::eEarlyFragmentTests;
+				srcAccess = vk::AccessFlagBits2::eDepthStencilAttachmentRead;
+				break;
+			case vk::ImageLayout::eShaderReadOnlyOptimal:
+				srcStage = vk::PipelineStageFlagBits2::eFragmentShader;
+				srcAccess = vk::AccessFlagBits2::eShaderRead;
+				break;
+			case vk::ImageLayout::ePresentSrcKHR:
+				srcStage = vk::PipelineStageFlagBits2::eBottomOfPipe;
+				srcAccess = vk::AccessFlagBits2::eNone;
+				break;
+			default:
+				break;
+		}
+
+		vk::ImageMemoryBarrier2 barrier{};
+		barrier.setImage(info.Image->GetImage());
+		barrier.setOldLayout(info.OldLayout);
+		barrier.setNewLayout(info.NewLayout);
+		barrier.setDstStageMask(srcStage);
+		barrier.setDstAccessMask(srcAccess);
+		barrier.setSrcStageMask(dstStage);
+		barrier.setSrcAccessMask(dstAccess);
+		barrier.subresourceRange.setAspectMask(info.Image->GetAspect());
+		barrier.subresourceRange.setBaseMipLevel(info.BaseMipLevel);
+		barrier.subresourceRange.setLevelCount(info.MipLevelCount);
+		barrier.subresourceRange.setBaseArrayLayer(info.BaseArrayLayer);
+		barrier.subresourceRange.setLayerCount(info.ArrayLayerCount);
+
+		vk::DependencyInfo depInfo{};
+		depInfo.setImageMemoryBarriers(barrier);
+		m_cmd.pipelineBarrier2(depInfo);
+	}
+
 	CommandBuffer::CommandBuffer(Context* context, vk::CommandBuffer cmd)
 		: m_ctx(context)
 		, m_cmd(cmd)

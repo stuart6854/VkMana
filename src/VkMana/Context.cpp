@@ -16,6 +16,7 @@ namespace VkMana
 		{
 			RemoveSurface(m_surfaces.front().WSI);
 		}
+		m_surfaces.clear();
 
 		if (m_device)
 		{
@@ -23,6 +24,7 @@ namespace VkMana
 			{
 				m_device.destroy(frame.FrameFence);
 			}
+			m_frames.clear();
 
 			if (m_allocator)
 				m_allocator.destroy();
@@ -87,7 +89,7 @@ namespace VkMana
 	void Context::RemoveSurface(WSI* wsi)
 	{
 		auto it = std::ranges::find_if(m_surfaces, [&](const SurfaceInfo& surfaceInfo) { return surfaceInfo.WSI == wsi; });
-		if (it != m_surfaces.end())
+		if (it == m_surfaces.end())
 			return;
 
 		auto& surfaceInfo = *it;

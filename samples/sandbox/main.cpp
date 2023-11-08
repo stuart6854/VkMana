@@ -58,6 +58,7 @@ void main()
 }
 )";
 
+constexpr auto WindowTitle = "VkMana - Sandbox";
 constexpr auto WindowWidth = 1280;
 constexpr auto WindowHeight = 720;
 constexpr auto WindowAspect = float(WindowWidth) / float(WindowHeight);
@@ -152,7 +153,7 @@ int main()
 	LOG_INFO("VkMana - Sample - Sandbox");
 
 	auto* window = SDL_CreateWindow(
-		"VkMana - Sandbox", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, 1280, 720, SDL_WINDOW_VULKAN | SDL_WINDOW_RESIZABLE);
+		WindowTitle, SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, 1280, 720, SDL_WINDOW_VULKAN | SDL_WINDOW_RESIZABLE);
 
 	SDL2WSI wsi(window);
 
@@ -205,13 +206,22 @@ int main()
 		glm::mat4 modelMatrix = glm::mat4(1.0f);
 	} pushConsts;
 
+	float lastFrameTime = SDL_GetTicks() / 1000.0f;
 	bool isRunning = true;
 	while (isRunning)
 	{
+		auto currentFrameTime = SDL_GetTicks() / 1000.0f;
+		auto deltaTime = currentFrameTime - lastFrameTime;
+		lastFrameTime = currentFrameTime;
+
 		if (!wsi.IsAlive())
 			isRunning = false;
 
-		pushConsts.modelMatrix = glm::rotate(pushConsts.modelMatrix, glm::radians(1.0f), glm::vec3(0, 1, 0));
+		auto windowTitle = std::format("{} - {}ms", WindowTitle, uint32_t(deltaTime * 1000));
+		SDL_SetWindowTitle(window, windowTitle.c_str());
+
+		const auto rotDegrees = 45.0f * deltaTime;
+		pushConsts.modelMatrix = glm::rotate(pushConsts.modelMatrix, glm::radians(rotDegrees), glm::vec3(0, 1, 0));
 
 		context.BeginFrame();
 		auto cmd = context.RequestCmd();

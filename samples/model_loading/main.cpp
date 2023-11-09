@@ -288,13 +288,13 @@ int main()
 	};
 	auto pipelineLayout = context.CreatePipelineLayout(pipelineLayoutInfo);
 
-	std::vector<uint32_t> vertSpirv;
+	ShaderBinary vertSpirv;
 	if (!VkMana::CompileShader(vertSpirv, VertexShaderSrc, shaderc_vertex_shader, true))
 	{
 		LOG_ERR("Failed to compiler VERTEX shader.");
 		return 1;
 	}
-	std::vector<uint32_t> fragSpirv;
+	ShaderBinary fragSpirv;
 	if (!VkMana::CompileShader(fragSpirv, FragmentShaderSrc, shaderc_fragment_shader, true))
 	{
 		LOG_ERR("Failed to compiler FRAGMENT shader.");

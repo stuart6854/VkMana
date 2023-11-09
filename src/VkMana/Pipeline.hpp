@@ -3,6 +3,8 @@
 #include "Vulkan_Common.hpp"
 #include "Descriptors.hpp"
 
+#include <vector>
+
 namespace VkMana
 {
 	class Context;
@@ -15,6 +17,8 @@ namespace VkMana
 
 	class PipelineLayout;
 
+	using ShaderBinary = std::vector<uint32_t>;
+
 	/**
 	 * Dynamic State
 	 * 	- Polygon Mode (Wireframe)
@@ -23,8 +27,8 @@ namespace VkMana
 	 */
 	struct GraphicsPipelineCreateInfo
 	{
-		std::vector<uint32_t> Vertex;
-		std::vector<uint32_t> Fragment;
+		ShaderBinary Vertex;
+		ShaderBinary Fragment;
 
 		std::vector<vk::VertexInputAttributeDescription> VertexAttributes;
 		std::vector<vk::VertexInputBindingDescription> VertexBindings;

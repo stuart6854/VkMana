@@ -3,7 +3,7 @@
 namespace VkMana
 {
 	bool CompileShader(
-		std::vector<uint32_t>& outSpirv, const std::string& glslSource, shaderc_shader_kind kind, bool debug, const std::string& filename)
+		ShaderBinary& outSpirv, const std::string& glslSource, shaderc_shader_kind kind, bool debug, const std::string& filename)
 	{
 		shaderc::CompileOptions options;
 		if (debug)

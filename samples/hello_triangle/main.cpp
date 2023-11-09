@@ -131,13 +131,13 @@ int main()
 	VkMana::PipelineLayoutCreateInfo pipelineLayoutInfo{};
 	auto pipelineLayout = context.CreatePipelineLayout(pipelineLayoutInfo);
 
-	std::vector<uint32_t> vertSpirv;
+	ShaderBinary vertSpirv;
 	if (!VkMana::CompileShader(vertSpirv, TriangleVertexShaderSrc, shaderc_vertex_shader, true))
 	{
 		LOG_ERR("Failed to compiler VERTEX shader.");
 		return 1;
 	}
-	std::vector<uint32_t> fragSpirv;
+	ShaderBinary fragSpirv;
 	if (!VkMana::CompileShader(fragSpirv, TriangleFragmentShaderSrc, shaderc_fragment_shader, true))
 	{
 		LOG_ERR("Failed to compiler FRAGMENT shader.");

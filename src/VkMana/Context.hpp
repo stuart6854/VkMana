@@ -37,6 +37,7 @@ namespace VkMana
 		auto RequestCmd() -> CmdBuffer;
 
 		void Submit(CmdBuffer cmd);
+		void SubmitStaging(CmdBuffer cmd);
 
 		/* Resources */
 
@@ -48,7 +49,7 @@ namespace VkMana
 		auto CreatePipelineLayout(const PipelineLayoutCreateInfo& info) -> PipelineLayoutHandle;
 		auto CreateGraphicsPipeline(const GraphicsPipelineCreateInfo& info) -> PipelineHandle;
 		auto CreateImageView(const Image* image, const ImageViewCreateInfo& info) -> ImageViewHandle;
-		auto CreateBuffer(const BufferCreateInfo& info) -> BufferHandle;
+		auto CreateBuffer(const BufferCreateInfo& info, const BufferDataSource* initialData = nullptr) -> BufferHandle;
 
 		void DestroySetLayout(vk::DescriptorSetLayout setLayout);
 		void DestroyPipelineLayout(vk::PipelineLayout pipelineLayout);
@@ -83,7 +84,7 @@ namespace VkMana
 
 		struct PerFrame
 		{
-			vk::Fence FrameFence; // Waited on at start of frame & submitted at end of frame.
+			std::vector<vk::Fence> FrameFences; // Waited on at start of frame & submitted at end of frame.
 			IntrusivePtr<CommandPool> CmdPool;
 
 			std::unordered_map<vk::DescriptorSetLayout, DescriptorPoolHandle> DescriptorPoolMap;

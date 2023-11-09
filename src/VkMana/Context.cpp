@@ -22,7 +22,6 @@ namespace VkMana
 		{
 			for (auto& frame : m_frames)
 			{
-				m_device.destroy(frame.FrameFence);
 			}
 			m_frames.clear();
 
@@ -140,8 +139,12 @@ namespace VkMana
 	{
 		auto& frame = GetFrame();
 
-		UNUSED(m_device.waitForFences(frame.FrameFence, true, UINT64_MAX));
-		m_device.resetFences(frame.FrameFence);
+		if (!frame.FrameFences.empty())
+		{
+			UNUSED(m_device.waitForFences(frame.FrameFences, true, UINT64_MAX));
+			m_device.resetFences(frame.FrameFences);
+			frame.FrameFences.clear();
+		}
 		frame.Garbage->EmptyBins();
 
 		frame.CmdPool->ResetPool();
@@ -168,7 +171,11 @@ namespace VkMana
 	{
 		auto& frame = GetFrame();
 
-		m_queueInfo.GraphicsQueue.submit({}, frame.FrameFence);
+		auto fence = m_device.createFence({});
+		m_queueInfo.GraphicsQueue.submit({}, fence);
+
+		GetFrame().FrameFences.push_back(fence);
+		GetFrame().Garbage->Bin(fence);
 
 		m_frameIndex = (m_frameIndex + 1) % m_frames.size();
 	}
@@ -223,6 +230,17 @@ namespace VkMana
 
 		m_submitWaitSemaphores.clear();
 		m_submitWaitStageMasks.clear();
+	}
+
+	void Context::SubmitStaging(CmdBuffer cmd)
+	{
+		Submit(std::move(cmd));
+
+		auto fence = m_device.createFence({});
+		m_queueInfo.GraphicsQueue.submit({}, fence);
+
+		GetFrame().FrameFences.push_back(fence);
+		GetFrame().Garbage->Bin(fence);
 	}
 
 	auto Context::GetSurfaceRenderPass(WSI* wsi) -> RenderPassInfo
@@ -394,7 +412,7 @@ namespace VkMana
 		return IntrusivePtr(new ImageView(this, image, view, info));
 	}
 
-	auto Context::CreateBuffer(const BufferCreateInfo& info) -> BufferHandle
+	auto Context::CreateBuffer(const BufferCreateInfo& info, const BufferDataSource* initialData) -> BufferHandle
 	{
 		vk::BufferCreateInfo bufferInfo{};
 		bufferInfo.setSize(info.Size);
@@ -406,7 +424,33 @@ namespace VkMana
 
 		auto [buffer, allocation] = m_allocator.createBuffer(bufferInfo, allocInfo);
 
-		return IntrusivePtr(new Buffer(this, buffer, allocation, info));
+		auto bufferHandle = IntrusivePtr(new Buffer(this, buffer, allocation, info));
+
+		if (initialData)
+		{
+			if (bufferHandle->IsHostAccessible())
+			{
+				auto* mapped = m_allocator.mapMemory(allocation);
+				std::memcpy(mapped, initialData->Data, initialData->Size);
+				m_allocator.unmapMemory(allocation);
+			}
+			else
+			{
+				// Staging buffer.
+				auto stagingBuffer = CreateBuffer(BufferCreateInfo::Staging(info.Size), initialData);
+				auto cmd = RequestCmd();
+
+				BufferCopyInfo copyInfo{
+					.SrcBuffer = stagingBuffer.Get(),
+					.DstBuffer = bufferHandle.Get(),
+					.Size = info.Size,
+				};
+				cmd->CopyBuffer(copyInfo);
+				SubmitStaging(cmd);
+			}
+		}
+
+		return bufferHandle;
 	}
 
 	void Context::DestroySetLayout(vk::DescriptorSetLayout setLayout)
@@ -602,7 +646,6 @@ namespace VkMana
 		m_frames.resize(2);
 		for (auto& frame : m_frames)
 		{
-			frame.FrameFence = m_device.createFence({ vk::FenceCreateFlagBits::eSignaled });
 			frame.CmdPool = IntrusivePtr(new CommandPool(this, m_queueInfo.GraphicsFamilyIndex));
 			frame.Garbage = IntrusivePtr(new Garbage(this));
 		}

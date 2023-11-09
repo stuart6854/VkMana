@@ -144,11 +144,19 @@ bool LoadObjMesh(Mesh& outMesh, VkMana::Context& context, const std::string& fil
 		}
 	}
 
-	auto vtxBufferInfo = VkMana::BufferCreateInfo::Vertex(sizeof(Vertex) * vertices.size());
-	outMesh.VertexBuffer = context.CreateBuffer(vtxBufferInfo);
+	VkMana::BufferDataSource vtxDataSrc{
+		.Size = sizeof(Vertex) * vertices.size(),
+		.Data = vertices.data(),
+	};
+	auto vtxBufferInfo = VkMana::BufferCreateInfo::Vertex(vtxDataSrc.Size);
+	outMesh.VertexBuffer = context.CreateBuffer(vtxBufferInfo, &vtxDataSrc);
 
-	auto idxBufferInfo = VkMana::BufferCreateInfo::Index(sizeof(uint16_t) * indices.size());
-	outMesh.IndexBuffer = context.CreateBuffer(idxBufferInfo);
+	VkMana::BufferDataSource idxDataSrc{
+		.Size = sizeof(uint16_t) * indices.size(),
+		.Data = indices.data(),
+	};
+	auto idxBufferInfo = VkMana::BufferCreateInfo::Index(idxDataSrc.Size);
+	outMesh.IndexBuffer = context.CreateBuffer(idxBufferInfo, &idxDataSrc);
 
 	outMesh.IndexCount = indices.size();
 

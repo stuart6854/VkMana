@@ -190,6 +190,20 @@ namespace VkMana
 		m_cmd.pipelineBarrier2(depInfo);
 	}
 
+	void CommandBuffer::CopyBuffer(const BufferCopyInfo& info)
+	{
+		vk::BufferCopy2 region{};
+		region.setSize(info.Size);
+		region.setSrcOffset(info.SrcOffset);
+		region.setDstOffset(info.DstOffset);
+
+		vk::CopyBufferInfo2 copyInfo{};
+		copyInfo.setSrcBuffer(info.SrcBuffer->GetBuffer());
+		copyInfo.setDstBuffer(info.DstBuffer->GetBuffer());
+		copyInfo.setRegions(region);
+		m_cmd.copyBuffer2(copyInfo);
+	}
+
 	CommandBuffer::CommandBuffer(Context* context, vk::CommandBuffer cmd)
 		: m_ctx(context)
 		, m_cmd(cmd)

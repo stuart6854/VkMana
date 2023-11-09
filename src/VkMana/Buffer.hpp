@@ -57,11 +57,18 @@ namespace VkMana
 		}
 	};
 
+	struct BufferDataSource
+	{
+		uint64_t Size = 0;
+		const void* Data = nullptr;
+	};
+
 	class Buffer : public IntrusivePtrEnabled<Buffer>
 	{
 	public:
 		~Buffer();
 
+		auto GetBuffer() const -> auto { return m_buffer; }
 		auto GetSize() const -> auto { return m_info.Size; }
 		auto GetUsage() const -> auto { return m_info.Usage; }
 		auto IsHostAccessible() const -> auto { return m_info.AllocFlags & vma::AllocationCreateFlagBits::eHostAccessSequentialWrite; }

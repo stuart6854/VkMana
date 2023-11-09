@@ -24,7 +24,7 @@ namespace VkMana
 				viewInfo = {
 					.Image = this,
 					.BaseMipLevel = 0,
-					.MipLevelCount = m_info.MipLevels,
+					.MipLevelCount = uint32_t(m_info.MipLevels),
 					.BaseArrayLayer = 0,
 					.ArrayLayerCount = 1,
 				};

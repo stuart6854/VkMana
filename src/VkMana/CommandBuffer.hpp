@@ -22,6 +22,26 @@ namespace VkMana
 		uint32_t BaseArrayLayer = 0;
 		uint32_t ArrayLayerCount = 1;
 	};
+	struct ImageBlitInfo
+	{
+		const Image* SrcImage = nullptr;
+		vk::ImageLayout SrcLayout = vk::ImageLayout::eTransferSrcOptimal;
+		vk::Offset3D SrcRectStart = { 0, 0, 0 };
+		vk::Offset3D SrcRectEnd = { 0, 0, 0 };
+		uint32_t SrcMipLevel = 0;
+		uint32_t SrcBaseArrayLayer = 0;
+		uint32_t SrcArrayLayerCount = 1;
+
+		const Image* DstImage = nullptr;
+		vk::ImageLayout DstLayout = vk::ImageLayout::eTransferDstOptimal;
+		vk::Offset3D DstRectStart = { 0, 0, 0 };
+		vk::Offset3D DstRectEnd = { 0, 0, 0 };
+		uint32_t DstMipLevel = 0;
+		uint32_t DstBaseArrayLayer = 0;
+		uint32_t DstArrayLayerCount = 1;
+
+		vk::Filter Filter = vk::Filter::eLinear;
+	};
 
 	struct BufferCopyInfo
 	{
@@ -61,6 +81,7 @@ namespace VkMana
 		void DrawIndexed(uint32_t indexCount, uint32_t firstIndex, uint32_t vertexOffset);
 
 		void TransitionImage(const ImageTransitionInfo& info);
+		void BlitImage(const ImageBlitInfo& info);
 
 		void CopyBuffer(const BufferCopyInfo& info);
 		void CopyBufferToImage(const BufferToImageCopyInfo& info);

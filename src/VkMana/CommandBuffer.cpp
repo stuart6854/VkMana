@@ -161,6 +161,12 @@ namespace VkMana
 				srcStage = vk::PipelineStageFlagBits2::eTopOfPipe;
 				srcAccess = vk::AccessFlagBits2::eNone;
 				break;
+			case vk::ImageLayout::eTransferSrcOptimal:
+				srcStage = vk::PipelineStageFlagBits2::eTransfer;
+				srcAccess = vk::AccessFlagBits2::eTransferRead;
+			case vk::ImageLayout::eTransferDstOptimal:
+				srcStage = vk::PipelineStageFlagBits2::eTransfer;
+				srcAccess = vk::AccessFlagBits2::eTransferWrite;
 			case vk::ImageLayout::eColorAttachmentOptimal:
 				srcStage = vk::PipelineStageFlagBits2::eColorAttachmentOutput;
 				srcAccess = vk::AccessFlagBits2::eColorAttachmentWrite;
@@ -174,6 +180,7 @@ namespace VkMana
 				srcAccess = vk::AccessFlagBits2::eShaderRead;
 				break;
 			default:
+				assert(false);
 				break;
 		}
 
@@ -181,6 +188,12 @@ namespace VkMana
 		vk::AccessFlags2 dstAccess = {};
 		switch (info.NewLayout)
 		{
+			case vk::ImageLayout::eTransferSrcOptimal:
+				srcStage = vk::PipelineStageFlagBits2::eTransfer;
+				srcAccess = vk::AccessFlagBits2::eTransferRead;
+			case vk::ImageLayout::eTransferDstOptimal:
+				srcStage = vk::PipelineStageFlagBits2::eTransfer;
+				srcAccess = vk::AccessFlagBits2::eTransferWrite;
 			case vk::ImageLayout::eColorAttachmentOptimal:
 				srcStage = vk::PipelineStageFlagBits2::eColorAttachmentOutput;
 				srcAccess = vk::AccessFlagBits2::eColorAttachmentWrite;
@@ -198,6 +211,7 @@ namespace VkMana
 				srcAccess = vk::AccessFlagBits2::eNone;
 				break;
 			default:
+				assert(false);
 				break;
 		}
 
@@ -218,6 +232,23 @@ namespace VkMana
 		vk::DependencyInfo depInfo{};
 		depInfo.setImageMemoryBarriers(barrier);
 		m_cmd.pipelineBarrier2(depInfo);
+	}
+
+	void CommandBuffer::BlitImage(const ImageBlitInfo& info)
+	{
+		vk::ImageBlit region{};
+		region.setSrcOffsets({ info.SrcRectStart, info.SrcRectEnd });
+		region.srcSubresource.setAspectMask(info.SrcImage->GetAspect());
+		region.srcSubresource.setMipLevel(info.SrcMipLevel);
+		region.srcSubresource.setBaseArrayLayer(info.SrcBaseArrayLayer);
+		region.srcSubresource.setLayerCount(info.SrcArrayLayerCount);
+		region.setDstOffsets({ info.DstRectStart, info.DstRectEnd });
+		region.dstSubresource.setAspectMask(info.DstImage->GetAspect());
+		region.dstSubresource.setMipLevel(info.DstMipLevel);
+		region.dstSubresource.setBaseArrayLayer(info.DstBaseArrayLayer);
+		region.dstSubresource.setLayerCount(info.DstArrayLayerCount);
+
+		m_cmd.blitImage(info.SrcImage->GetImage(), info.SrcLayout, info.DstImage->GetImage(), info.DstLayout, region, info.Filter);
 	}
 
 	void CommandBuffer::CopyBuffer(const BufferCopyInfo& info)

@@ -12,21 +12,25 @@ namespace VkMana
 	class ImageView;
 	using ImageViewHandle = IntrusivePtr<ImageView>;
 
+	constexpr auto ImageCreateFlags_GenMipMaps = (1 << 0);
+
 	struct ImageCreateInfo
 	{
 		uint32_t Width = 1;
 		uint32_t Height = 1;
 		uint32_t Depth = 1;
-		uint32_t MipLevels = 1;
+		int32_t MipLevels = -1; // -1 = Automatically determine max mip levels.
 		uint32_t ArrayLayers = 1;
 		vk::Format Format = vk::Format::eUndefined;
 		vk::ImageUsageFlags Usage;
+		uint32_t Flags = 0;
 
 		static auto ColorTarget(uint32_t width, uint32_t height, vk::Format format) -> ImageCreateInfo
 		{
 			return ImageCreateInfo{
 				.Width = width,
 				.Height = height,
+				.MipLevels = 1,
 				.Format = format,
 				.Usage = vk::ImageUsageFlagBits::eColorAttachment | vk::ImageUsageFlagBits::eSampled,
 			};
@@ -36,8 +40,20 @@ namespace VkMana
 			return ImageCreateInfo{
 				.Width = width,
 				.Height = height,
+				.MipLevels = 1,
 				.Format = use32Bit ? vk::Format::eD32SfloatS8Uint : vk::Format::eD24UnormS8Uint,
 				.Usage = vk::ImageUsageFlagBits::eDepthStencilAttachment | vk::ImageUsageFlagBits::eSampled,
+			};
+		}
+		static auto Texture(uint32_t width, uint32_t height, int32_t mipLevels = -1) -> ImageCreateInfo
+		{
+			return ImageCreateInfo{
+				.Width = width,
+				.Height = height,
+				.MipLevels = -1,
+				.Format = vk::Format::eR8G8B8A8Unorm,
+				.Usage = vk::ImageUsageFlagBits::eSampled | vk::ImageUsageFlagBits::eTransferDst | vk::ImageUsageFlagBits::eTransferSrc,
+				.Flags = ImageCreateFlags_GenMipMaps,
 			};
 		}
 	};
@@ -82,6 +98,8 @@ namespace VkMana
 		auto GetWidth() const -> auto { return m_info.Width; }
 		auto GetHeight() const -> auto { return m_info.Height; }
 		auto GetDepth() const -> auto { return m_info.Depth; }
+		auto GetMipLevels() const -> auto { return uint32_t(m_info.MipLevels); }
+		auto GetArrayLayers() const -> auto { return m_info.ArrayLayers; }
 		auto GetFormat() const -> auto { return m_info.Format; }
 		auto GetAspect() const -> vk::ImageAspectFlags;
 

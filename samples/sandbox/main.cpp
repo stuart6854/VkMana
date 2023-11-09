@@ -181,13 +181,7 @@ bool LoadImage(VkMana::ImageHandle& outImage, VkMana::Context& context, const st
 		return false;
 	}
 
-	VkMana::ImageCreateInfo imageInfo{
-		.Width = uint32_t(width),
-		.Height = uint32_t(height),
-		.MipLevels = 1,
-		.Format = vk::Format::eR8G8B8A8Unorm,
-		.Usage = vk::ImageUsageFlagBits::eSampled | vk::ImageUsageFlagBits::eTransferDst,
-	};
+	auto imageInfo = VkMana::ImageCreateInfo::Texture(width, height);
 	VkMana::ImageDataSource dataSource{
 		.Size = uint32_t(width * height * 4),
 		.Data = pixels,

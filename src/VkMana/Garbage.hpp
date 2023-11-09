@@ -20,6 +20,7 @@ namespace VkMana
 		void Bin(vk::Pipeline pipeline);
 		void Bin(vk::Image image);
 		void Bin(vk::ImageView view);
+		void Bin(vk::Sampler sampler);
 		void Bin(vk::Buffer buffer);
 		void Bin(vma::Allocation alloc);
 
@@ -39,6 +40,7 @@ namespace VkMana
 		std::vector<vk::Pipeline> m_pipelines;
 		std::vector<vk::Image> m_images;
 		std::vector<vk::ImageView> m_imageViews;
+		std::vector<vk::Sampler> m_samplers;
 		std::vector<vk::Buffer> m_buffers;
 		std::vector<vma::Allocation> m_allocs;
 	};

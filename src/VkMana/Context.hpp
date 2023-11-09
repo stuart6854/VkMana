@@ -50,6 +50,7 @@ namespace VkMana
 		auto CreateGraphicsPipeline(const GraphicsPipelineCreateInfo& info) -> PipelineHandle;
 		auto CreateImage(const ImageCreateInfo& info, const ImageDataSource* initialData = nullptr) -> ImageHandle;
 		auto CreateImageView(const Image* image, const ImageViewCreateInfo& info) -> ImageViewHandle;
+		auto CreateSampler(const SamplerCreateInfo& info) -> SamplerHandle;
 		auto CreateBuffer(const BufferCreateInfo& info, const BufferDataSource* initialData = nullptr) -> BufferHandle;
 
 		void DestroySetLayout(vk::DescriptorSetLayout setLayout);
@@ -57,6 +58,7 @@ namespace VkMana
 		void DestroyPipeline(vk::Pipeline pipeline);
 		void DestroyImage(vk::Image image);
 		void DestroyImageView(vk::ImageView view);
+		void DestroySampler(vk::Sampler sampler);
 		void DestroyBuffer(vk::Buffer buffer);
 		void DestroyAllocation(vma::Allocation alloc);
 
@@ -64,6 +66,9 @@ namespace VkMana
 
 		auto GetDevice() const -> auto { return m_device; }
 		auto GetAllocator() const -> auto { return m_allocator; }
+
+		auto GetNearestSampler() const -> auto { return m_nearestSampler; }
+		auto GetLinearSampler() const -> auto { return m_linearSampler; }
 
 	private:
 		struct QueueInfo
@@ -125,6 +130,9 @@ namespace VkMana
 		vk::Device m_device;
 		vma::Allocator m_allocator;
 		vk::DescriptorPool m_descriptorPool;
+
+		SamplerHandle m_nearestSampler;
+		SamplerHandle m_linearSampler;
 
 		QueueInfo m_queueInfo{};
 

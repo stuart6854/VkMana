@@ -44,6 +44,11 @@ namespace VkMana
 		m_imageViews.push_back(view);
 	}
 
+	void Garbage::Bin(vk::Sampler sampler)
+	{
+		m_samplers.push_back(sampler);
+	}
+
 	void Garbage::Bin(vk::Buffer buffer)
 	{
 		m_buffers.push_back(buffer);
@@ -66,6 +71,8 @@ namespace VkMana
 			m_ctx->GetDevice().destroy(v);
 		for (auto& v : m_pipelines)
 			m_ctx->GetDevice().destroy(v);
+		for (auto& v : m_samplers)
+			m_ctx->GetDevice().destroy(v);
 		for (auto& v : m_imageViews)
 			m_ctx->GetDevice().destroy(v);
 		for (auto& v : m_images)
@@ -80,6 +87,7 @@ namespace VkMana
 		m_setLayouts.clear();
 		m_pipelineLayouts.clear();
 		m_pipelines.clear();
+		m_samplers.clear();
 		m_imageViews.clear();
 		m_images.clear();
 		m_buffers.clear();

@@ -18,13 +18,27 @@ namespace VkMana
 		auto& view = m_views.at(uint8_t(type));
 		if (!view)
 		{
-			ImageViewCreateInfo viewInfo{
-				.Image = this,
-				.BaseMipLevel = 0,
-				.MipLevelCount = 1,
-				.BaseArrayLayer = 0,
-				.ArrayLayerCount = 1,
-			};
+			ImageViewCreateInfo viewInfo;
+			if (type == ImageViewType::Texture)
+			{
+				viewInfo = {
+					.Image = this,
+					.BaseMipLevel = 0,
+					.MipLevelCount = m_info.MipLevels,
+					.BaseArrayLayer = 0,
+					.ArrayLayerCount = 1,
+				};
+			}
+			else if (type == ImageViewType::RenderTarget)
+			{
+				viewInfo = {
+					.Image = this,
+					.BaseMipLevel = 0,
+					.MipLevelCount = 1,
+					.BaseArrayLayer = 0,
+					.ArrayLayerCount = 1,
+				};
+			}
 			view = m_ctx->CreateImageView(this, viewInfo);
 		}
 		return view.Get();
@@ -73,6 +87,18 @@ namespace VkMana
 		, m_image(image)
 		, m_view(view)
 		, m_info(info)
+	{
+	}
+
+	Sampler::~Sampler()
+	{
+		if (m_sampler)
+			m_ctx->DestroySampler(m_sampler);
+	}
+
+	Sampler::Sampler(Context* context, vk::Sampler sampler)
+		: m_ctx(context)
+		, m_sampler(sampler)
 	{
 	}
 

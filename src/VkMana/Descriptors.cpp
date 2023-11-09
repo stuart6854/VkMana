@@ -17,12 +17,12 @@ namespace VkMana
 	{
 	}
 
-	void DescriptorSet::Write(const ImageView* image, uint32_t binding)
+	void DescriptorSet::Write(const ImageView* image, const Sampler* sampler, uint32_t binding)
 	{
 		vk::DescriptorImageInfo imageInfo{};
 		imageInfo.setImageView(image->GetView());
 		imageInfo.setImageLayout(vk::ImageLayout::eShaderReadOnlyOptimal);
-		imageInfo.setSampler({});
+		imageInfo.setSampler(sampler->GetSampler());
 
 		vk::WriteDescriptorSet write{};
 		write.setDescriptorType(vk::DescriptorType::eCombinedImageSampler);

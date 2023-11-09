@@ -20,6 +20,9 @@ namespace VkMana
 
 		if (m_device)
 		{
+			m_linearSampler = nullptr;
+			m_nearestSampler = nullptr;
+
 			for (auto& frame : m_frames)
 			{
 			}
@@ -73,6 +76,17 @@ namespace VkMana
 		poolInfo.setPoolSizes(poolSizes);
 		poolInfo.setMaxSets(10);
 		m_descriptorPool = m_device.createDescriptorPool(poolInfo);
+
+		m_nearestSampler = CreateSampler({
+			.MinFilter = vk::Filter::eNearest,
+			.MagFilter = vk::Filter::eNearest,
+			.MipMapMode = vk::SamplerMipmapMode::eNearest,
+		});
+		m_linearSampler = CreateSampler({
+			.MinFilter = vk::Filter::eLinear,
+			.MagFilter = vk::Filter::eLinear,
+			.MipMapMode = vk::SamplerMipmapMode::eLinear,
+		});
 
 		return true;
 	}
@@ -491,6 +505,20 @@ namespace VkMana
 		return IntrusivePtr(new ImageView(this, image, view, info));
 	}
 
+	auto Context::CreateSampler(const SamplerCreateInfo& info) -> SamplerHandle
+	{
+		vk::SamplerCreateInfo samplerInfo{};
+		samplerInfo.setMinFilter(info.MinFilter);
+		samplerInfo.setMagFilter(info.MagFilter);
+		samplerInfo.setMipmapMode(info.MipMapMode);
+		samplerInfo.setAddressModeU(info.AddressMode);
+		samplerInfo.setAddressModeV(info.AddressMode);
+		samplerInfo.setAddressModeW(info.AddressMode);
+		auto sampler = m_device.createSampler(samplerInfo);
+
+		return IntrusivePtr(new Sampler(this, sampler));
+	}
+
 	auto Context::CreateBuffer(const BufferCreateInfo& info, const BufferDataSource* initialData) -> BufferHandle
 	{
 		vk::BufferCreateInfo bufferInfo{};
@@ -555,6 +583,11 @@ namespace VkMana
 	void Context::DestroyImageView(vk::ImageView view)
 	{
 		GetFrame().Garbage->Bin(view);
+	}
+
+	void Context::DestroySampler(vk::Sampler sampler)
+	{
+		GetFrame().Garbage->Bin(sampler);
 	}
 
 	void Context::DestroyBuffer(vk::Buffer buffer)

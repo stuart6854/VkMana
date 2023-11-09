@@ -58,8 +58,17 @@ namespace VkMana
 
 	enum class ImageViewType : uint8_t
 	{
+		Texture,
 		RenderTarget,
 		Count,
+	};
+
+	struct SamplerCreateInfo
+	{
+		vk::Filter MinFilter = vk::Filter::eLinear;
+		vk::Filter MagFilter = vk::Filter::eLinear;
+		vk::SamplerAddressMode AddressMode = vk::SamplerAddressMode::eRepeat;
+		vk::SamplerMipmapMode MipMapMode = vk::SamplerMipmapMode::eLinear;
 	};
 
 	class Image : public IntrusivePtrEnabled<Image>
@@ -112,5 +121,23 @@ namespace VkMana
 		vk::ImageView m_view;
 		ImageViewCreateInfo m_info;
 	};
+
+	class Sampler : public IntrusivePtrEnabled<Sampler>
+	{
+	public:
+		~Sampler();
+
+		auto GetSampler() const -> auto { return m_sampler; }
+
+	private:
+		friend class Context;
+
+		Sampler(Context* context, vk::Sampler sampler);
+
+	private:
+		Context* m_ctx;
+		vk::Sampler m_sampler;
+	};
+	using SamplerHandle = IntrusivePtr<Sampler>;
 
 } // namespace VkMana

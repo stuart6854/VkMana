@@ -67,6 +67,9 @@ namespace VkMana
 		auto GetDevice() const -> auto { return m_device; }
 		auto GetAllocator() const -> auto { return m_allocator; }
 
+		auto GetFrameBufferCount() const -> auto { return m_frames.size(); }
+		auto GetFrameIndex() const -> auto { return m_frameIndex; }
+
 		auto GetNearestSampler() const -> auto { return m_nearestSampler; }
 		auto GetLinearSampler() const -> auto { return m_linearSampler; }
 

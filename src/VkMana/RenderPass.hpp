@@ -34,7 +34,7 @@ namespace VkMana
 				.IsDepthStencil = true,
 				.Clear = true,
 				.Store = false,
-				.ClearValue = { 0.0f, 0.0f, 0.0f, 0.0f },
+				.ClearValue = { 1.0f, 0.0f, 0.0f, 0.0f },
 				.PreLayout = vk::ImageLayout::eDepthStencilAttachmentOptimal,
 				.PostLayout = vk::ImageLayout::eDepthStencilAttachmentOptimal,
 			};

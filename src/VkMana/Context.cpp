@@ -514,6 +514,8 @@ namespace VkMana
 		samplerInfo.setAddressModeU(info.AddressMode);
 		samplerInfo.setAddressModeV(info.AddressMode);
 		samplerInfo.setAddressModeW(info.AddressMode);
+		samplerInfo.setMinLod(0.0f);
+		samplerInfo.setMaxLod(VK_LOD_CLAMP_NONE);
 		auto sampler = m_device.createSampler(samplerInfo);
 
 		return IntrusivePtr(new Sampler(this, sampler));

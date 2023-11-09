@@ -24,7 +24,11 @@
 const std::string VertexShaderSrc = R"(
 #version 450
 
-layout(location = 0) out vec4 outColor;
+layout(location = 0) in vec3 aPosition;
+layout(location = 1) in vec3 aNormal;
+layout(location = 2) in vec2 aTexCoord;
+
+layout(location = 0) out vec2 outTexCoord;
 
 layout(push_constant) uniform PushConstants
 {
@@ -35,31 +39,20 @@ layout(push_constant) uniform PushConstants
 
 void main()
 {
-	const vec3 positions[3] = vec3[3](
-		vec3(0.5, 0.5, 0.0),
-		vec3(-0.5, 0.5, 0.0),
-		vec3(0.0, -0.5, 0.0)
-	);
-
-	const vec4 colors[3] = vec4[3](
-		vec4(1.0, 0.0, 0.0, 1.0),
-		vec4(0.0, 1.0, 0.0, 1.0),
-		vec4(0.0, 0.0, 1.0, 1.0)
-	);
-
-	gl_Position = uConsts.projMatrix * uConsts.viewMatrix * uConsts.modelMatrix * vec4(positions[gl_VertexIndex], 1.0f);
-	outColor = colors[gl_VertexIndex];
+	gl_Position = uConsts.projMatrix * uConsts.viewMatrix * uConsts.modelMatrix * vec4(aPosition, 1.0f);
+	outTexCoord = aTexCoord;
 }
 )";
 const std::string FragmentShaderSrc = R"(
 #version 450
 
-layout (location = 0) in vec4 inColor;
+layout (location = 0) in vec2 inTexCoord;
+
 layout (location = 0) out vec4 outFragColor;
 
 void main()
 {
-	outFragColor = inColor;
+	outFragColor = vec4(inTexCoord, 0, 1);
 }
 )";
 
@@ -97,18 +90,19 @@ struct Mesh
 {
 	VkMana::BufferHandle VertexBuffer;
 	VkMana::BufferHandle IndexBuffer;
-	uint32_t IndexCount;
+	uint32_t IndexCount = 0;
 };
 
 bool LoadObjMesh(Mesh& outMesh, VkMana::Context& context, const std::string& filename)
 {
 	std::vector<Vertex> vertices;
-	std::vector<uint32_t> indices;
+	std::vector<uint16_t> indices;
 
 	tinyobj::attrib_t attrib;
 	std::vector<tinyobj::shape_t> shapes;
 	std::vector<tinyobj::material_t> materials;
-	std::string warn, err;
+	std::string warn;
+	std::string err;
 
 	if (!tinyobj::LoadObj(&attrib, &shapes, &materials, &warn, &err, filename.c_str()))
 	{
@@ -118,7 +112,7 @@ bool LoadObjMesh(Mesh& outMesh, VkMana::Context& context, const std::string& fil
 		return false;
 	}
 
-	std::unordered_map<Vertex, uint32_t> uniqueVertices{};
+	std::unordered_map<Vertex, uint16_t> uniqueVertices{};
 
 	for (const auto& shape : shapes)
 	{
@@ -130,17 +124,22 @@ bool LoadObjMesh(Mesh& outMesh, VkMana::Context& context, const std::string& fil
 				attrib.vertices[3 * index.vertex_index + 1],
 				attrib.vertices[3 * index.vertex_index + 2],
 			};
+			vertex.Normal = {
+				attrib.normals[3 * index.normal_index + 0],
+				attrib.normals[3 * index.normal_index + 1],
+				attrib.normals[3 * index.normal_index + 2],
+			};
 			vertex.TexCoord = {
-				attrib.texcoords[2 * index.vertex_index + 0],
-				attrib.texcoords[2 * index.vertex_index + 1],
+				attrib.texcoords[2 * index.texcoord_index + 0],
+				attrib.texcoords[2 * index.texcoord_index + 1],
 			};
 			if (!uniqueVertices.contains(vertex))
 			{
-				uniqueVertices[vertex] = vertices.size();
+				uniqueVertices[vertex] = uint16_t(vertices.size());
 				vertices.push_back(vertex);
 			}
 
-			indices.push_back(indices.size());
+			indices.push_back(uniqueVertices[vertex]);
 		}
 	}
 
@@ -294,6 +293,14 @@ int main()
 	VkMana::GraphicsPipelineCreateInfo pipelineInfo{
 		.Vertex = vertSpirv,
 		.Fragment = fragSpirv,
+		.VertexAttributes = {
+			vk::VertexInputAttributeDescription(0, 0, vk::Format::eR32G32B32Sfloat, offsetof(Vertex, Position)),
+			vk::VertexInputAttributeDescription(1, 0, vk::Format::eR32G32B32Sfloat, offsetof(Vertex, Normal)),
+			vk::VertexInputAttributeDescription(2, 0, vk::Format::eR32G32Sfloat, offsetof(Vertex, TexCoord)),
+		},
+		.VertexBindings = {
+			vk::VertexInputBindingDescription(0, sizeof(Vertex), vk::VertexInputRate::eVertex),
+		},
 		.Topology = vk::PrimitiveTopology::eTriangleList,
 		.ColorTargetFormats = { vk::Format::eB8G8R8A8Srgb },
 		.Layout = pipelineLayout.Get(),

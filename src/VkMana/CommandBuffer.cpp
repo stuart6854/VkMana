@@ -116,6 +116,16 @@ namespace VkMana
 		m_cmd.pushConstants(m_pipeline->GetLayout(), shaderStages, offset, size, data);
 	}
 
+	void CommandBuffer::BindDescriptorSets(
+		uint32_t firstSet, const std::vector<DescriptorSet*>& sets, const std::vector<uint32_t>& dynamicOffsets)
+	{
+		std::vector<vk::DescriptorSet> descSets(sets.size());
+		for (auto i = 0; i < sets.size(); ++i)
+			descSets[i] = sets[i]->GetSet();
+
+		m_cmd.bindDescriptorSets(m_pipeline->GetBindPoint(), m_pipeline->GetLayout(), firstSet, descSets, dynamicOffsets);
+	}
+
 	void CommandBuffer::BindIndexBuffer(const Buffer* buffer, uint64_t offsetBytes, vk::IndexType indexType)
 	{
 		m_cmd.bindIndexBuffer(buffer->GetBuffer(), offsetBytes, indexType);

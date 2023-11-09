@@ -35,6 +35,8 @@ namespace VkMana
 		void Write(const ImageView* image, const Sampler* sampler, uint32_t binding);
 		// 	void Write(const Buffer* image, uint32_t binding, uint64_t offset, uint64_t range);
 
+		auto GetSet() const -> auto { return m_set; }
+
 	private:
 		friend class Context;
 

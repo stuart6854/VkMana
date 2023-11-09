@@ -53,9 +53,12 @@ layout (location = 0) in vec2 inTexCoord;
 
 layout (location = 0) out vec4 outFragColor;
 
+layout(set = 0, binding = 0) uniform sampler2D uTexture;
+
 void main()
 {
-	outFragColor = vec4(inTexCoord, 0, 1);
+	// outFragColor = vec4(inTexCoord, 0, 1);
+	outFragColor = texture(uTexture, inTexCoord);
 }
 )";
 
@@ -301,14 +304,14 @@ int main()
 	auto depthTarget = context.CreateImage(depthImageInfo, nullptr);
 
 	std::vector<vk::DescriptorSetLayoutBinding> setBindings{
-		{ 0, vk::DescriptorType::eStorageBuffer, 1, vk::ShaderStageFlagBits::eAll },
+		{ 0, vk::DescriptorType::eCombinedImageSampler, 1, vk::ShaderStageFlagBits::eFragment },
 	};
 	auto setLayout = context.CreateSetLayout(setBindings);
 
 	VkMana::PipelineLayoutCreateInfo pipelineLayoutInfo{
 		.PushConstantRange = { vk::ShaderStageFlagBits::eVertex, 0, 192 },
 		.SetLayouts = {
-			// setLayout.Get(),
+			 setLayout.Get(),
 		},
 	};
 	auto pipelineLayout = context.CreatePipelineLayout(pipelineLayoutInfo);
@@ -389,9 +392,8 @@ int main()
 		 * Update Uniforms & Descriptors
 		 */
 
-		auto globalSet = context.RequestDescriptorSet(setLayout.Get());
-		// globalSet->Write(imageView, sampler, 0);
-		// globalSet->Write(buffer, 1, 0, 512);
+		auto textureSet = context.RequestDescriptorSet(setLayout.Get());
+		textureSet->Write(texture->GetImageView(VkMana::ImageViewType::Texture), context.GetLinearSampler().Get(), 0);
 
 		/**
 		 * Render
@@ -406,6 +408,7 @@ int main()
 		cmd->BindPipeline(pipeline.Get());
 		cmd->SetViewport(0, WindowHeight, WindowWidth, -WindowHeight);
 		cmd->SetScissor(0, 0, WindowWidth, WindowHeight);
+		cmd->BindDescriptorSets(0, { textureSet.Get() }, {});
 		cmd->SetPushConstants(vk::ShaderStageFlagBits::eVertex, 0, sizeof(PushConstants), &pushConsts);
 		cmd->BindIndexBuffer(mesh.IndexBuffer.Get());
 		cmd->BindVertexBuffers(0, { mesh.VertexBuffer.Get() }, { 0 });

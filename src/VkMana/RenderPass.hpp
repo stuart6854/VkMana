@@ -22,7 +22,7 @@ namespace VkMana
 				.Clear = true,
 				.Store = true,
 				.ClearValue = { 1.0f, 1.0f, 1.0f, 1.0f },
-				.PreLayout = vk::ImageLayout::eColorAttachmentOptimal,
+				.PreLayout = vk::ImageLayout::eUndefined,
 				.PostLayout = vk::ImageLayout::eShaderReadOnlyOptimal,
 			};
 		}

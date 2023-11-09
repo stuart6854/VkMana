@@ -116,9 +116,29 @@ namespace VkMana
 		m_cmd.pushConstants(m_pipeline->GetLayout(), shaderStages, offset, size, data);
 	}
 
+	void CommandBuffer::BindIndexBuffer(const Buffer* buffer, uint64_t offsetBytes, vk::IndexType indexType)
+	{
+		m_cmd.bindIndexBuffer(buffer->GetBuffer(), offsetBytes, indexType);
+	}
+
+	void CommandBuffer::BindVertexBuffers(
+		uint32_t firstBinding, const std::vector<const Buffer*>& buffers, const std::vector<uint64_t>& offsets)
+	{
+		std::vector<vk::Buffer> vtxBuffers(buffers.size());
+		for (auto i = 0; i < buffers.size(); ++i)
+			vtxBuffers[i] = buffers[i]->GetBuffer();
+
+		m_cmd.bindVertexBuffers(firstBinding, vtxBuffers, offsets);
+	}
+
 	void CommandBuffer::Draw(uint32_t vertexCount, uint32_t firstVertex)
 	{
 		m_cmd.draw(vertexCount, 1, firstVertex, 0);
+	}
+
+	void CommandBuffer::DrawIndexed(uint32_t indexCount, uint32_t firstIndex, uint32_t vertexOffset)
+	{
+		m_cmd.drawIndexed(indexCount, 1, firstIndex, vertexOffset, 0);
 	}
 
 	void CommandBuffer::TransitionImage(const ImageTransitionInfo& info)

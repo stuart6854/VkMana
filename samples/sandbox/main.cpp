@@ -328,8 +328,8 @@ int main()
 		auto windowTitle = std::format("{} - {}ms", WindowTitle, uint32_t(deltaTime * 1000));
 		SDL_SetWindowTitle(window, windowTitle.c_str());
 
-		const auto rotDegrees = 45.0f * deltaTime;
-		pushConsts.modelMatrix = glm::rotate(pushConsts.modelMatrix, glm::radians(rotDegrees), glm::vec3(0, 1, 0));
+		// const auto rotDegrees = 45.0f * deltaTime;
+		// pushConsts.modelMatrix = glm::rotate(pushConsts.modelMatrix, glm::radians(rotDegrees), glm::vec3(0, 1, 0));
 
 		context.BeginFrame();
 		auto cmd = context.RequestCmd();
@@ -352,7 +352,9 @@ int main()
 		cmd->SetViewport(0, 0, WindowWidth, WindowHeight);
 		cmd->SetScissor(0, 0, WindowWidth, WindowHeight);
 		cmd->SetPushConstants(vk::ShaderStageFlagBits::eVertex, 0, sizeof(PushConstants), &pushConsts);
-		cmd->Draw(3, 0);
+		cmd->BindIndexBuffer(mesh.IndexBuffer.Get());
+		cmd->BindVertexBuffers(0, { mesh.VertexBuffer.Get() }, { 0 });
+		cmd->DrawIndexed(mesh.IndexCount, 0, 0);
 		cmd->EndRenderPass();
 
 		context.Submit(cmd);

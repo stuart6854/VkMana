@@ -47,7 +47,11 @@ namespace VkMana
 		void SetScissor(int32_t x, int32_t y, uint32_t width, uint32_t height);
 		void SetPushConstants(vk::ShaderStageFlags shaderStages, uint32_t offset, uint32_t size, const void* data);
 
+		void BindIndexBuffer(const Buffer* buffer, uint64_t offsetBytes = 0, vk::IndexType indexType = vk::IndexType::eUint16);
+		void BindVertexBuffers(uint32_t firstBinding, const std::vector<const Buffer*>& buffers, const std::vector<uint64_t>& offsets);
+
 		void Draw(uint32_t vertexCount, uint32_t firstVertex);
+		void DrawIndexed(uint32_t indexCount, uint32_t firstIndex, uint32_t vertexOffset);
 
 		void TransitionImage(const ImageTransitionInfo& info);
 

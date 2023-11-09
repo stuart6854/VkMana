@@ -796,8 +796,19 @@ namespace VkMana
 
 		/* Extension Features */
 
+		vk::PhysicalDeviceDescriptorIndexingFeatures descriptorIndexingFeatures{};
+		descriptorIndexingFeatures.setRuntimeDescriptorArray(VK_TRUE);			// Support SPIRV RuntimeDescriptorArray capability.
+		descriptorIndexingFeatures.setDescriptorBindingPartiallyBound(VK_TRUE); // Descriptor sets do not need to have valid descriptors.
+		descriptorIndexingFeatures.setShaderSampledImageArrayNonUniformIndexing(VK_TRUE);
+		descriptorIndexingFeatures.setShaderUniformBufferArrayNonUniformIndexing(VK_TRUE);
+		descriptorIndexingFeatures.setShaderStorageBufferArrayNonUniformIndexing(VK_TRUE);
+		descriptorIndexingFeatures.setDescriptorBindingSampledImageUpdateAfterBind(VK_TRUE);
+		descriptorIndexingFeatures.setDescriptorBindingStorageBufferUpdateAfterBind(VK_TRUE);
+		descriptorIndexingFeatures.setDescriptorBindingUniformBufferUpdateAfterBind(VK_TRUE);
+
 		vk::PhysicalDeviceSynchronization2Features sync2Features{};
 		sync2Features.setSynchronization2(VK_TRUE);
+		sync2Features.setPNext(&descriptorIndexingFeatures);
 
 		vk::PhysicalDeviceDynamicRenderingFeatures dynRenderFeatures{};
 		dynRenderFeatures.setDynamicRendering(VK_TRUE);

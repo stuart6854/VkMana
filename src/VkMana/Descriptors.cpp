@@ -33,6 +33,22 @@ namespace VkMana
 		m_ctx->GetDevice().updateDescriptorSets(write, {});
 	}
 
+	void DescriptorSet::Write(const Buffer* buffer, uint32_t binding, vk::DescriptorType descriptorType, uint64_t offset, uint64_t range)
+	{
+		vk::DescriptorBufferInfo bufferInfo{};
+		bufferInfo.setBuffer(buffer->GetBuffer());
+		bufferInfo.setOffset(offset);
+		bufferInfo.setRange(range);
+
+		vk::WriteDescriptorSet write{};
+		write.setDescriptorType(descriptorType);
+		write.setDstSet(m_set);
+		write.setDstBinding(binding);
+		write.setDescriptorCount(1);
+		write.setBufferInfo(bufferInfo);
+		m_ctx->GetDevice().updateDescriptorSets(write, {});
+	}
+
 	DescriptorSet::DescriptorSet(Context* context, vk::DescriptorSet set)
 		: m_ctx(context)
 		, m_set(set)

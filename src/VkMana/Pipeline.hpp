@@ -26,6 +26,9 @@ namespace VkMana
 		std::vector<uint32_t> Vertex;
 		std::vector<uint32_t> Fragment;
 
+		std::vector<vk::VertexInputAttributeDescription> VertexAttributes;
+		std::vector<vk::VertexInputBindingDescription> VertexBindings;
+
 		vk::PrimitiveTopology Topology;
 
 		std::vector<vk::Format> ColorTargetFormats;

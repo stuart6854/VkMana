@@ -356,6 +356,8 @@ namespace VkMana
 		CreateShaderModule(info.Fragment, vk::ShaderStageFlagBits::eFragment);
 
 		vk::PipelineVertexInputStateCreateInfo vertexInputState{};
+		vertexInputState.setVertexAttributeDescriptions(info.VertexAttributes);
+		vertexInputState.setVertexBindingDescriptions(info.VertexBindings);
 
 		vk::PipelineInputAssemblyStateCreateInfo inputAssemblyState{};
 		inputAssemblyState.setTopology(info.Topology);

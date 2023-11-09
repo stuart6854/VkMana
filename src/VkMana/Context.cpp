@@ -369,7 +369,10 @@ namespace VkMana
 		viewportState.setScissorCount(1);  // Dynamic State
 
 		vk::PipelineRasterizationStateCreateInfo rasterizationState{};
-		rasterizationState.setLineWidth(1.0f);
+		rasterizationState.setFrontFace(vk::FrontFace::eClockwise);	 // #TODO: Make dynamic state.
+		rasterizationState.setPolygonMode(vk::PolygonMode::eFill);	 // #TODO: Make dynamic state.
+		rasterizationState.setCullMode(vk::CullModeFlagBits::eBack); // #TODO: Make dynamic state.
+		rasterizationState.setLineWidth(1.0f);						 // #TODO: Make dynamic state.
 
 		vk::PipelineMultisampleStateCreateInfo multisampleState{};
 

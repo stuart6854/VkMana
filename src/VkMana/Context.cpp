@@ -377,6 +377,9 @@ namespace VkMana
 		vk::PipelineMultisampleStateCreateInfo multisampleState{};
 
 		vk::PipelineDepthStencilStateCreateInfo depthStencilState{};
+		depthStencilState.setDepthTestEnable(VK_TRUE);			   // #TODO: Make dynamic state.
+		depthStencilState.setDepthWriteEnable(VK_TRUE);			   // #TODO: Make dynamic state.
+		depthStencilState.setDepthCompareOp(vk::CompareOp::eLess); // #TODO: Make dynamic state.
 
 		vk::PipelineColorBlendAttachmentState defaultBlendAttachment{};
 		defaultBlendAttachment.setColorWriteMask(vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG

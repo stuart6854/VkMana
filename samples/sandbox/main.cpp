@@ -264,6 +264,9 @@ int main()
 		return 1;
 	}
 
+	auto depthImageInfo = VkMana::ImageCreateInfo::DepthStencilTarget(WindowWidth, WindowHeight, false);
+	auto depthTarget = context.CreateImage(depthImageInfo);
+
 	std::vector<vk::DescriptorSetLayoutBinding> setBindings{
 		{ 0, vk::DescriptorType::eStorageBuffer, 1, vk::ShaderStageFlagBits::eAll },
 	};
@@ -303,6 +306,7 @@ int main()
 		},
 		.Topology = vk::PrimitiveTopology::eTriangleList,
 		.ColorTargetFormats = { vk::Format::eB8G8R8A8Srgb },
+		.DepthTargetFormat = vk::Format::eD24UnormS8Uint,
 		.Layout = pipelineLayout.Get(),
 	};
 	auto pipeline = context.CreateGraphicsPipeline(pipelineInfo);
@@ -353,7 +357,11 @@ int main()
 		 * Render
 		 */
 
+		auto rpDepthTarget =
+			VkMana::RenderPassTarget::DefaultDepthStencilTarget(depthTarget->GetImageView(VkMana::ImageViewType::RenderTarget));
 		auto rpInfo = context.GetSurfaceRenderPass(&wsi);
+		rpInfo.Targets.push_back(rpDepthTarget);
+
 		cmd->BeginRenderPass(rpInfo);
 		cmd->BindPipeline(pipeline.Get());
 		cmd->SetViewport(0, WindowHeight, WindowWidth, -WindowHeight);

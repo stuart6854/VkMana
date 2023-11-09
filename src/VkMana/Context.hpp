@@ -15,7 +15,7 @@
 
 namespace VkMana
 {
-	class Context
+	class Context : public IntrusivePtrEnabled<Context>
 	{
 	public:
 		Context() = default;
@@ -141,5 +141,6 @@ namespace VkMana
 		std::vector<vk::Semaphore> m_submitWaitSemaphores;
 		std::vector<vk::PipelineStageFlags> m_submitWaitStageMasks;
 	};
+	using ContextHandle = IntrusivePtr<Context>;
 
 } // namespace VkMana

@@ -1,17 +1,17 @@
 #define SDL_MAIN_HANDLED
-#include <SDL.h>
-#include <SDL_vulkan.h>
-#include <SDL_syswm.h>
+#include <../../../cmake-build-debug/third_party/sdl2/include/SDL2/SDL.h>
+#include <../../../cmake-build-debug/third_party/sdl2/include/SDL2/SDL_vulkan.h>
+#include <../../../cmake-build-debug/third_party/sdl2/include/SDL2/SDL_syswm.h>
 #define VULKAN_DEBUG
-#include <VkMana/Logging.hpp>
-#include <VkMana/Context.hpp>
-#include <VkMana/ShaderCompiler.hpp>
+#include <../../../src/VkMana/Logging.hpp>
+#include <../../../src/VkMana/Context.hpp>
+#include <../../../src/VkMana/ShaderCompiler.hpp>
 
 #define TINYOBJLOADER_IMPLEMENTATION
-#include <tiny_obj_loader.h>
+#include <../../../third_party/tinyobjloader/tiny_obj_loader.h>
 
 #define STB_IMAGE_IMPLEMENTATION
-#include <stb_image.h>
+#include <../../../third_party/stb/stb_image.h>
 
 #include <glm/ext/matrix_float4x4.hpp>
 #include <glm/ext/matrix_transform.hpp>

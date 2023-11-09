@@ -309,8 +309,8 @@ int main()
 
 	struct PushConstants
 	{
-		glm::mat4 projMatrix = glm::perspective(glm::radians(60.0f), WindowAspect, 0.1f, 600.0f);
-		glm::mat4 viewMatrix = glm::lookAtRH(glm::vec3(0, 1, -2), glm::vec3(0, 0, 0), glm::vec3(0, 1, 0));
+		glm::mat4 projMatrix = glm::perspectiveLH_ZO(glm::radians(60.0f), WindowAspect, 0.1f, 600.0f);
+		glm::mat4 viewMatrix = glm::lookAtLH(glm::vec3(-1, 0.5f, -1), glm::vec3(0, -0.2f, 0), glm::vec3(0, 1, 0));
 		glm::mat4 modelMatrix = glm::mat4(1.0f);
 	} pushConsts;
 
@@ -356,7 +356,7 @@ int main()
 		auto rpInfo = context.GetSurfaceRenderPass(&wsi);
 		cmd->BeginRenderPass(rpInfo);
 		cmd->BindPipeline(pipeline.Get());
-		cmd->SetViewport(0, 0, WindowWidth, WindowHeight);
+		cmd->SetViewport(0, WindowHeight, WindowWidth, -WindowHeight);
 		cmd->SetScissor(0, 0, WindowWidth, WindowHeight);
 		cmd->SetPushConstants(vk::ShaderStageFlagBits::eVertex, 0, sizeof(PushConstants), &pushConsts);
 		cmd->BindIndexBuffer(mesh.IndexBuffer.Get());

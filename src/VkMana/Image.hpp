@@ -20,6 +20,26 @@ namespace VkMana
 		uint32_t MipLevels = 1;
 		uint32_t ArrayLayers = 1;
 		vk::Format Format = vk::Format::eUndefined;
+		vk::ImageUsageFlags Usage;
+
+		static auto ColorTarget(uint32_t width, uint32_t height, vk::Format format) -> ImageCreateInfo
+		{
+			return ImageCreateInfo{
+				.Width = width,
+				.Height = height,
+				.Format = format,
+				.Usage = vk::ImageUsageFlagBits::eColorAttachment | vk::ImageUsageFlagBits::eSampled,
+			};
+		}
+		static auto DepthStencilTarget(uint32_t width, uint32_t height, bool use32Bit) -> ImageCreateInfo
+		{
+			return ImageCreateInfo{
+				.Width = width,
+				.Height = height,
+				.Format = use32Bit ? vk::Format::eD32SfloatS8Uint : vk::Format::eD24UnormS8Uint,
+				.Usage = vk::ImageUsageFlagBits::eDepthStencilAttachment | vk::ImageUsageFlagBits::eSampled,
+			};
+		}
 	};
 	struct ImageViewCreateInfo
 	{
@@ -54,6 +74,7 @@ namespace VkMana
 		friend class Context;
 
 		Image(Context* context, vk::Image image, const ImageCreateInfo& info);
+		Image(Context* context, vk::Image image, vma::Allocation allocation, const ImageCreateInfo& info);
 
 	private:
 		Context* m_ctx;

@@ -53,6 +53,15 @@ namespace VkMana
 	{
 	}
 
+	Image::Image(Context* context, vk::Image image, vma::Allocation allocation, const ImageCreateInfo& info)
+		: m_ctx(context)
+		, m_image(image)
+		, m_allocation(allocation)
+		, m_info(info)
+		, m_ownsImage(true)
+	{
+	}
+
 	ImageView::~ImageView()
 	{
 		if (m_view)

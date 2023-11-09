@@ -419,6 +419,25 @@ namespace VkMana
 		return IntrusivePtr(new Pipeline(this, info.Layout->GetLayout(), pipeline, vk::PipelineBindPoint::eGraphics));
 	}
 
+	auto Context::CreateImage(const ImageCreateInfo& info) -> ImageHandle
+	{
+		vk::ImageCreateInfo imageInfo{};
+		imageInfo.setExtent({ info.Width, info.Height, info.Depth });
+		imageInfo.setMipLevels(info.MipLevels);
+		imageInfo.setArrayLayers(info.ArrayLayers);
+		imageInfo.setFormat(info.Format);
+		imageInfo.setUsage(info.Usage);
+		imageInfo.setImageType(vk::ImageType::e2D);		   // #TODO: Make auto.
+		imageInfo.setSamples(vk::SampleCountFlagBits::e1); // #TODO: Make optional.
+
+		vma::AllocationCreateInfo allocInfo{};
+
+		auto [image, allocation] = m_allocator.createImage(imageInfo, allocInfo);
+
+		auto imageHandle = IntrusivePtr(new Image(this, image, allocation, info));
+		return imageHandle;
+	}
+
 	auto Context::CreateImageView(const Image* image, const ImageViewCreateInfo& info) -> ImageViewHandle
 	{
 		vk::ImageViewCreateInfo viewInfo{};

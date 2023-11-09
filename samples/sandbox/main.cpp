@@ -10,6 +10,9 @@
 #define TINYOBJLOADER_IMPLEMENTATION
 #include <tiny_obj_loader.h>
 
+#define STB_IMAGE_IMPLEMENTATION
+#include <stb_image.h>
+
 #include <glm/ext/matrix_float4x4.hpp>
 #include <glm/ext/matrix_transform.hpp>
 #include <glm/ext/matrix_clip_space.hpp>
@@ -162,6 +165,36 @@ bool LoadObjMesh(Mesh& outMesh, VkMana::Context& context, const std::string& fil
 	return true;
 }
 
+bool LoadImage(VkMana::ImageHandle& outImage, VkMana::Context& context, const std::string& filename)
+{
+	int32_t width;
+	int32_t height;
+	int32_t comps;
+	stbi_set_flip_vertically_on_load(true);
+	auto* pixels = stbi_load(filename.c_str(), &width, &height, &comps, 4);
+	if (!pixels)
+	{
+		LOG_ERR("Failed to load image: {}", filename);
+		return false;
+	}
+
+	VkMana::ImageCreateInfo imageInfo{
+		.Width = uint32_t(width),
+		.Height = uint32_t(height),
+		.MipLevels = 1,
+		.Format = vk::Format::eR8G8B8A8Unorm,
+		.Usage = vk::ImageUsageFlagBits::eSampled | vk::ImageUsageFlagBits::eTransferDst,
+	};
+	VkMana::ImageDataSource dataSource{
+		.Size = uint32_t(width * height * 4),
+		.Data = pixels,
+	};
+	outImage = context.CreateImage(imageInfo, &dataSource);
+
+	stbi_image_free(pixels);
+	return true;
+}
+
 /*auto CreateBuffer(VkMana::Device& device) -> VkMana::BufferHandle
 {
 	VkMana::BufferCreateInfo info{};
@@ -265,7 +298,7 @@ int main()
 	}
 
 	auto depthImageInfo = VkMana::ImageCreateInfo::DepthStencilTarget(WindowWidth, WindowHeight, false);
-	auto depthTarget = context.CreateImage(depthImageInfo);
+	auto depthTarget = context.CreateImage(depthImageInfo, nullptr);
 
 	std::vector<vk::DescriptorSetLayoutBinding> setBindings{
 		{ 0, vk::DescriptorType::eStorageBuffer, 1, vk::ShaderStageFlagBits::eAll },
@@ -322,6 +355,13 @@ int main()
 	if (!LoadObjMesh(mesh, context, "assets/models/viking_room.obj"))
 	{
 		LOG_ERR("Failed to load mesh.");
+		return 1;
+	}
+
+	VkMana::ImageHandle texture;
+	if (!LoadImage(texture, context, "assets/models/viking_room.png"))
+	{
+		LOG_ERR("Failed to load texture.");
 		return 1;
 	}
 

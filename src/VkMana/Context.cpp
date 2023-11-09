@@ -422,7 +422,7 @@ namespace VkMana
 		return IntrusivePtr(new Pipeline(this, info.Layout->GetLayout(), pipeline, vk::PipelineBindPoint::eGraphics));
 	}
 
-	auto Context::CreateImage(const ImageCreateInfo& info) -> ImageHandle
+	auto Context::CreateImage(const ImageCreateInfo& info, const ImageDataSource* initialData) -> ImageHandle
 	{
 		vk::ImageCreateInfo imageInfo{};
 		imageInfo.setExtent({ info.Width, info.Height, info.Depth });
@@ -438,6 +438,40 @@ namespace VkMana
 		auto [image, allocation] = m_allocator.createImage(imageInfo, allocInfo);
 
 		auto imageHandle = IntrusivePtr(new Image(this, image, allocation, info));
+
+		if (initialData)
+		{
+			// Staging buffer.
+			BufferDataSource bufferSource{
+				.Size = initialData->Size,
+				.Data = initialData->Data,
+			};
+			auto stagingBuffer = CreateBuffer(BufferCreateInfo::Staging(initialData->Size), &bufferSource);
+			auto cmd = RequestCmd();
+
+			ImageTransitionInfo preTransitionInfo{
+				.Image = imageHandle.Get(),
+				.OldLayout = vk::ImageLayout::eUndefined,
+				.NewLayout = vk::ImageLayout::eTransferDstOptimal,
+			};
+			cmd->TransitionImage(preTransitionInfo);
+
+			BufferToImageCopyInfo copyInfo{
+				.SrcBuffer = stagingBuffer.Get(),
+				.DstImage = imageHandle.Get(),
+			};
+			cmd->CopyBufferToImage(copyInfo);
+
+			ImageTransitionInfo postTransitionInfo{
+				.Image = imageHandle.Get(),
+				.OldLayout = vk::ImageLayout::eTransferDstOptimal,
+				.NewLayout = vk::ImageLayout::eShaderReadOnlyOptimal,
+			};
+			cmd->TransitionImage(postTransitionInfo);
+
+			SubmitStaging(cmd);
+		}
+
 		return imageHandle;
 	}
 

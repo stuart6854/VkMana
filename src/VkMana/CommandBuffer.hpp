@@ -31,6 +31,11 @@ namespace VkMana
 		uint64_t SrcOffset = 0;
 		uint64_t DstOffset = 0;
 	};
+	struct BufferToImageCopyInfo
+	{
+		const Buffer* SrcBuffer = nullptr;
+		const Image* DstImage = nullptr;
+	};
 
 	class CommandBuffer : public IntrusivePtrEnabled<CommandBuffer>
 	{
@@ -56,6 +61,7 @@ namespace VkMana
 		void TransitionImage(const ImageTransitionInfo& info);
 
 		void CopyBuffer(const BufferCopyInfo& info);
+		void CopyBufferToImage(const BufferToImageCopyInfo& info);
 
 		/* Getters */
 

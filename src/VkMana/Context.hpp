@@ -48,7 +48,7 @@ namespace VkMana
 		auto CreateSetLayout(std::vector<vk::DescriptorSetLayoutBinding> bindings) -> SetLayoutHandle;
 		auto CreatePipelineLayout(const PipelineLayoutCreateInfo& info) -> PipelineLayoutHandle;
 		auto CreateGraphicsPipeline(const GraphicsPipelineCreateInfo& info) -> PipelineHandle;
-		auto CreateImage(const ImageCreateInfo& info) -> ImageHandle;
+		auto CreateImage(const ImageCreateInfo& info, const ImageDataSource* initialData = nullptr) -> ImageHandle;
 		auto CreateImageView(const Image* image, const ImageViewCreateInfo& info) -> ImageViewHandle;
 		auto CreateBuffer(const BufferCreateInfo& info, const BufferDataSource* initialData = nullptr) -> BufferHandle;
 

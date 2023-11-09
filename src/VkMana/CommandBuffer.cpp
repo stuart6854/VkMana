@@ -224,6 +224,27 @@ namespace VkMana
 		m_cmd.copyBuffer2(copyInfo);
 	}
 
+	void CommandBuffer::CopyBufferToImage(const BufferToImageCopyInfo& info)
+	{
+		vk::BufferImageCopy2 region{};
+		region.setBufferOffset(0);
+		region.setBufferRowLength(0);
+		region.setBufferImageHeight(0);
+		region.setImageExtent({ info.DstImage->GetWidth(), info.DstImage->GetHeight(), info.DstImage->GetDepth() });
+		region.imageSubresource.setAspectMask(info.DstImage->GetAspect());
+		region.imageSubresource.setMipLevel(0);
+		region.imageSubresource.setBaseArrayLayer(0);
+		region.imageSubresource.setLayerCount(1);
+
+		vk::CopyBufferToImageInfo2 copyInfo{};
+		copyInfo.setSrcBuffer(info.SrcBuffer->GetBuffer());
+		copyInfo.setDstImage(info.DstImage->GetImage());
+		copyInfo.setDstImageLayout(vk::ImageLayout::eTransferDstOptimal);
+		copyInfo.setRegions(region);
+
+		m_cmd.copyBufferToImage2(copyInfo);
+	}
+
 	CommandBuffer::CommandBuffer(Context* context, vk::CommandBuffer cmd)
 		: m_ctx(context)
 		, m_cmd(cmd)

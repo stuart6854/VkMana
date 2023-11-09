@@ -41,6 +41,12 @@ namespace VkMana
 			};
 		}
 	};
+	struct ImageDataSource
+	{
+		uint64_t Size = 0;
+		const void* Data = nullptr;
+	};
+
 	struct ImageViewCreateInfo
 	{
 		const Image* Image = nullptr;

@@ -378,11 +378,28 @@ namespace VkMana
 
 		vk::PipelineDepthStencilStateCreateInfo depthStencilState{};
 
+		vk::PipelineColorBlendAttachmentState defaultBlendAttachment{};
+		defaultBlendAttachment.setColorWriteMask(vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG
+			| vk::ColorComponentFlagBits::eB | vk::ColorComponentFlagBits::eA);
+		defaultBlendAttachment.setBlendEnable(VK_FALSE);
+		// #TODO: Enable alpha blending (should just be below).
+		/*defaultBlendAttachment.setSrcColorBlendFactor(vk::BlendFactor::eSrcAlpha);
+		defaultBlendAttachment.setDstColorBlendFactor(vk::BlendFactor::eOneMinusSrcAlpha);
+		defaultBlendAttachment.setColorBlendOp(vk::BlendOp::eAdd);
+		defaultBlendAttachment.setSrcAlphaBlendFactor(vk::BlendFactor::eOne);
+		defaultBlendAttachment.setDstAlphaBlendFactor(vk::BlendFactor::eZero);
+		defaultBlendAttachment.setAlphaBlendOp(vk::BlendOp::eAdd);*/
+		std::vector<vk::PipelineColorBlendAttachmentState> blendAttachments(info.ColorTargetFormats.size(), defaultBlendAttachment);
 		vk::PipelineColorBlendStateCreateInfo colorBlendState{};
+		colorBlendState.setAttachments(blendAttachments);
 
 		std::vector<vk::DynamicState> dynStates{ vk::DynamicState::eViewport, vk::DynamicState::eScissor };
 		vk::PipelineDynamicStateCreateInfo dynamicState{};
 		dynamicState.setDynamicStates(dynStates);
+
+		vk::PipelineRenderingCreateInfo renderingInfo{};
+		renderingInfo.setColorAttachmentFormats(info.ColorTargetFormats);
+		renderingInfo.setDepthAttachmentFormat(info.DepthTargetFormat);
 
 		vk::GraphicsPipelineCreateInfo pipelineInfo{};
 		pipelineInfo.setStages(shaderStages);
@@ -396,6 +413,7 @@ namespace VkMana
 		pipelineInfo.setPColorBlendState(&colorBlendState);
 		pipelineInfo.setPDynamicState(&dynamicState);
 		pipelineInfo.setLayout(info.Layout->GetLayout());
+		pipelineInfo.setPNext(&renderingInfo);
 		auto pipeline = m_device.createGraphicsPipeline({}, pipelineInfo).value; // #TODO: Pipeline Cache
 
 		return IntrusivePtr(new Pipeline(this, info.Layout->GetLayout(), pipeline, vk::PipelineBindPoint::eGraphics));

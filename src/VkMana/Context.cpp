@@ -340,7 +340,8 @@ namespace VkMana
 		// #TODO: Layout caching
 
 		vk::PipelineLayoutCreateInfo layoutInfo{};
-		layoutInfo.setPushConstantRanges(info.PushConstantRange);
+		if (info.PushConstantRange.size > 0)
+			layoutInfo.setPushConstantRanges(info.PushConstantRange);
 		layoutInfo.setSetLayouts(setLayouts);
 		auto layout = m_device.createPipelineLayout(layoutInfo);
 

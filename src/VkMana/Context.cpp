@@ -74,7 +74,8 @@ namespace VkMana
 		};
 		vk::DescriptorPoolCreateInfo poolInfo{};
 		poolInfo.setPoolSizes(poolSizes);
-		poolInfo.setMaxSets(10);
+		poolInfo.setMaxSets(20);
+		poolInfo.setFlags(vk::DescriptorPoolCreateFlagBits::eUpdateAfterBind);
 		m_descriptorPool = m_device.createDescriptorPool(poolInfo);
 
 		m_nearestSampler = CreateSampler({
@@ -306,19 +307,36 @@ namespace VkMana
 		return IntrusivePtr(new DescriptorSet(this, descriptorSet));
 	}
 
-	auto Context::CreateSetLayout(std::vector<vk::DescriptorSetLayoutBinding> bindings) -> SetLayoutHandle
+	auto Context::CreateSetLayout(std::vector<SetLayoutBinding> bindings) -> SetLayoutHandle
 	{
-		std::sort(bindings.begin(), bindings.end(), [](const auto& a, const auto& b) { return a.binding < b.binding; });
+		std::sort(bindings.begin(), bindings.end(), [](const auto& a, const auto& b) { return a.Binding < b.Binding; });
+
+		std::vector<vk::DescriptorSetLayoutBinding> layoutBindings(bindings.size());
+		std::vector<vk::DescriptorBindingFlags> bindingFlags(bindings.size());
+		for (auto i = 0; i < bindings.size(); ++i)
+		{
+			const auto& binding = bindings[i];
+			layoutBindings[i] = { binding.Binding, binding.Type, binding.Count, binding.StageFlags };
+			bindingFlags[i] = binding.BindingFlags;
+		}
 
 		size_t hash = 0;
-		for (auto& binding : bindings)
-			HashCombine(hash, binding);
+		for (auto i = 0; i < bindings.size(); ++i)
+		{
+			HashCombine(hash, layoutBindings[i]);
+			HashCombine(hash, bindingFlags[i]);
+		}
 
 		// #TODO: Layout caching
 
+		vk::DescriptorSetLayoutBindingFlagsCreateInfo bindingsFlagsInfo{};
+		bindingsFlagsInfo.setBindingFlags(bindingFlags);
+
 		vk::DescriptorSetLayoutCreateInfo layoutInfo{};
-		layoutInfo.setBindings(bindings);
-		auto layout = m_device.createDescriptorSetLayout(layoutInfo);
+		layoutInfo.setBindings(layoutBindings);
+		layoutInfo.setFlags(vk::DescriptorSetLayoutCreateFlagBits::eUpdateAfterBindPoolEXT);
+		layoutInfo.setPNext(&bindingsFlagsInfo);
+		const auto layout = m_device.createDescriptorSetLayout(layoutInfo);
 
 		for (auto& frame : m_frames)
 		{

@@ -49,6 +49,33 @@ namespace VkMana
 		m_ctx->GetDevice().updateDescriptorSets(write, {});
 	}
 
+	void DescriptorSet::WriteArray(
+		uint32_t binding, uint32_t arrayOffset, const std::vector<const ImageView*>& images, const Sampler* sampler)
+	{
+		std::vector<vk::DescriptorImageInfo> imageInfos(images.size());
+		std::vector<vk::WriteDescriptorSet> writes(images.size());
+
+		for (auto i = 0; i < images.size(); ++i)
+		{
+			auto& image = images[i];
+
+			auto& imageInfo = imageInfos[i];
+			imageInfo.setImageView(image->GetView());
+			imageInfo.setImageLayout(vk::ImageLayout::eShaderReadOnlyOptimal);
+			imageInfo.setSampler(sampler->GetSampler());
+
+			auto& write = writes[i];
+			write.setDescriptorType(vk::DescriptorType::eCombinedImageSampler);
+			write.setDstSet(m_set);
+			write.setDstBinding(binding);
+			write.setDstArrayElement(arrayOffset + i);
+			write.setDescriptorCount(1);
+			write.setImageInfo(imageInfo);
+		}
+
+		m_ctx->GetDevice().updateDescriptorSets(writes, {});
+	}
+
 	DescriptorSet::DescriptorSet(Context* context, vk::DescriptorSet set)
 		: m_ctx(context)
 		, m_set(set)

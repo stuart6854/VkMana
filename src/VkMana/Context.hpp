@@ -45,7 +45,7 @@ namespace VkMana
 
 		auto RequestDescriptorSet(const SetLayout* layout) -> DescriptorSetHandle;
 
-		auto CreateSetLayout(std::vector<vk::DescriptorSetLayoutBinding> bindings) -> SetLayoutHandle;
+		auto CreateSetLayout(std::vector<SetLayoutBinding> bindings) -> SetLayoutHandle;
 		auto CreatePipelineLayout(const PipelineLayoutCreateInfo& info) -> PipelineLayoutHandle;
 		auto CreateGraphicsPipeline(const GraphicsPipelineCreateInfo& info) -> PipelineHandle;
 		auto CreateImage(ImageCreateInfo info, const ImageDataSource* initialData = nullptr) -> ImageHandle;

@@ -4,9 +4,20 @@
 #include "Image.hpp"
 #include "Buffer.hpp"
 
+#include <glm/ext/scalar_uint_sized.hpp>
+
 namespace VkMana
 {
 	class Context;
+
+	struct SetLayoutBinding
+	{
+		uint32_t Binding = 0;
+		vk::DescriptorType Type;
+		uint32_t Count = 1;
+		vk::ShaderStageFlags StageFlags;
+		vk::DescriptorBindingFlags BindingFlags;
+	};
 
 	class SetLayout : public IntrusivePtrEnabled<SetLayout>
 	{
@@ -35,6 +46,8 @@ namespace VkMana
 
 		void Write(const ImageView* image, const Sampler* sampler, uint32_t binding);
 		void Write(const Buffer* buffer, uint32_t binding, vk::DescriptorType descriptorType, uint64_t offset, uint64_t range);
+
+		void WriteArray(uint32_t binding, uint32_t arrayOffset, const std::vector<const ImageView*>& images, const Sampler* sampler);
 
 		auto GetSet() const -> auto { return m_set; }
 

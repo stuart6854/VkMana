@@ -65,10 +65,10 @@ namespace VkMana::Sample
 					const auto imageIndex = gltfModel.textures[mat.values["baseColorTexture"].TextureIndex()].source;
 					material->SetAlbedoTexture(images[imageIndex]);
 				}
-				if (mat.values.contains("normalTexture"))
+				if (mat.additionalValues.contains("normalTexture"))
 				{
-					const auto imageIndex = gltfModel.textures[mat.values["normalTexture"].TextureIndex()].source;
-					material->SetAlbedoTexture(images[imageIndex]);
+					const auto imageIndex = gltfModel.textures[mat.additionalValues["normalTexture"].TextureIndex()].source;
+					material->SetNormalTexture(images[imageIndex]);
 				}
 
 				materials.push_back(material);

@@ -24,12 +24,12 @@ void main()
     outPosition = vec4(inWorldPos, 1.0);
 
     // Calculate normal in tangent space
-    vec3 N = normalize(inNormal);
-    vec3 T = normalize(inTangent);
-    vec3 B = cross(N, T);
-    mat3 TBN = mat3(T, B, N);
-    vec3 tNorm = TBN * normalize(texture(uGlobalTextures[uConsts.normalMapIdx], inTexCoord).xyz * 2.0 - vec3(1.0));
-    outNormal = vec4(tNorm, 1.0);
+    vec3 normal = normalize(inNormal);
+    vec3 tangent = normalize(inTangent);
+    vec3 bitangent = cross(normal, tangent);
+    mat3 TBN = mat3(tangent, bitangent, normal);
+    vec3 localNormal = normalize(TBN * (texture(uGlobalTextures[uConsts.normalMapIdx], inTexCoord).xyz * 2.0 - 1.0));
+    outNormal = vec4(localNormal, 1.0);
 
     outAlbedo = texture(uGlobalTextures[uConsts.albedoMapIdx], inTexCoord);
 }

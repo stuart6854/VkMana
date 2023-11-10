@@ -130,8 +130,8 @@ int main()
 		SDL_SetWindowTitle(window, windowTitle.c_str());
 
 		auto projMat = glm::perspectiveLH_ZO(glm::radians(60.0f), WindowAspect, 0.1f, 500.0f);
-		const glm::vec3 cameraPos = { 0, 1, -8 };
-		const glm::vec3 cameraTarget = { 0, 0, 0 };
+		const glm::vec3 cameraPos = { -3, 3, -4 };
+		const glm::vec3 cameraTarget = { 0, 0.5f, 0 };
 		auto viewMat = glm::lookAtLH(cameraPos, cameraTarget, glm::vec3(0, 1, 0));
 
 		renderer.SetSceneCamera(projMat, viewMat);

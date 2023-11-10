@@ -185,8 +185,15 @@ namespace VkMana
 	{
 		auto& frame = GetFrame();
 
-		auto fence = m_device.createFence({});
-		m_queueInfo.GraphicsQueue.submit({}, fence);
+		const auto signalSemaphore = m_device.createSemaphore({});
+		const auto fence = m_device.createFence({});
+
+		vk::SubmitInfo submitInfo{};
+		submitInfo.setSignalSemaphores(signalSemaphore);
+		m_queueInfo.GraphicsQueue.submit(submitInfo, fence);
+
+		m_presentWaitSemaphores.push_back(signalSemaphore);
+		GetFrame().Garbage->Bin(signalSemaphore);
 
 		GetFrame().FrameFences.push_back(fence);
 		GetFrame().Garbage->Bin(fence);
@@ -209,7 +216,7 @@ namespace VkMana
 		std::vector<vk::Result> results(swapchains.size());
 
 		vk::PresentInfoKHR presentInfo{};
-		presentInfo.setWaitSemaphores({});
+		presentInfo.setWaitSemaphores(m_presentWaitSemaphores);
 		presentInfo.setSwapchains(swapchains);
 		presentInfo.setImageIndices(imageIndices);
 		presentInfo.setResults(results);
@@ -221,6 +228,8 @@ namespace VkMana
 			auto& surface = m_surfaces[i];
 			// #TODO: Handle present result.
 		}
+
+		m_presentWaitSemaphores.clear();
 	}
 
 	auto Context::RequestCmd() -> CmdBuffer

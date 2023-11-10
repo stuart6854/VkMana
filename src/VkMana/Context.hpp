@@ -143,6 +143,7 @@ namespace VkMana
 
 		std::vector<vk::Semaphore> m_submitWaitSemaphores;
 		std::vector<vk::PipelineStageFlags> m_submitWaitStageMasks;
+		std::vector<vk::Semaphore> m_presentWaitSemaphores;
 	};
 	using ContextHandle = IntrusivePtr<Context>;
 

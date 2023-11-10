@@ -164,9 +164,11 @@ namespace VkMana
 			case vk::ImageLayout::eTransferSrcOptimal:
 				srcStage = vk::PipelineStageFlagBits2::eTransfer;
 				srcAccess = vk::AccessFlagBits2::eTransferRead;
+				break;
 			case vk::ImageLayout::eTransferDstOptimal:
 				srcStage = vk::PipelineStageFlagBits2::eTransfer;
 				srcAccess = vk::AccessFlagBits2::eTransferWrite;
+				break;
 			case vk::ImageLayout::eColorAttachmentOptimal:
 				srcStage = vk::PipelineStageFlagBits2::eColorAttachmentOutput;
 				srcAccess = vk::AccessFlagBits2::eColorAttachmentWrite;
@@ -189,26 +191,28 @@ namespace VkMana
 		switch (info.NewLayout)
 		{
 			case vk::ImageLayout::eTransferSrcOptimal:
-				srcStage = vk::PipelineStageFlagBits2::eTransfer;
-				srcAccess = vk::AccessFlagBits2::eTransferRead;
+				dstStage = vk::PipelineStageFlagBits2::eTransfer;
+				dstAccess = vk::AccessFlagBits2::eTransferRead;
+				break;
 			case vk::ImageLayout::eTransferDstOptimal:
-				srcStage = vk::PipelineStageFlagBits2::eTransfer;
-				srcAccess = vk::AccessFlagBits2::eTransferWrite;
+				dstStage = vk::PipelineStageFlagBits2::eTransfer;
+				dstAccess = vk::AccessFlagBits2::eTransferWrite;
+				break;
 			case vk::ImageLayout::eColorAttachmentOptimal:
-				srcStage = vk::PipelineStageFlagBits2::eColorAttachmentOutput;
-				srcAccess = vk::AccessFlagBits2::eColorAttachmentWrite;
+				dstStage = vk::PipelineStageFlagBits2::eColorAttachmentOutput;
+				dstAccess = vk::AccessFlagBits2::eColorAttachmentWrite;
 				break;
 			case vk::ImageLayout::eDepthStencilAttachmentOptimal:
-				srcStage = vk::PipelineStageFlagBits2::eEarlyFragmentTests;
-				srcAccess = vk::AccessFlagBits2::eDepthStencilAttachmentRead;
+				dstStage = vk::PipelineStageFlagBits2::eEarlyFragmentTests;
+				dstAccess = vk::AccessFlagBits2::eDepthStencilAttachmentRead;
 				break;
 			case vk::ImageLayout::eShaderReadOnlyOptimal:
-				srcStage = vk::PipelineStageFlagBits2::eFragmentShader;
-				srcAccess = vk::AccessFlagBits2::eShaderRead;
+				dstStage = vk::PipelineStageFlagBits2::eFragmentShader;
+				dstAccess = vk::AccessFlagBits2::eShaderRead;
 				break;
 			case vk::ImageLayout::ePresentSrcKHR:
-				srcStage = vk::PipelineStageFlagBits2::eBottomOfPipe;
-				srcAccess = vk::AccessFlagBits2::eNone;
+				dstStage = vk::PipelineStageFlagBits2::eBottomOfPipe;
+				dstAccess = vk::AccessFlagBits2::eNone;
 				break;
 			default:
 				assert(false);

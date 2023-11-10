@@ -6,6 +6,8 @@
 #include <string>
 #include <sstream>
 
+constexpr auto MaxBindlessImages = 100;
+
 using namespace VkMana;
 
 namespace VkMana::Sample
@@ -52,14 +54,25 @@ namespace VkMana::Sample
 		m_mainWindow = mainWindow;
 		m_mainWindowSize = { m_mainWindow->GetSurfaceWidth(), m_mainWindow->GetSurfaceHeight() };
 
-		const std::vector<uint8_t> WhitePixels = { 255, 255, 255, 255 };
-		const auto whiteImageInfo = ImageCreateInfo::Texture(1, 1, 1);
-		const ImageDataSource whiteImageDataSrc{ .Size = 1 * 1 * 4, .Data = WhitePixels.data() };
-		m_whiteImage = m_ctx->CreateImage(whiteImageInfo, &whiteImageDataSrc);
+		{ // White image
+			const std::vector<uint8_t> WhitePixels = { 255, 255, 255, 255 };
+			const auto imageInfo = ImageCreateInfo::Texture(1, 1, 1);
+			const ImageDataSource imageDataSrc{ .Size = 1 * 1 * 4, .Data = WhitePixels.data() };
+			m_whiteImage = m_ctx->CreateImage(imageInfo, &imageDataSrc);
+		}
+		{ // Black image
+			const std::vector<uint8_t> BlackPixels = { 0, 0, 0, 255 };
+			const auto imageInfo = ImageCreateInfo::Texture(1, 1, 1);
+			const ImageDataSource imageDataSrc{ .Size = 1 * 1 * 4, .Data = BlackPixels.data() };
+			m_blackImage = m_ctx->CreateImage(imageInfo, &imageDataSrc);
+		}
 
-		// #TODO: Make bindless.
 		m_bindlessSetLayout = m_ctx->CreateSetLayout({
-			vk::DescriptorSetLayoutBinding(0, vk::DescriptorType::eCombinedImageSampler, 1, vk::ShaderStageFlagBits::eFragment),
+			{ 0,
+				vk::DescriptorType::eCombinedImageSampler,
+				MaxBindlessImages,
+				vk::ShaderStageFlagBits::eFragment,
+				vk::DescriptorBindingFlagBits::ePartiallyBound },
 		});
 
 		SetupGBufferPass();
@@ -78,14 +91,27 @@ namespace VkMana::Sample
 	void Renderer::Submit(StaticMesh* mesh, glm::mat4 transform)
 	{
 		m_staticInstances.emplace_back(mesh, transform);
+
+		for (auto& mat : mesh->GetMaterials())
+		{
+			GetMaterialIndex(mat.Get());
+
+			for (auto& tex : mat->GetTextures())
+			{
+				GetImageIndex(tex.Get());
+			}
+		}
 	}
 
 	void Renderer::Flush()
 	{
 		m_ctx->BeginFrame();
 
+		GetImageIndex(m_whiteImage.Get());
+		GetImageIndex(m_blackImage.Get());
+
 		m_bindlessSet = m_ctx->RequestDescriptorSet(m_bindlessSetLayout.Get());
-		m_bindlessSet->Write(m_whiteImage->GetImageView(ImageViewType::Texture), m_ctx->GetLinearSampler(), 0);
+		m_bindlessSet->WriteArray(0, 0, m_bindlessImages, m_ctx->GetLinearSampler());
 
 		auto cmd = m_ctx->RequestCmd();
 
@@ -100,6 +126,11 @@ namespace VkMana::Sample
 
 		m_ctx->EndFrame();
 		m_ctx->Present();
+
+		m_knownBindlessImages.clear();
+		m_bindlessImages.clear();
+		m_knownMaterials.clear();
+		m_materials.clear();
 	}
 
 	auto Renderer::CreateMaterial() -> MaterialHandle
@@ -135,7 +166,7 @@ namespace VkMana::Sample
 		};
 
 		m_cameraSetLayout = m_ctx->CreateSetLayout({
-			vk::DescriptorSetLayoutBinding(0, vk::DescriptorType::eUniformBuffer, 1, vk::ShaderStageFlagBits::eVertex),
+			{ 0, vk::DescriptorType::eUniformBuffer, 1, vk::ShaderStageFlagBits::eVertex },
 		});
 
 		const PipelineLayoutCreateInfo layoutInfo{
@@ -190,9 +221,9 @@ namespace VkMana::Sample
 		};
 
 		m_compositionSetLayout = m_ctx->CreateSetLayout({
-			vk::DescriptorSetLayoutBinding(0, vk::DescriptorType::eCombinedImageSampler, 1, vk::ShaderStageFlagBits::eFragment),
-			vk::DescriptorSetLayoutBinding(1, vk::DescriptorType::eCombinedImageSampler, 1, vk::ShaderStageFlagBits::eFragment),
-			vk::DescriptorSetLayoutBinding(2, vk::DescriptorType::eCombinedImageSampler, 1, vk::ShaderStageFlagBits::eFragment),
+			{ 0, vk::DescriptorType::eCombinedImageSampler, 1, vk::ShaderStageFlagBits::eFragment },
+			{ 1, vk::DescriptorType::eCombinedImageSampler, 1, vk::ShaderStageFlagBits::eFragment },
+			{ 2, vk::DescriptorType::eCombinedImageSampler, 1, vk::ShaderStageFlagBits::eFragment },
 		});
 
 		const PipelineLayoutCreateInfo layoutInfo{
@@ -227,7 +258,7 @@ namespace VkMana::Sample
 	void Renderer::SetupScreenPass()
 	{
 		m_screenSetLayout = m_ctx->CreateSetLayout({
-			vk::DescriptorSetLayoutBinding(0, vk::DescriptorType::eCombinedImageSampler, 1, vk::ShaderStageFlagBits::eFragment),
+			{ 0, vk::DescriptorType::eCombinedImageSampler, 1, vk::ShaderStageFlagBits::eFragment },
 		});
 
 		const PipelineLayoutCreateInfo layoutInfo{
@@ -281,11 +312,21 @@ namespace VkMana::Sample
 
 			cmd->BindIndexBuffer(instance.Mesh->GetIndexBuffer(), 0);
 			cmd->BindVertexBuffers(0, { instance.Mesh->GetVertexBuffer() }, { 0 });
-			cmd->SetPushConstants(
-				vk::ShaderStageFlagBits::eVertex | vk::ShaderStageFlagBits::eFragment, 0, sizeof(PushConstantData), &m_pushConstantData);
 
+			auto& materials = instance.Mesh->GetMaterials();
 			for (auto& submesh : instance.Mesh->GetSubmeshes())
 			{
+				auto& material = materials[submesh.MaterialIndex];
+				auto* albedoImage = material->GetAlbedoTexture();
+				auto* normalImage = material->GetNormalTexture();
+
+				m_pushConstantData.albedoMapIndex = GetImageIndex(albedoImage ? albedoImage : m_whiteImage.Get());
+				m_pushConstantData.normalMapIndex = GetImageIndex(normalImage ? normalImage : m_blackImage.Get());
+				cmd->SetPushConstants(vk::ShaderStageFlagBits::eVertex | vk::ShaderStageFlagBits::eFragment,
+					0,
+					sizeof(PushConstantData),
+					&m_pushConstantData);
+
 				cmd->DrawIndexed(submesh.IndexCount, submesh.IndexOffset, submesh.VertexOffset);
 			}
 		}
@@ -319,6 +360,34 @@ namespace VkMana::Sample
 		cmd->BindDescriptorSets(0, { screenTextureSet.Get() }, {});
 		cmd->Draw(3, 0);
 		cmd->EndRenderPass();
+	}
+
+	auto Renderer::GetImageIndex(Image* image) -> uint32_t
+	{
+		const auto it = m_knownBindlessImages.find(image);
+		if (it != m_knownBindlessImages.end())
+		{
+			return it->second;
+		}
+
+		const auto index = m_bindlessImages.size();
+		m_bindlessImages.push_back(image->GetImageView(ImageViewType::Texture));
+		m_knownBindlessImages[image] = index;
+		return index;
+	}
+
+	auto Renderer::GetMaterialIndex(const Material* material) -> uint32_t
+	{
+		const auto it = m_knownMaterials.find(material);
+		if (it != m_knownMaterials.end())
+		{
+			return it->second;
+		}
+
+		const auto index = m_materials.size();
+		m_materials.push_back(material);
+		m_knownMaterials[material] = index;
+		return index;
 	}
 
 } // namespace VkMana::Sample

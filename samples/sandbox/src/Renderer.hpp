@@ -7,6 +7,8 @@
 
 #include <glm/ext/matrix_float4x4.hpp>
 
+#include <unordered_map>
+
 namespace VkMana::Sample
 {
 	class Renderer
@@ -43,12 +45,16 @@ namespace VkMana::Sample
 		void CompositionPass(CmdBuffer& cmd);
 		void ScreenPass(CmdBuffer& cmd);
 
+		auto GetImageIndex(Image* image) -> uint32_t;
+		auto GetMaterialIndex(const Material* material) -> uint32_t;
+
 	private:
 		ContextHandle m_ctx = nullptr;
 		WSI* m_mainWindow = nullptr;
 		glm::uvec2 m_mainWindowSize;
 
 		ImageHandle m_whiteImage = nullptr;
+		ImageHandle m_blackImage = nullptr;
 
 		/* Pass Resources */
 
@@ -98,10 +104,18 @@ namespace VkMana::Sample
 		struct Instance
 		{
 			T* Mesh = nullptr;
+			// uint32_t submesh = 0;
+			// uint32_t MaterialIdx = 0;
 			glm::mat4 Transform = glm::mat4(1.0f);
 		};
 
 		std::vector<Instance<StaticMesh>> m_staticInstances;
+
+		std::unordered_map<const Image*, uint32_t> m_knownBindlessImages;
+		std::vector<const ImageView*> m_bindlessImages;
+
+		std::unordered_map<const Material*, uint32_t> m_knownMaterials;
+		std::vector<const Material*> m_materials;
 	};
 
 } // namespace VkMana::Sample

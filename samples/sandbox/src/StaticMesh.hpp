@@ -50,7 +50,7 @@ namespace VkMana::Sample
 		void SetMaterials(const std::vector<MaterialHandle>& materials);
 
 		auto GetSubmeshes() const -> const auto& { return m_submeshes; }
-		auto GetMaterials() const -> const auto& { return m_materials; }
+		auto GetMaterials() -> auto& { return m_materials; }
 
 	private:
 		friend class Renderer;

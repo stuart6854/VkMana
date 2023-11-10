@@ -138,7 +138,7 @@ namespace VkMana::Sample
 		});
 
 		const PipelineLayoutCreateInfo layoutInfo{
-			.PushConstantRange = { vk::ShaderStageFlagBits::eVertex | vk::ShaderStageFlagBits::eFragment, 0, 68 },
+			.PushConstantRange = { vk::ShaderStageFlagBits::eVertex | vk::ShaderStageFlagBits::eFragment, 0, sizeof(PushConstantData) },
 			.SetLayouts = { m_bindlessSetLayout.Get(), m_cameraSetLayout.Get() },
 		};
 		m_gBufferPipelineLayout = m_ctx->CreatePipelineLayout(layoutInfo);
@@ -161,8 +161,9 @@ namespace VkMana::Sample
 			.Fragment = fragmentBinary,
 			.VertexAttributes = {
 				vk::VertexInputAttributeDescription(0, 0, vk::Format::eR32G32B32Sfloat, offsetof(StaticVertex, Position)),
-				vk::VertexInputAttributeDescription(1, 0, vk::Format::eR32G32B32Sfloat, offsetof(StaticVertex, Normal)),
-				vk::VertexInputAttributeDescription(2, 0, vk::Format::eR32G32Sfloat, offsetof(StaticVertex, TexCoord)),
+				vk::VertexInputAttributeDescription(1, 0, vk::Format::eR32G32Sfloat, offsetof(StaticVertex, TexCoord)),
+				vk::VertexInputAttributeDescription(2, 0, vk::Format::eR32G32B32Sfloat, offsetof(StaticVertex, Normal)),
+				vk::VertexInputAttributeDescription(3, 0, vk::Format::eR32G32B32Sfloat, offsetof(StaticVertex, Tangent)),
 			},
 			.VertexBindings = {
 				vk::VertexInputBindingDescription(0, sizeof(StaticVertex), vk::VertexInputRate::eVertex),

@@ -83,7 +83,8 @@ namespace VkMana::Sample
 		struct PushConstantData
 		{
 			glm::mat4 modelMatrix = glm::mat4(1.0f);
-			uint32_t textureIndex = 0;
+			uint32_t albedoMapIndex = 0;
+			uint32_t normalMapIndex = 0;
 		} m_pushConstantData;
 
 		/* Renderables */

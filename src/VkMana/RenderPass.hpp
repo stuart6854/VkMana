@@ -21,7 +21,7 @@ namespace VkMana
 				.IsDepthStencil = false,
 				.Clear = true,
 				.Store = true,
-				.ClearValue = { 1.0f, 1.0f, 1.0f, 1.0f },
+				.ClearValue = { 0.0f, 0.0f, 0.0f, 1.0f },
 				.PreLayout = vk::ImageLayout::eUndefined,
 				.PostLayout = vk::ImageLayout::eShaderReadOnlyOptimal,
 			};

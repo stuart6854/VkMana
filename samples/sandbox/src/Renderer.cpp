@@ -64,6 +64,7 @@ namespace VkMana::Sample
 
 		SetupGBufferPass();
 		SetupCompositionPass();
+		SetupScreenPass();
 
 		return true;
 	}
@@ -187,6 +188,74 @@ namespace VkMana::Sample
 		m_compositionPass.Targets = {
 			RenderPassTarget::DefaultColorTarget(m_compositionTargetImage->GetImageView(ImageViewType::RenderTarget)),
 		};
+
+		m_compositionSetLayout = m_ctx->CreateSetLayout({
+			vk::DescriptorSetLayoutBinding(0, vk::DescriptorType::eCombinedImageSampler, 1, vk::ShaderStageFlagBits::eFragment),
+			vk::DescriptorSetLayoutBinding(1, vk::DescriptorType::eCombinedImageSampler, 1, vk::ShaderStageFlagBits::eFragment),
+			vk::DescriptorSetLayoutBinding(2, vk::DescriptorType::eCombinedImageSampler, 1, vk::ShaderStageFlagBits::eFragment),
+		});
+
+		const PipelineLayoutCreateInfo layoutInfo{
+			.SetLayouts = { m_compositionSetLayout.Get() },
+		};
+		m_compositionPipelineLayout = m_ctx->CreatePipelineLayout(layoutInfo);
+
+		ShaderBinary vertexBinary;
+		if (!Utils::ReadThenCompileShaderSource(vertexBinary, *m_ctx, shaderc_vertex_shader, "assets/shaders/deferred_composition.vert"))
+		{
+			LOG_ERR("Failed to read/compile Vertex shader.");
+			return;
+		}
+		ShaderBinary fragmentBinary;
+		if (!Utils::ReadThenCompileShaderSource(
+				fragmentBinary, *m_ctx, shaderc_fragment_shader, "assets/shaders/deferred_composition.frag"))
+		{
+			LOG_ERR("Failed to read/compile Fragment shader.");
+			return;
+		}
+
+		const GraphicsPipelineCreateInfo pipelineInfo{
+			.Vertex = vertexBinary,
+			.Fragment = fragmentBinary,
+			.Topology = vk::PrimitiveTopology::eTriangleList,
+			.ColorTargetFormats = { compositionImageInfo.Format },
+			.Layout = m_compositionPipelineLayout.Get(),
+		};
+		m_compositionPipeline = m_ctx->CreateGraphicsPipeline(pipelineInfo);
+	}
+
+	void Renderer::SetupScreenPass()
+	{
+		m_screenSetLayout = m_ctx->CreateSetLayout({
+			vk::DescriptorSetLayoutBinding(0, vk::DescriptorType::eCombinedImageSampler, 1, vk::ShaderStageFlagBits::eFragment),
+		});
+
+		const PipelineLayoutCreateInfo layoutInfo{
+			.SetLayouts = { m_screenSetLayout.Get() },
+		};
+		m_screenPipelineLayout = m_ctx->CreatePipelineLayout(layoutInfo);
+
+		ShaderBinary vertexBinary;
+		if (!Utils::ReadThenCompileShaderSource(vertexBinary, *m_ctx, shaderc_vertex_shader, "assets/shaders/fullscreen_quad.vert"))
+		{
+			LOG_ERR("Failed to read/compile Vertex shader.");
+			return;
+		}
+		ShaderBinary fragmentBinary;
+		if (!Utils::ReadThenCompileShaderSource(fragmentBinary, *m_ctx, shaderc_fragment_shader, "assets/shaders/fullscreen_quad.frag"))
+		{
+			LOG_ERR("Failed to read/compile Fragment shader.");
+			return;
+		}
+
+		const GraphicsPipelineCreateInfo pipelineInfo{
+			.Vertex = vertexBinary,
+			.Fragment = fragmentBinary,
+			.Topology = vk::PrimitiveTopology::eTriangleList,
+			.ColorTargetFormats = { vk::Format::eB8G8R8A8Srgb },
+			.Layout = m_screenPipelineLayout.Get(),
+		};
+		m_screenPipeline = m_ctx->CreateGraphicsPipeline(pipelineInfo);
 	}
 
 	void Renderer::GBufferPass(CmdBuffer& cmd)
@@ -228,17 +297,27 @@ namespace VkMana::Sample
 
 	void Renderer::CompositionPass(CmdBuffer& cmd)
 	{
-		cmd->BeginRenderPass(m_compositionPass);
+		auto compositionSet = m_ctx->RequestDescriptorSet(m_compositionSetLayout.Get());
+		compositionSet->Write(m_positionTargetImage->GetImageView(ImageViewType::Texture), m_ctx->GetLinearSampler(), 0);
+		compositionSet->Write(m_normalTargetImage->GetImageView(ImageViewType::Texture), m_ctx->GetLinearSampler(), 1);
+		compositionSet->Write(m_albedoTargetImage->GetImageView(ImageViewType::Texture), m_ctx->GetLinearSampler(), 2);
 
+		cmd->BeginRenderPass(m_compositionPass);
+		cmd->BindPipeline(m_compositionPipeline.Get());
+		cmd->BindDescriptorSets(0, { compositionSet.Get() }, {});
+		cmd->Draw(3, 0);
 		cmd->EndRenderPass();
 	}
 
 	void Renderer::ScreenPass(CmdBuffer& cmd)
 	{
+		auto screenTextureSet = m_ctx->RequestDescriptorSet(m_screenSetLayout.Get());
+		screenTextureSet->Write(m_compositionTargetImage->GetImageView(ImageViewType::Texture), m_ctx->GetLinearSampler(), 0);
+
 		cmd->BeginRenderPass(m_ctx->GetSurfaceRenderPass(m_mainWindow));
-		// cmd->BindPipeline(pipeline.Get());
-		// cmd->BindDescriptorSets(0, { textureSet.Get() }, {});
-		// cmd->Draw(3, 0, 0);
+		cmd->BindPipeline(m_screenPipeline.Get());
+		cmd->BindDescriptorSets(0, { screenTextureSet.Get() }, {});
+		cmd->Draw(3, 0);
 		cmd->EndRenderPass();
 	}
 

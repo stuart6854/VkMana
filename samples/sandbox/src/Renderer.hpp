@@ -37,6 +37,7 @@ namespace VkMana::Sample
 	private:
 		void SetupGBufferPass();
 		void SetupCompositionPass();
+		void SetupScreenPass();
 
 		void GBufferPass(CmdBuffer& cmd);
 		void CompositionPass(CmdBuffer& cmd);
@@ -67,9 +68,13 @@ namespace VkMana::Sample
 		ImageHandle m_compositionTargetImage;
 		RenderPassInfo m_compositionPass;
 
-		SetLayoutHandle m_compositeSetLayout = nullptr;
-		PipelineLayoutHandle m_compositePipelineLayout = nullptr;
-		PipelineHandle m_compositePipeline = nullptr;
+		SetLayoutHandle m_compositionSetLayout = nullptr;
+		PipelineLayoutHandle m_compositionPipelineLayout = nullptr;
+		PipelineHandle m_compositionPipeline = nullptr;
+
+		SetLayoutHandle m_screenSetLayout = nullptr;
+		PipelineLayoutHandle m_screenPipelineLayout = nullptr;
+		PipelineHandle m_screenPipeline = nullptr;
 
 		/* Uniform Data */
 

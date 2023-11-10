@@ -1,4 +1,11 @@
-add_executable(sample_sandbox main.cpp)
+add_executable(sample_sandbox
+        src/main.cpp
+        src/Renderer.cpp
+        src/StaticMesh.cpp
+        src/Material.hpp
+        src/ModelLoader.cpp
+        src/ModelLoader.hpp
+)
 
 target_link_libraries(sample_sandbox PRIVATE VkMana tinygltf tinyobjloader stb)
 

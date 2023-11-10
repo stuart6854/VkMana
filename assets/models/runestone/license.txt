@@ -1,0 +1,11 @@
+Model Information:
+* title:	Runestone
+* source:	https://sketchfab.com/3d-models/runestone-1aa38beb0c3049a188edf2096a9731fb
+* author:	Glen Ortiz (https://sketchfab.com/roberto_ortiz)
+
+Model License:
+* license type:	CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)
+* requirements:	Author must be credited. Commercial use is allowed.
+
+If you use this 3D model in your project be sure to copy paste this credit wherever you share it:
+This work is based on "Runestone" (https://sketchfab.com/3d-models/runestone-1aa38beb0c3049a188edf2096a9731fb) by Glen Ortiz (https://sketchfab.com/roberto_ortiz) licensed under CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)

@@ -386,7 +386,7 @@ namespace VkMana
 		vk::PipelineRasterizationStateCreateInfo rasterizationState{};
 		rasterizationState.setFrontFace(vk::FrontFace::eClockwise);	 // #TODO: Make dynamic state.
 		rasterizationState.setPolygonMode(vk::PolygonMode::eFill);	 // #TODO: Make dynamic state.
-		rasterizationState.setCullMode(vk::CullModeFlagBits::eBack); // #TODO: Make dynamic state.
+		rasterizationState.setCullMode(vk::CullModeFlagBits::eNone); // #TODO: Make dynamic state.
 		rasterizationState.setLineWidth(1.0f);						 // #TODO: Make dynamic state.
 
 		vk::PipelineMultisampleStateCreateInfo multisampleState{};

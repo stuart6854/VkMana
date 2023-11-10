@@ -362,7 +362,7 @@ int main()
 		 */
 
 		auto textureSet = context.RequestDescriptorSet(setLayout.Get());
-		textureSet->Write(texture->GetImageView(VkMana::ImageViewType::Texture), context.GetLinearSampler().Get(), 0);
+		textureSet->Write(texture->GetImageView(VkMana::ImageViewType::Texture), context.GetLinearSampler(), 0);
 
 		/**
 		 * Render

@@ -23,9 +23,7 @@ namespace VkMana
 			m_linearSampler = nullptr;
 			m_nearestSampler = nullptr;
 
-			for (auto& frame : m_frames)
-			{
-			}
+			for (auto& frame : m_frames) {}
 			m_frames.clear();
 
 			m_device.destroy(m_descriptorPool);
@@ -102,17 +100,17 @@ namespace VkMana
 		uint32_t imageHeight = 0;
 		vk::Format imageFormat = vk::Format::eUndefined;
 		if (!CreateSwapchain(newSurfaceInfo.Swapchain,
-				imageWidth,
-				imageHeight,
-				imageFormat,
-				m_device,
-				wsi->GetSurfaceWidth(),
-				wsi->GetSurfaceHeight(),
-				wsi->IsVSync(),
-				true,
-				{},
-				newSurfaceInfo.Surface,
-				m_gpu))
+			imageWidth,
+			imageHeight,
+			imageFormat,
+			m_device,
+			wsi->GetSurfaceWidth(),
+			wsi->GetSurfaceHeight(),
+			wsi->IsVSync(),
+			true,
+			{},
+			newSurfaceInfo.Surface,
+			m_gpu))
 		{
 			m_instance.destroy(newSurfaceInfo.Surface);
 			m_surfaces.erase(m_surfaces.end() - 1);
@@ -411,29 +409,29 @@ namespace VkMana
 		viewportState.setScissorCount(1);  // Dynamic State
 
 		vk::PipelineRasterizationStateCreateInfo rasterizationState{};
-		rasterizationState.setFrontFace(vk::FrontFace::eClockwise);	 // #TODO: Make dynamic state.
-		rasterizationState.setPolygonMode(vk::PolygonMode::eFill);	 // #TODO: Make dynamic state.
+		rasterizationState.setFrontFace(vk::FrontFace::eClockwise);  // #TODO: Make dynamic state.
+		rasterizationState.setPolygonMode(vk::PolygonMode::eFill);   // #TODO: Make dynamic state.
 		rasterizationState.setCullMode(vk::CullModeFlagBits::eNone); // #TODO: Make dynamic state.
-		rasterizationState.setLineWidth(1.0f);						 // #TODO: Make dynamic state.
+		rasterizationState.setLineWidth(1.0f);                       // #TODO: Make dynamic state.
 
 		vk::PipelineMultisampleStateCreateInfo multisampleState{};
 
 		vk::PipelineDepthStencilStateCreateInfo depthStencilState{};
-		depthStencilState.setDepthTestEnable(VK_TRUE);			   // #TODO: Make dynamic state.
-		depthStencilState.setDepthWriteEnable(VK_TRUE);			   // #TODO: Make dynamic state.
+		depthStencilState.setDepthTestEnable(VK_TRUE);             // #TODO: Make dynamic state.
+		depthStencilState.setDepthWriteEnable(VK_TRUE);            // #TODO: Make dynamic state.
 		depthStencilState.setDepthCompareOp(vk::CompareOp::eLess); // #TODO: Make dynamic state.
 
 		vk::PipelineColorBlendAttachmentState defaultBlendAttachment{};
 		defaultBlendAttachment.setColorWriteMask(vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG
 			| vk::ColorComponentFlagBits::eB | vk::ColorComponentFlagBits::eA);
-		defaultBlendAttachment.setBlendEnable(VK_FALSE);
 		// #TODO: Enable alpha blending (should just be below).
-		/*defaultBlendAttachment.setSrcColorBlendFactor(vk::BlendFactor::eSrcAlpha);
+		defaultBlendAttachment.setBlendEnable(VK_TRUE);
+		defaultBlendAttachment.setSrcColorBlendFactor(vk::BlendFactor::eSrcAlpha);
 		defaultBlendAttachment.setDstColorBlendFactor(vk::BlendFactor::eOneMinusSrcAlpha);
 		defaultBlendAttachment.setColorBlendOp(vk::BlendOp::eAdd);
 		defaultBlendAttachment.setSrcAlphaBlendFactor(vk::BlendFactor::eOne);
-		defaultBlendAttachment.setDstAlphaBlendFactor(vk::BlendFactor::eZero);
-		defaultBlendAttachment.setAlphaBlendOp(vk::BlendOp::eAdd);*/
+		defaultBlendAttachment.setDstAlphaBlendFactor(vk::BlendFactor::eOneMinusSrcAlpha);
+		defaultBlendAttachment.setAlphaBlendOp(vk::BlendOp::eAdd);
 		std::vector<vk::PipelineColorBlendAttachmentState> blendAttachments(info.ColorTargetFormats.size(), defaultBlendAttachment);
 		vk::PipelineColorBlendStateCreateInfo colorBlendState{};
 		colorBlendState.setAttachments(blendAttachments);
@@ -475,7 +473,7 @@ namespace VkMana
 		imageInfo.setArrayLayers(info.ArrayLayers);
 		imageInfo.setFormat(info.Format);
 		imageInfo.setUsage(info.Usage);
-		imageInfo.setImageType(vk::ImageType::e2D);		   // #TODO: Make auto.
+		imageInfo.setImageType(vk::ImageType::e2D);        // #TODO: Make auto.
 		imageInfo.setSamples(vk::SampleCountFlagBits::e1); // #TODO: Make optional.
 
 		vma::AllocationCreateInfo allocInfo{};
@@ -742,16 +740,16 @@ namespace VkMana
 		appInfo.setApiVersion(VK_API_VERSION_1_3);
 
 		std::vector<const char*> enabledLayers{
-#ifdef _DEBUG
+			#ifdef _DEBUG
 			"VK_LAYER_KHRONOS_validation",
 			"VK_LAYER_KHRONOS_synchronization2",
-#endif
+			#endif
 		};
 		std::vector<const char*> enabledExtensions{
 			VK_KHR_SURFACE_EXTENSION_NAME,
-#ifdef _WIN32
+			#ifdef _WIN32
 			VK_KHR_WIN32_SURFACE_EXTENSION_NAME,
-#endif
+			#endif
 		};
 
 		vk::InstanceCreateInfo instanceInfo{};
@@ -825,7 +823,7 @@ namespace VkMana
 		/* Extension Features */
 
 		vk::PhysicalDeviceDescriptorIndexingFeatures descriptorIndexingFeatures{};
-		descriptorIndexingFeatures.setRuntimeDescriptorArray(VK_TRUE);			// Support SPIRV RuntimeDescriptorArray capability.
+		descriptorIndexingFeatures.setRuntimeDescriptorArray(VK_TRUE);          // Support SPIRV RuntimeDescriptorArray capability.
 		descriptorIndexingFeatures.setDescriptorBindingPartiallyBound(VK_TRUE); // Descriptor sets do not need to have valid descriptors.
 		descriptorIndexingFeatures.setShaderSampledImageArrayNonUniformIndexing(VK_TRUE);
 		descriptorIndexingFeatures.setShaderUniformBufferArrayNonUniformIndexing(VK_TRUE);

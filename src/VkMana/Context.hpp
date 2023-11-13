@@ -62,6 +62,15 @@ namespace VkMana
 		void DestroyBuffer(vk::Buffer buffer);
 		void DestroyAllocation(vma::Allocation alloc);
 
+		/* Debug */
+
+		void SetName(const Buffer& buffer, const std::string& name);
+		void SetName(const Image& buffer, const std::string& name);
+		void SetName(const DescriptorSet& set, const std::string& name);
+		void SetName(const Pipeline& pipeline, const std::string& name);
+		void SetName(const CommandBuffer& buffer, const std::string& name);
+		void SetName(uint64_t object, vk::ObjectType type, const std::string& name);
+
 		/* Getters */
 
 		auto GetDevice() const -> auto { return m_device; }

@@ -490,6 +490,7 @@ namespace VkMana
 				.Data = initialData->Data,
 			};
 			auto stagingBuffer = CreateBuffer(BufferCreateInfo::Staging(initialData->Size), &bufferSource);
+			SetName(*stagingBuffer, "image_upload_staging_buffer");
 			auto cmd = RequestCmd();
 
 			// Transition all mip levels to TransferDst.
@@ -641,6 +642,7 @@ namespace VkMana
 			{
 				// Staging buffer.
 				auto stagingBuffer = CreateBuffer(BufferCreateInfo::Staging(info.Size), initialData);
+				SetName(*stagingBuffer, "buffer_upload_staging_buffer");
 				auto cmd = RequestCmd();
 
 				BufferCopyInfo copyInfo{
@@ -696,6 +698,40 @@ namespace VkMana
 		GetFrame().Garbage->Bin(alloc);
 	}
 
+	void Context::SetName(const Buffer& buffer, const std::string& name)
+	{
+		SetName(uint64_t(VkBuffer(buffer.GetBuffer())), buffer.GetBuffer().objectType, name);
+	}
+
+	void Context::SetName(const Image& buffer, const std::string& name)
+	{
+		SetName(uint64_t(VkImage(buffer.GetImage())), buffer.GetImage().objectType, name);
+	}
+
+	void Context::SetName(const DescriptorSet& set, const std::string& name)
+	{
+		SetName(uint64_t(VkDescriptorSet(set.GetSet())), set.GetSet().objectType, name);
+	}
+
+	void Context::SetName(const Pipeline& pipeline, const std::string& name)
+	{
+		SetName(uint64_t(VkPipeline(pipeline.GetPipeline())), pipeline.GetPipeline().objectType, name);
+	}
+
+	void Context::SetName(const CommandBuffer& buffer, const std::string& name)
+	{
+		SetName(uint64_t(VkCommandBuffer(buffer.GetCmd())), buffer.GetCmd().objectType, name);
+	}
+
+	void Context::SetName(uint64_t object, vk::ObjectType type, const std::string& name)
+	{
+		vk::DebugUtilsObjectNameInfoEXT nameInfo{};
+		nameInfo.setObjectType(type);
+		nameInfo.setObjectHandle(object);
+		nameInfo.setPObjectName(name.c_str());
+		m_device.setDebugUtilsObjectNameEXT(nameInfo);
+	}
+
 	void Context::PrintInstanceInfo()
 	{
 		auto layers = vk::enumerateInstanceLayerProperties();
@@ -740,16 +776,17 @@ namespace VkMana
 		appInfo.setApiVersion(VK_API_VERSION_1_3);
 
 		std::vector<const char*> enabledLayers{
-			#ifdef _DEBUG
+#ifdef _DEBUG
 			"VK_LAYER_KHRONOS_validation",
 			"VK_LAYER_KHRONOS_synchronization2",
-			#endif
+#endif
 		};
 		std::vector<const char*> enabledExtensions{
+			VK_EXT_DEBUG_UTILS_EXTENSION_NAME,
 			VK_KHR_SURFACE_EXTENSION_NAME,
-			#ifdef _WIN32
+#ifdef _WIN32
 			VK_KHR_WIN32_SURFACE_EXTENSION_NAME,
-			#endif
+#endif
 		};
 
 		vk::InstanceCreateInfo instanceInfo{};

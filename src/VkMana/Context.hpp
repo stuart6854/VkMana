@@ -6,7 +6,7 @@
 #include "CommandBuffer.hpp"
 #include "WSI.hpp"
 #include "Descriptors.hpp"
-#include "DescriptorPool.hpp"
+#include "DescriptorAllocator.hpp"
 #include "Pipeline.hpp"
 #include "Image.hpp"
 #include "Buffer.hpp"
@@ -105,7 +105,7 @@ namespace VkMana
 			std::vector<vk::Fence> FrameFences; // Waited on at start of frame & submitted at end of frame.
 			IntrusivePtr<CommandPool> CmdPool;
 
-			std::unordered_map<vk::DescriptorSetLayout, DescriptorPoolHandle> DescriptorPoolMap;
+			DescriptorAllocatorHandle DescriptorAllocator;
 
 			IntrusivePtr<Garbage> Garbage;
 		};

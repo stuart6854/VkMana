@@ -23,7 +23,6 @@ namespace VkMana
 			m_linearSampler = nullptr;
 			m_nearestSampler = nullptr;
 
-			for (auto& frame : m_frames) {}
 			m_frames.clear();
 
 			m_device.destroy(m_descriptorPool);
@@ -64,15 +63,15 @@ namespace VkMana
 			return false;
 
 		std::vector<vk::DescriptorPoolSize> poolSizes{
-			{ vk::DescriptorType::eUniformBuffer, 10 },
-			{ vk::DescriptorType::eUniformBufferDynamic, 10 },
-			{ vk::DescriptorType::eStorageBuffer, 10 },
-			{ vk::DescriptorType::eStorageBufferDynamic, 10 },
-			{ vk::DescriptorType::eCombinedImageSampler, 10 },
+			{ vk::DescriptorType::eUniformBuffer, 25 },
+			{ vk::DescriptorType::eUniformBufferDynamic, 25 },
+			{ vk::DescriptorType::eStorageBuffer, 25 },
+			{ vk::DescriptorType::eStorageBufferDynamic, 25 },
+			{ vk::DescriptorType::eCombinedImageSampler, 25 },
 		};
 		vk::DescriptorPoolCreateInfo poolInfo{};
 		poolInfo.setPoolSizes(poolSizes);
-		poolInfo.setMaxSets(20);
+		poolInfo.setMaxSets(500);
 		poolInfo.setFlags(vk::DescriptorPoolCreateFlagBits::eUpdateAfterBind);
 		m_descriptorPool = m_device.createDescriptorPool(poolInfo);
 
@@ -100,17 +99,17 @@ namespace VkMana
 		uint32_t imageHeight = 0;
 		vk::Format imageFormat = vk::Format::eUndefined;
 		if (!CreateSwapchain(newSurfaceInfo.Swapchain,
-			imageWidth,
-			imageHeight,
-			imageFormat,
-			m_device,
-			wsi->GetSurfaceWidth(),
-			wsi->GetSurfaceHeight(),
-			wsi->IsVSync(),
-			true,
-			{},
-			newSurfaceInfo.Surface,
-			m_gpu))
+				imageWidth,
+				imageHeight,
+				imageFormat,
+				m_device,
+				wsi->GetSurfaceWidth(),
+				wsi->GetSurfaceHeight(),
+				wsi->IsVSync(),
+				true,
+				{},
+				newSurfaceInfo.Surface,
+				m_gpu))
 		{
 			m_instance.destroy(newSurfaceInfo.Surface);
 			m_surfaces.erase(m_surfaces.end() - 1);
@@ -150,6 +149,7 @@ namespace VkMana
 
 	void Context::BeginFrame()
 	{
+		m_frameIndex = (m_frameIndex + 1) % m_frames.size();
 		auto& frame = GetFrame();
 
 		if (!frame.FrameFences.empty())
@@ -158,13 +158,10 @@ namespace VkMana
 			m_device.resetFences(frame.FrameFences);
 			frame.FrameFences.clear();
 		}
-		frame.Garbage->EmptyBins();
 
 		frame.CmdPool->ResetPool();
-		for (auto& [_, pool] : frame.DescriptorPoolMap)
-		{
-			pool->ResetPool();
-		}
+		frame.DescriptorAllocator->ResetAllocator();
+		frame.Garbage->EmptyBins();
 
 		for (auto& surfaceInfo : m_surfaces)
 		{
@@ -196,8 +193,6 @@ namespace VkMana
 
 		GetFrame().FrameFences.push_back(fence);
 		GetFrame().Garbage->Bin(fence);
-
-		m_frameIndex = (m_frameIndex + 1) % m_frames.size();
 	}
 
 	void Context::Present()
@@ -295,13 +290,7 @@ namespace VkMana
 	{
 		auto& frame = GetFrame();
 
-		const auto it = frame.DescriptorPoolMap.find(layout->GetLayout());
-		if (it == frame.DescriptorPoolMap.end())
-			return nullptr;
-
-		auto& descriptorPool = it->second;
-
-		auto descriptorSet = descriptorPool->AcquireDescriptorSet();
+		auto descriptorSet = frame.DescriptorAllocator->Allocate(layout->GetLayout());
 		return IntrusivePtr(new DescriptorSet(this, descriptorSet));
 	}
 
@@ -338,7 +327,7 @@ namespace VkMana
 
 		for (auto& frame : m_frames)
 		{
-			frame.DescriptorPoolMap[layout] = IntrusivePtr(new DescriptorPool(this, m_descriptorPool, layout));
+			frame.DescriptorAllocator = IntrusivePtr(new DescriptorAllocator(this, 100));
 		}
 
 		return IntrusivePtr(new SetLayout(this, layout, hash));
@@ -409,16 +398,16 @@ namespace VkMana
 		viewportState.setScissorCount(1);  // Dynamic State
 
 		vk::PipelineRasterizationStateCreateInfo rasterizationState{};
-		rasterizationState.setFrontFace(vk::FrontFace::eClockwise);  // #TODO: Make dynamic state.
-		rasterizationState.setPolygonMode(vk::PolygonMode::eFill);   // #TODO: Make dynamic state.
+		rasterizationState.setFrontFace(vk::FrontFace::eClockwise);	 // #TODO: Make dynamic state.
+		rasterizationState.setPolygonMode(vk::PolygonMode::eFill);	 // #TODO: Make dynamic state.
 		rasterizationState.setCullMode(vk::CullModeFlagBits::eNone); // #TODO: Make dynamic state.
-		rasterizationState.setLineWidth(1.0f);                       // #TODO: Make dynamic state.
+		rasterizationState.setLineWidth(1.0f);						 // #TODO: Make dynamic state.
 
 		vk::PipelineMultisampleStateCreateInfo multisampleState{};
 
 		vk::PipelineDepthStencilStateCreateInfo depthStencilState{};
-		depthStencilState.setDepthTestEnable(VK_TRUE);             // #TODO: Make dynamic state.
-		depthStencilState.setDepthWriteEnable(VK_TRUE);            // #TODO: Make dynamic state.
+		depthStencilState.setDepthTestEnable(VK_TRUE);			   // #TODO: Make dynamic state.
+		depthStencilState.setDepthWriteEnable(VK_TRUE);			   // #TODO: Make dynamic state.
 		depthStencilState.setDepthCompareOp(vk::CompareOp::eLess); // #TODO: Make dynamic state.
 
 		vk::PipelineColorBlendAttachmentState defaultBlendAttachment{};
@@ -473,7 +462,7 @@ namespace VkMana
 		imageInfo.setArrayLayers(info.ArrayLayers);
 		imageInfo.setFormat(info.Format);
 		imageInfo.setUsage(info.Usage);
-		imageInfo.setImageType(vk::ImageType::e2D);        // #TODO: Make auto.
+		imageInfo.setImageType(vk::ImageType::e2D);		   // #TODO: Make auto.
 		imageInfo.setSamples(vk::SampleCountFlagBits::e1); // #TODO: Make optional.
 
 		vma::AllocationCreateInfo allocInfo{};
@@ -860,7 +849,7 @@ namespace VkMana
 		/* Extension Features */
 
 		vk::PhysicalDeviceDescriptorIndexingFeatures descriptorIndexingFeatures{};
-		descriptorIndexingFeatures.setRuntimeDescriptorArray(VK_TRUE);          // Support SPIRV RuntimeDescriptorArray capability.
+		descriptorIndexingFeatures.setRuntimeDescriptorArray(VK_TRUE);			// Support SPIRV RuntimeDescriptorArray capability.
 		descriptorIndexingFeatures.setDescriptorBindingPartiallyBound(VK_TRUE); // Descriptor sets do not need to have valid descriptors.
 		descriptorIndexingFeatures.setShaderSampledImageArrayNonUniformIndexing(VK_TRUE);
 		descriptorIndexingFeatures.setShaderUniformBufferArrayNonUniformIndexing(VK_TRUE);

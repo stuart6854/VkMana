@@ -367,17 +367,17 @@ namespace VkMana
 		std::vector<vk::UniqueShaderModule> shaderModules;
 		std::vector<vk::PipelineShaderStageCreateInfo> shaderStages;
 
-		auto CreateShaderModule = [&](const auto& spirv, auto shaderStage) {
-			if (!spirv.empty())
+		auto CreateShaderModule = [&](const auto& shaderInfo, auto shaderStage) {
+			if (!shaderInfo.SPIRVBinary.empty())
 			{
 				vk::ShaderModuleCreateInfo moduleInfo{};
-				moduleInfo.setCode(spirv);
+				moduleInfo.setCode(shaderInfo.SPIRVBinary);
 				shaderModules.push_back(m_device.createShaderModuleUnique(moduleInfo));
 
 				auto& stageInfo = shaderStages.emplace_back();
 				stageInfo.setStage(shaderStage);
 				stageInfo.setModule(shaderModules.back().get());
-				stageInfo.setPName("main");
+				stageInfo.setPName(shaderInfo.EntryPoint.c_str());
 			}
 		};
 

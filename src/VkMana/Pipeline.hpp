@@ -18,6 +18,11 @@ namespace VkMana
 	class PipelineLayout;
 
 	using ShaderBinary = std::vector<uint32_t>;
+	struct ShaderInfo
+	{
+		ShaderBinary SPIRVBinary;
+		std::string EntryPoint = "main"; // Should be "main" for GLSL.
+	};
 
 	/**
 	 * Dynamic State
@@ -27,8 +32,8 @@ namespace VkMana
 	 */
 	struct GraphicsPipelineCreateInfo
 	{
-		ShaderBinary Vertex;
-		ShaderBinary Fragment;
+		ShaderInfo Vertex;
+		ShaderInfo Fragment;
 
 		std::vector<vk::VertexInputAttributeDescription> VertexAttributes;
 		std::vector<vk::VertexInputBindingDescription> VertexBindings;

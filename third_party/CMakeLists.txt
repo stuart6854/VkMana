@@ -1,4 +1,4 @@
-find_package(Vulkan REQUIRED GLOBAL)
+find_package(Vulkan REQUIRED COMPONENTS dxc GLOBAL)
 
 add_subdirectory(SPIRV-Headers)
 add_subdirectory(SPIRV-Tools)

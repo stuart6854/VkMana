@@ -71,7 +71,7 @@ namespace VkMana
 		friend class IntrusivePtr;
 
 		IntrusivePtr() = default;
-		IntrusivePtr(nullptr_t)
+		IntrusivePtr(std::nullptr_t)
 			: m_data(nullptr)
 		{
 		}

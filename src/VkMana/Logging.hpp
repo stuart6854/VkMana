@@ -4,21 +4,21 @@
 #include <format>
 #include <iostream>
 
-#define LOG_ERR(...)                                                      \
+#define VM_ERR(...)                                                      \
 	do                                                                    \
 	{                                                                     \
 		std::cerr << "[ERROR] " << std::format(__VA_ARGS__) << std::endl; \
 	}                                                                     \
 	while (false)
 
-#define LOG_WARN(...)                                                    \
+#define VM_WARN(...)                                                    \
 	do                                                                   \
 	{                                                                    \
 		std::cout << "[WARN] " << std::format(__VA_ARGS__) << std::endl; \
 	}                                                                    \
 	while (false)
 
-#define LOG_INFO(...)                                                    \
+#define VM_INFO(...)                                                    \
 	do                                                                   \
 	{                                                                    \
 		std::cout << "[INFO] " << std::format(__VA_ARGS__) << std::endl; \

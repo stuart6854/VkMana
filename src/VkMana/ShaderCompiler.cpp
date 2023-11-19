@@ -41,7 +41,7 @@ namespace VkMana
 				case vk::ShaderStageFlagBits::eCompute:
 					return shaderc_compute_shader;
 				default:
-					LOG_ERR("Unknown shader kind.");
+					VM_ERR("Unknown shader kind.");
 					assert(false);
 					return {};
 			}
@@ -64,7 +64,7 @@ namespace VkMana
 				case vk::ShaderStageFlagBits::eCompute:
 					return L"cs_6_1";
 				default:
-					LOG_ERR("Unknown shader kind.");
+					VM_ERR("Unknown shader kind.");
 					assert(false);
 					return {};
 			}
@@ -88,7 +88,7 @@ namespace VkMana
 		auto result = compiler.CompileGlslToSpv(glslSource, kind, filename.c_str(), options);
 		if (result.GetCompilationStatus() != shaderc_compilation_status_success)
 		{
-			LOG_ERR("Shader Compile Error: \n{}", result.GetErrorMessage());
+			VM_ERR("Shader Compile Error: \n{}", result.GetErrorMessage());
 			return false;
 		}
 
@@ -113,7 +113,7 @@ namespace VkMana
 		auto result = compiler.CompileGlslToSpv(info.SourceStr, kind, sourceFile, options);
 		if (result.GetCompilationStatus() != shaderc_compilation_status_success)
 		{
-			LOG_ERR("Shader Compile Error:\n{}", result.GetErrorMessage());
+			VM_ERR("Shader Compile Error:\n{}", result.GetErrorMessage());
 			return std::nullopt;
 		}
 
@@ -132,7 +132,7 @@ namespace VkMana
 		hres = DxcCreateInstance(CLSID_DxcLibrary, IID_PPV_ARGS(&library));
 		if (FAILED(hres))
 		{
-			LOG_ERR("Failed to initialise DXC library.");
+			VM_ERR("Failed to initialise DXC library.");
 			return std::nullopt;
 		}
 
@@ -140,7 +140,7 @@ namespace VkMana
 		hres = DxcCreateInstance(CLSID_DxcCompiler, IID_PPV_ARGS(&compiler));
 		if (FAILED(hres))
 		{
-			LOG_ERR("Failed to inititalise DXC compiler.");
+			VM_ERR("Failed to inititalise DXC compiler.");
 			return std::nullopt;
 		}
 
@@ -148,7 +148,7 @@ namespace VkMana
 		hres = DxcCreateInstance(CLSID_DxcUtils, IID_PPV_ARGS(&utils));
 		if (FAILED(hres))
 		{
-			LOG_ERR("Failed to inititalise DXC Utility.");
+			VM_ERR("Failed to inititalise DXC Utility.");
 			return std::nullopt;
 		}
 
@@ -157,7 +157,7 @@ namespace VkMana
 		hres = utils->CreateBlob(info.SourceStr.data(), info.SourceStr.size(), codePage, &sourceBlob);
 		if (FAILED(hres))
 		{
-			LOG_ERR("Could not create shader source blob.");
+			VM_ERR("Could not create shader source blob.");
 			return std::nullopt;
 		}
 
@@ -195,8 +195,8 @@ namespace VkMana
 			hres = result->GetErrorBuffer(&errorBlob);
 			if (SUCCEEDED(hres) && errorBlob)
 			{
-				LOG_ERR("Shader Compilation Failed:\n");
-				LOG_ERR("{}", static_cast<const char*>(errorBlob->GetBufferPointer()));
+				VM_ERR("Shader Compilation Failed:\n");
+				VM_ERR("{}", static_cast<const char*>(errorBlob->GetBufferPointer()));
 				return std::nullopt;
 			}
 		}
@@ -221,12 +221,12 @@ namespace VkMana
 				info.SourceStr = opt.value();
 			else
 			{
-				LOG_ERR("Failed to read Shader source from file: {}", info.SourceFilename.string());
+				VM_ERR("Failed to read Shader source from file: {}", info.SourceFilename.string());
 			}
 		}
 		if (info.SourceStr.empty())
 		{
-			LOG_ERR("No shader source to compile.");
+			VM_ERR("No shader source to compile.");
 			return std::nullopt;
 		}
 
@@ -237,7 +237,7 @@ namespace VkMana
 			case SourceLanguage::HLSL:
 				return CompileHLSL(info);
 		}
-		LOG_ERR("Unknown Shader SourceLanguage.");
+		VM_ERR("Unknown Shader SourceLanguage.");
 		assert(false);
 		return std::nullopt;
 	}

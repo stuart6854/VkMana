@@ -724,22 +724,22 @@ namespace VkMana
 	void Context::PrintInstanceInfo()
 	{
 		auto layers = vk::enumerateInstanceLayerProperties();
-		LOG_INFO("{} Instance Layers:", layers.size());
+		VM_INFO("{} Instance Layers:", layers.size());
 		for (auto& layer : layers)
-			LOG_INFO("  - {}", layer.layerName.data());
+			VM_INFO("  - {}", layer.layerName.data());
 
 		auto exts = vk::enumerateInstanceExtensionProperties();
-		LOG_INFO("{} Instance Extensions:", exts.size());
+		VM_INFO("{} Instance Extensions:", exts.size());
 		for (auto& ext : exts)
-			LOG_INFO("  - {}", ext.extensionName.data());
+			VM_INFO("  - {}", ext.extensionName.data());
 	}
 
 	void Context::PrintDeviceInfo(vk::PhysicalDevice gpu)
 	{
 		auto exts = gpu.enumerateDeviceExtensionProperties();
-		LOG_INFO("{} Device Extensions:", exts.size());
+		VM_INFO("{} Device Extensions:", exts.size());
 		for (auto& ext : exts)
-			LOG_INFO("  - {}", ext.extensionName.data());
+			VM_INFO("  - {}", ext.extensionName.data());
 	}
 
 	bool Context::FindQueueFamily(uint32_t outFamilyIndex, vk::PhysicalDevice gpu, vk::QueueFlags flags)
@@ -786,13 +786,13 @@ namespace VkMana
 
 		VULKAN_HPP_DEFAULT_DISPATCHER.init(outInstance);
 
-		LOG_INFO("Enabled Instance layers:");
+		VM_INFO("Enabled Instance layers:");
 		for (const auto* layer : enabledLayers)
-			LOG_INFO("  - {}", layer);
+			VM_INFO("  - {}", layer);
 
-		LOG_INFO("Enabled Instance extensions:");
+		VM_INFO("Enabled Instance extensions:");
 		for (const auto* ext : enabledExtensions)
-			LOG_INFO("  - {}", ext);
+			VM_INFO("  - {}", ext);
 
 		return outInstance != VK_NULL_HANDLE;
 	}
@@ -807,12 +807,12 @@ namespace VkMana
 		outGPU = gpus[0];
 
 		auto gpuProps = outGPU.getProperties();
-		LOG_INFO("GPU - {}", gpuProps.deviceName.data());
-		LOG_INFO("  API - {}.{}.{}",
+		VM_INFO("GPU - {}", gpuProps.deviceName.data());
+		VM_INFO("  API - {}.{}.{}",
 			VK_API_VERSION_MAJOR(gpuProps.apiVersion),
 			VK_API_VERSION_MINOR(gpuProps.apiVersion),
 			VK_API_VERSION_PATCH(gpuProps.apiVersion));
-		LOG_INFO("  Driver - {}.{}.{}",
+		VM_INFO("  Driver - {}.{}.{}",
 			VK_API_VERSION_MAJOR(gpuProps.driverVersion),
 			VK_API_VERSION_MINOR(gpuProps.driverVersion),
 			VK_API_VERSION_PATCH(gpuProps.driverVersion));
@@ -879,9 +879,9 @@ namespace VkMana
 
 		outQueueInfo.GraphicsQueue = outDevice.getQueue(outQueueInfo.GraphicsFamilyIndex, 0);
 
-		LOG_INFO("Enabled Device extensions:");
+		VM_INFO("Enabled Device extensions:");
 		for (const auto* ext : enabledExtensions)
-			LOG_INFO("  - {}", ext);
+			VM_INFO("  - {}", ext);
 
 		return outDevice != VK_NULL_HANDLE;
 	}

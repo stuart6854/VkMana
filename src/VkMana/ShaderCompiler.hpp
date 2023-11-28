@@ -9,7 +9,7 @@
 
 namespace VkMana
 {
-	enum class SourceLanguage
+	enum class SourceLanguage : uint8_t
 	{
 		GLSL,
 		HLSL,

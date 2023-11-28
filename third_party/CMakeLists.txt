@@ -7,10 +7,6 @@ add_subdirectory(glslang)
 # vma-hpp
 add_subdirectory(vma-hpp)
 
-# DXC
-include(dxc/cmake/caches/PredefinedParams.cmake)
-add_subdirectory(dxc)
-
 # ShaderC
 option(SHADERC_SKIP_INSTALL "Skip installation" ON)
 option(SHADERC_SKIP_TESTS "Skip building tests" ON)

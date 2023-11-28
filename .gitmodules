@@ -19,3 +19,6 @@
 [submodule "third_party/dxc"]
 	path = third_party/dxc
 	url = https://github.com/microsoft/DirectXShaderCompiler.git
+[submodule "third_party/vma-hpp"]
+	path = third_party/vma-hpp
+	url = https://github.com/stuart6854/VulkanMemoryAllocator-Hpp.git

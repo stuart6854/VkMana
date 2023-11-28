@@ -12,38 +12,6 @@ using namespace VkMana;
 
 namespace VkMana::Sample
 {
-	namespace Utils
-	{
-		bool ReadThenCompileShaderSource(
-			ShaderBinary& outSpirv, Context& context, const shaderc_shader_kind kind, const std::string& filename)
-		{
-			const auto stream = std::ifstream(filename);
-			if (!stream)
-			{
-				LOG_ERR("Failed to read file: {}", filename);
-				return false;
-			}
-
-			std::stringstream ss;
-			ss << stream.rdbuf();
-
-			const auto glslSource = ss.str();
-
-#ifdef _DEBUG
-			constexpr bool debug = true;
-#else
-			constexpr bool debug = true;
-#endif
-
-			if (!CompileShader(outSpirv, glslSource, kind, debug, filename))
-			{
-				return false;
-			}
-			return true;
-		}
-
-	} // namespace Utils
-
 	bool Renderer::Init(WSI* mainWindow)
 	{
 		m_ctx = IntrusivePtr(new Context);
@@ -175,22 +143,31 @@ namespace VkMana::Sample
 		};
 		m_gBufferPipelineLayout = m_ctx->CreatePipelineLayout(layoutInfo);
 
-		ShaderBinary vertexBinary;
-		if (!Utils::ReadThenCompileShaderSource(vertexBinary, *m_ctx, shaderc_vertex_shader, "assets/shaders/deferred_gbuffer.vert"))
+		ShaderCompileInfo compileInfo{
+			.SourceLanguage = SourceLanguage::GLSL,
+			.SourceFilename = "assets/shaders/deferred_gbuffer.vert",
+			.Stage = vk::ShaderStageFlagBits::eVertex,
+			.Debug = true,
+		};
+		auto vertexSpirvOpt = CompileShader(compileInfo);
+		if (!vertexSpirvOpt)
 		{
-			LOG_ERR("Failed to read/compile Vertex shader.");
+			VM_ERR("Failed to read/compile Vertex shader.");
 			return;
 		}
-		ShaderBinary fragmentBinary;
-		if (!Utils::ReadThenCompileShaderSource(fragmentBinary, *m_ctx, shaderc_fragment_shader, "assets/shaders/deferred_gbuffer.frag"))
+
+		compileInfo.Stage = vk::ShaderStageFlagBits::eFragment;
+		compileInfo.SourceFilename = "assets/shaders/deferred_gbuffer.frag";
+		auto fragmentSpirvOpt = CompileShader(compileInfo);
+		if (!fragmentSpirvOpt)
 		{
-			LOG_ERR("Failed to read/compile Fragment shader.");
+			VM_ERR("Failed to read/compile Fragment shader.");
 			return;
 		}
 
 		const GraphicsPipelineCreateInfo pipelineInfo{
-			.Vertex = vertexBinary,
-			.Fragment = fragmentBinary,
+			.Vertex = vertexSpirvOpt.value(),
+			.Fragment = fragmentSpirvOpt.value(),
 			.VertexAttributes = {
 				vk::VertexInputAttributeDescription(0, 0, vk::Format::eR32G32B32Sfloat, offsetof(StaticVertex, Position)),
 				vk::VertexInputAttributeDescription(1, 0, vk::Format::eR32G32Sfloat, offsetof(StaticVertex, TexCoord)),
@@ -231,23 +208,31 @@ namespace VkMana::Sample
 		};
 		m_compositionPipelineLayout = m_ctx->CreatePipelineLayout(layoutInfo);
 
-		ShaderBinary vertexBinary;
-		if (!Utils::ReadThenCompileShaderSource(vertexBinary, *m_ctx, shaderc_vertex_shader, "assets/shaders/deferred_composition.vert"))
+		ShaderCompileInfo compileInfo{
+			.SourceLanguage = SourceLanguage::GLSL,
+			.SourceFilename = "assets/shaders/deferred_composition.vert",
+			.Stage = vk::ShaderStageFlagBits::eVertex,
+			.Debug = true,
+		};
+		auto vertexSpirvOpt = CompileShader(compileInfo);
+		if (!vertexSpirvOpt)
 		{
-			LOG_ERR("Failed to read/compile Vertex shader.");
+			VM_ERR("Failed to read/compile Vertex shader.");
 			return;
 		}
-		ShaderBinary fragmentBinary;
-		if (!Utils::ReadThenCompileShaderSource(
-				fragmentBinary, *m_ctx, shaderc_fragment_shader, "assets/shaders/deferred_composition.frag"))
+
+		compileInfo.Stage = vk::ShaderStageFlagBits::eFragment;
+		compileInfo.SourceFilename = "assets/shaders/deferred_composition.frag";
+		auto fragmentSpirvOpt = CompileShader(compileInfo);
+		if (!fragmentSpirvOpt)
 		{
-			LOG_ERR("Failed to read/compile Fragment shader.");
+			VM_ERR("Failed to read/compile Fragment shader.");
 			return;
 		}
 
 		const GraphicsPipelineCreateInfo pipelineInfo{
-			.Vertex = vertexBinary,
-			.Fragment = fragmentBinary,
+			.Vertex = vertexSpirvOpt.value(),
+			.Fragment = fragmentSpirvOpt.value(),
 			.Topology = vk::PrimitiveTopology::eTriangleList,
 			.ColorTargetFormats = { compositionImageInfo.Format },
 			.Layout = m_compositionPipelineLayout.Get(),
@@ -266,22 +251,31 @@ namespace VkMana::Sample
 		};
 		m_screenPipelineLayout = m_ctx->CreatePipelineLayout(layoutInfo);
 
-		ShaderBinary vertexBinary;
-		if (!Utils::ReadThenCompileShaderSource(vertexBinary, *m_ctx, shaderc_vertex_shader, "assets/shaders/fullscreen_quad.vert"))
+		ShaderCompileInfo compileInfo{
+			.SourceLanguage = SourceLanguage::GLSL,
+			.SourceFilename = "assets/shaders/fullscreen_quad.vert",
+			.Stage = vk::ShaderStageFlagBits::eVertex,
+			.Debug = true,
+		};
+		auto vertexSpirvOpt = CompileShader(compileInfo);
+		if (!vertexSpirvOpt)
 		{
-			LOG_ERR("Failed to read/compile Vertex shader.");
+			VM_ERR("Failed to read/compile Vertex shader.");
 			return;
 		}
-		ShaderBinary fragmentBinary;
-		if (!Utils::ReadThenCompileShaderSource(fragmentBinary, *m_ctx, shaderc_fragment_shader, "assets/shaders/fullscreen_quad.frag"))
+
+		compileInfo.Stage = vk::ShaderStageFlagBits::eFragment;
+		compileInfo.SourceFilename = "assets/shaders/fullscreen_quad.frag";
+		auto fragmentSpirvOpt = CompileShader(compileInfo);
+		if (!fragmentSpirvOpt)
 		{
-			LOG_ERR("Failed to read/compile Fragment shader.");
+			VM_ERR("Failed to read/compile Fragment shader.");
 			return;
 		}
 
 		const GraphicsPipelineCreateInfo pipelineInfo{
-			.Vertex = vertexBinary,
-			.Fragment = fragmentBinary,
+			.Vertex = vertexSpirvOpt.value(),
+			.Fragment = fragmentSpirvOpt.value(),
 			.Topology = vk::PrimitiveTopology::eTriangleList,
 			.ColorTargetFormats = { vk::Format::eB8G8R8A8Srgb },
 			.Layout = m_screenPipelineLayout.Get(),

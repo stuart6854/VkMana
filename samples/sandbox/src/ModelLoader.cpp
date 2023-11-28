@@ -231,7 +231,7 @@ namespace VkMana::Sample
 
 		if (!fileLoaded)
 		{
-			LOG_ERR("Failed to load GLTF model <{}>: {}", filename, error);
+			VM_ERR("Failed to load GLTF model <{}>: {}", filename, error);
 			return false;
 		}
 

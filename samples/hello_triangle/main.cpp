@@ -1,7 +1,6 @@
 #define SDL_MAIN_HANDLED
 #include <SDL.h>
 #include <SDL_vulkan.h>
-#include <SDL_syswm.h>
 #define VULKAN_DEBUG
 #include <VkMana/Logging.hpp>
 #include <VkMana/Context.hpp>
@@ -56,6 +55,7 @@ public:
 		: m_window(window)
 	{
 	}
+	~SDL2WSI() override = default;
 
 	void PollEvents() override
 	{
@@ -107,6 +107,12 @@ public:
 	bool IsVSync() override { return true; }
 	bool IsAlive() override { return m_isAlive; }
 
+	void HideCursor() override {}
+	void ShowCursor() override {}
+
+	auto CreateCursor(uint32_t cursorType) -> void* override { return nullptr; }
+	void SetCursor(void* cursor) override {}
+
 private:
 	SDL_Window* m_window;
 	bool m_isAlive = true;
@@ -114,7 +120,7 @@ private:
 
 int main()
 {
-	LOG_INFO("Sample - Hello Triangle");
+	VM_INFO("Sample - Hello Triangle");
 
 	auto* window = SDL_CreateWindow(
 		"Hello Triangle", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, 1280, 720, SDL_WINDOW_VULKAN | SDL_WINDOW_RESIZABLE);
@@ -124,29 +130,39 @@ int main()
 	VkMana::Context context;
 	if (!context.Init(&wsi))
 	{
-		LOG_ERR("Failed to initialise device.");
+		VM_ERR("Failed to initialise device.");
 		return 1;
 	}
 
 	VkMana::PipelineLayoutCreateInfo pipelineLayoutInfo{};
 	auto pipelineLayout = context.CreatePipelineLayout(pipelineLayoutInfo);
 
-	ShaderBinary vertSpirv;
-	if (!VkMana::CompileShader(vertSpirv, TriangleVertexShaderSrc, shaderc_vertex_shader, true))
+	VkMana::ShaderCompileInfo compileInfo{
+		.SourceLanguage = VkMana::SourceLanguage::GLSL,
+		.SourceFilename = "",
+		.SourceStr = TriangleVertexShaderSrc,
+		.Stage = vk::ShaderStageFlagBits::eVertex,
+		.Debug = true,
+	};
+	auto vertSpirvOpt = VkMana::CompileShader(compileInfo);
+	if (!vertSpirvOpt)
 	{
-		LOG_ERR("Failed to compiler VERTEX shader.");
+		VM_ERR("Failed to compiler VERTEX shader.");
 		return 1;
 	}
-	ShaderBinary fragSpirv;
-	if (!VkMana::CompileShader(fragSpirv, TriangleFragmentShaderSrc, shaderc_fragment_shader, true))
+
+	compileInfo.SourceStr = TriangleFragmentShaderSrc;
+	compileInfo.Stage = vk::ShaderStageFlagBits::eFragment;
+	auto fragSpirvOpt = VkMana::CompileShader(compileInfo);
+	if (!fragSpirvOpt)
 	{
-		LOG_ERR("Failed to compiler FRAGMENT shader.");
+		VM_ERR("Failed to compiler FRAGMENT shader.");
 		return 1;
 	}
 
 	VkMana::GraphicsPipelineCreateInfo pipelineInfo{
-		.Vertex = vertSpirv,
-		.Fragment = fragSpirv,
+		.Vertex = vertSpirvOpt.value(),
+		.Fragment = fragSpirvOpt.value(),
 		.Topology = vk::PrimitiveTopology::eTriangleList,
 		.ColorTargetFormats = { vk::Format::eB8G8R8A8Srgb },
 		.Layout = pipelineLayout.Get(),

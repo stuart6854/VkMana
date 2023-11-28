@@ -28,6 +28,7 @@ public:
 		: m_window(window)
 	{
 	}
+	~SDL2WSI() override = default;
 
 	void PollEvents() override
 	{
@@ -79,6 +80,12 @@ public:
 	bool IsVSync() override { return true; }
 	bool IsAlive() override { return m_isAlive; }
 
+	void HideCursor() override {}
+	void ShowCursor() override {}
+
+	auto CreateCursor(uint32_t cursorType) -> void* override { return nullptr; }
+	void SetCursor(void* cursor) override {}
+
 private:
 	SDL_Window* m_window;
 	bool m_isAlive = true;
@@ -86,8 +93,8 @@ private:
 
 int main()
 {
-	LOG_INFO("VkMana - Sample - Sandbox");
-	LOG_INFO("Path: {}", std::filesystem::current_path().string());
+	VM_INFO("VkMana - Sample - Sandbox");
+	VM_INFO("Path: {}", std::filesystem::current_path().string());
 
 	auto* window = SDL_CreateWindow(
 		WindowTitle, SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, 1280, 720, SDL_WINDOW_VULKAN | SDL_WINDOW_RESIZABLE);
@@ -97,21 +104,21 @@ int main()
 	Renderer renderer;
 	if (!renderer.Init(&wsi))
 	{
-		LOG_ERR("Failed to initialise Renderer.");
+		VM_ERR("Failed to initialise Renderer.");
 		return 1;
 	}
 
 	auto staticMesh = renderer.CreateStaticMesh();
 	if (!staticMesh->LoadFromFile("assets/models/viking_room.obj"))
 	{
-		LOG_ERR("Failed to load mesh!");
+		VM_ERR("Failed to load mesh!");
 		return 1;
 	}
 
 	if (!LoadGLTFModel(*staticMesh, renderer, "assets/models/runestone/scene.gltf"))
 	// if (!LoadGLTFModel(*staticMesh, renderer, "assets/models/submesh_test/scene.gltf"))
 	{
-		LOG_ERR("Failed to load GLTF model.");
+		VM_ERR("Failed to load GLTF model.");
 		return 1;
 	}
 

@@ -15,9 +15,9 @@ namespace VkMana::Sample
 		tinyobj::ObjReader objReader;
 		if (!objReader.ParseFromFile(filename))
 		{
-			LOG_ERR("{}", objReader.Error());
+			VM_ERR("{}", objReader.Error());
 			if (!objReader.Warning().empty())
-				LOG_WARN("{}", objReader.Warning());
+				VM_WARN("{}", objReader.Warning());
 			return false;
 		}
 

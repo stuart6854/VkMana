@@ -112,9 +112,9 @@ bool LoadObjMesh(Mesh& outMesh, VkMana::Context& context, const std::string& fil
 
 	if (!tinyobj::LoadObj(&attrib, &shapes, &materials, &warn, &err, filename.c_str()))
 	{
-		LOG_ERR("{}", err);
+		VM_ERR("{}", err);
 		if (!warn.empty())
-			LOG_WARN("{}", warn);
+			VM_WARN("{}", warn);
 		return false;
 	}
 
@@ -177,7 +177,7 @@ bool LoadImage(VkMana::ImageHandle& outImage, VkMana::Context& context, const st
 	auto* pixels = stbi_load(filename.c_str(), &width, &height, &comps, 4);
 	if (!pixels)
 	{
-		LOG_ERR("Failed to load image: {}", filename);
+		VM_ERR("Failed to load image: {}", filename);
 		return false;
 	}
 
@@ -199,6 +199,7 @@ public:
 		: m_window(window)
 	{
 	}
+	~SDL2WSI() override = default;
 
 	void PollEvents() override
 	{
@@ -250,6 +251,12 @@ public:
 	bool IsVSync() override { return true; }
 	bool IsAlive() override { return m_isAlive; }
 
+	void HideCursor() override {}
+	void ShowCursor() override {}
+
+	auto CreateCursor(uint32_t cursorType) -> void* override { return nullptr; }
+	void SetCursor(void* cursor) override {}
+
 private:
 	SDL_Window* m_window;
 	bool m_isAlive = true;
@@ -257,8 +264,8 @@ private:
 
 int main()
 {
-	LOG_INFO("VkMana - Sample - Model Loading");
-	LOG_INFO("Path: {}", std::filesystem::current_path().string());
+	VM_INFO("VkMana - Sample - Model Loading");
+	VM_INFO("Path: {}", std::filesystem::current_path().string());
 
 	auto* window = SDL_CreateWindow(
 		WindowTitle, SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, 1280, 720, SDL_WINDOW_VULKAN | SDL_WINDOW_RESIZABLE);
@@ -268,14 +275,14 @@ int main()
 	VkMana::Context context;
 	if (!context.Init(&wsi))
 	{
-		LOG_ERR("Failed to initialise device.");
+		VM_ERR("Failed to initialise device.");
 		return 1;
 	}
 
 	auto depthImageInfo = VkMana::ImageCreateInfo::DepthStencilTarget(WindowWidth, WindowHeight, false);
 	auto depthTarget = context.CreateImage(depthImageInfo, nullptr);
 
-	std::vector<vk::DescriptorSetLayoutBinding> setBindings{
+	std::vector<VkMana::SetLayoutBinding> setBindings{
 		{ 0, vk::DescriptorType::eCombinedImageSampler, 1, vk::ShaderStageFlagBits::eFragment },
 	};
 	auto setLayout = context.CreateSetLayout(setBindings);
@@ -288,22 +295,32 @@ int main()
 	};
 	auto pipelineLayout = context.CreatePipelineLayout(pipelineLayoutInfo);
 
-	ShaderBinary vertSpirv;
-	if (!VkMana::CompileShader(vertSpirv, VertexShaderSrc, shaderc_vertex_shader, true))
+	VkMana::ShaderCompileInfo compileInfo{
+		.SourceLanguage = VkMana::SourceLanguage::GLSL,
+		.SourceFilename = "",
+		.SourceStr = VertexShaderSrc,
+		.Stage = vk::ShaderStageFlagBits::eVertex,
+		.Debug = true,
+	};
+	auto vertSpirvOpt = VkMana::CompileShader(compileInfo);
+	if (!vertSpirvOpt)
 	{
-		LOG_ERR("Failed to compiler VERTEX shader.");
+		VM_ERR("Failed to compiler VERTEX shader.");
 		return 1;
 	}
-	ShaderBinary fragSpirv;
-	if (!VkMana::CompileShader(fragSpirv, FragmentShaderSrc, shaderc_fragment_shader, true))
+
+	compileInfo.SourceStr = FragmentShaderSrc;
+	compileInfo.Stage = vk::ShaderStageFlagBits::eFragment;
+	auto fragSpirvOpt = VkMana::CompileShader(compileInfo);
+	if (!fragSpirvOpt)
 	{
-		LOG_ERR("Failed to compiler FRAGMENT shader.");
+		VM_ERR("Failed to compiler FRAGMENT shader.");
 		return 1;
 	}
 
 	VkMana::GraphicsPipelineCreateInfo pipelineInfo{
-		.Vertex = vertSpirv,
-		.Fragment = fragSpirv,
+		.Vertex = vertSpirvOpt.value(),
+		.Fragment = fragSpirvOpt.value(),
 		.VertexAttributes = {
 			vk::VertexInputAttributeDescription(0, 0, vk::Format::eR32G32B32Sfloat, offsetof(Vertex, Position)),
 			vk::VertexInputAttributeDescription(1, 0, vk::Format::eR32G32B32Sfloat, offsetof(Vertex, Normal)),
@@ -329,14 +346,14 @@ int main()
 	Mesh mesh;
 	if (!LoadObjMesh(mesh, context, "assets/models/viking_room.obj"))
 	{
-		LOG_ERR("Failed to load mesh.");
+		VM_ERR("Failed to load mesh.");
 		return 1;
 	}
 
 	VkMana::ImageHandle texture;
 	if (!LoadImage(texture, context, "assets/models/viking_room.png"))
 	{
-		LOG_ERR("Failed to load texture.");
+		VM_ERR("Failed to load texture.");
 		return 1;
 	}
 

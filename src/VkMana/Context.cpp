@@ -893,6 +893,7 @@ namespace VkMana
 		{
 			frame.CmdPool = IntrusivePtr(new CommandPool(this, m_queueInfo.GraphicsFamilyIndex));
 			frame.Garbage = IntrusivePtr(new Garbage(this));
+			frame.DescriptorAllocator = IntrusivePtr(new DescriptorAllocator(this, 30));
 		}
 
 		m_frameIndex = 0;

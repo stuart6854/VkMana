@@ -16,3 +16,6 @@
 [submodule "third_party/shaderc"]
 	path = third_party/shaderc
 	url = https://github.com/google/shaderc.git
+[submodule "third_party/dxc"]
+	path = third_party/dxc
+	url = https://github.com/microsoft/DirectXShaderCompiler.git

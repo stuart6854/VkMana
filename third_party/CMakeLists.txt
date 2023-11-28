@@ -1,4 +1,4 @@
-find_package(Vulkan REQUIRED COMPONENTS dxc GLOBAL)
+find_package(Vulkan REQUIRED GLOBAL)
 
 add_subdirectory(SPIRV-Headers)
 add_subdirectory(SPIRV-Tools)
@@ -6,6 +6,10 @@ add_subdirectory(glslang)
 
 # vma-hpp
 add_subdirectory(vma-hpp)
+
+# DXC
+include(dxc/cmake/caches/PredefinedParams.cmake)
+add_subdirectory(dxc)
 
 # ShaderC
 option(SHADERC_SKIP_INSTALL "Skip installation" ON)

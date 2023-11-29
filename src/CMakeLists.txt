@@ -13,7 +13,7 @@ add_library(VkMana
 
 target_include_directories(VkMana PUBLIC "./")
 
-target_link_libraries(VkMana PRIVATE shaderc shaderc_util PUBLIC Vulkan::Vulkan VulkanMemoryAllocator-Hpp SDL2-static)
+target_link_libraries(VkMana PRIVATE shaderc shaderc_util PUBLIC Vulkan::Headers VulkanMemoryAllocator-Hpp SDL2-static)
 
 target_compile_features(VkMana PUBLIC cxx_std_20)
 target_compile_definitions(VkMana PRIVATE #[[WIN32_LEAN_AND_MEAN NOMINMAX]])

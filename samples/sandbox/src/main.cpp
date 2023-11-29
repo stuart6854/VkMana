@@ -133,7 +133,7 @@ int main()
 		if (!wsi.IsAlive())
 			isRunning = false;
 
-		auto windowTitle = std::format("{} - {}ms", WindowTitle, uint32_t(deltaTime * 1000));
+		auto windowTitle = fmt::format("{} - {}ms", WindowTitle, uint32_t(deltaTime * 1000));
 		SDL_SetWindowTitle(window, windowTitle.c_str());
 
 		auto projMat = glm::perspectiveLH_ZO(glm::radians(60.0f), WindowAspect, 0.1f, 500.0f);

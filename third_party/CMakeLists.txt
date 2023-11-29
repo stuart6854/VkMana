@@ -40,3 +40,7 @@ add_subdirectory(glm)
 add_subdirectory(stb)
 add_subdirectory(tinygltf)
 add_subdirectory(tinyobjloader)
+
+# FmtLib
+option(FMT_INSTALL "Generate the install target." OFF)
+add_subdirectory(fmt)

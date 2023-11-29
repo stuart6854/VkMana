@@ -85,7 +85,7 @@ namespace VkMana
 
 	inline bool FormatIsColor(vk::Format format)
 	{
-		return !FormatIsUndefined(format) || FormatIsDepthOrStencil(format);
+		return !(FormatIsUndefined(format) || FormatIsDepthOrStencil(format));
 	}
 
 } // namespace VkMana

@@ -55,7 +55,7 @@ namespace VkMana
 		std::vector<vk::DescriptorImageInfo> imageInfos(images.size());
 		std::vector<vk::WriteDescriptorSet> writes(images.size());
 
-		for (auto i = 0; i < images.size(); ++i)
+		for (auto i = 0u; i < images.size(); ++i)
 		{
 			auto& image = images[i];
 

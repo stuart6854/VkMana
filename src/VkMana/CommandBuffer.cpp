@@ -120,7 +120,7 @@ namespace VkMana
 		uint32_t firstSet, const std::vector<DescriptorSet*>& sets, const std::vector<uint32_t>& dynamicOffsets)
 	{
 		std::vector<vk::DescriptorSet> descSets(sets.size());
-		for (auto i = 0; i < sets.size(); ++i)
+		for (auto i = 0u; i < sets.size(); ++i)
 			descSets[i] = sets[i]->GetSet();
 
 		m_cmd.bindDescriptorSets(m_pipeline->GetBindPoint(), m_pipeline->GetLayout(), firstSet, descSets, dynamicOffsets);
@@ -135,7 +135,7 @@ namespace VkMana
 		uint32_t firstBinding, const std::vector<const Buffer*>& buffers, const std::vector<uint64_t>& offsets)
 	{
 		std::vector<vk::Buffer> vtxBuffers(buffers.size());
-		for (auto i = 0; i < buffers.size(); ++i)
+		for (auto i = 0u; i < buffers.size(); ++i)
 			vtxBuffers[i] = buffers[i]->GetBuffer();
 
 		m_cmd.bindVertexBuffers(firstBinding, vtxBuffers, offsets);

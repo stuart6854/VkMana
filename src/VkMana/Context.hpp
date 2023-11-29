@@ -92,7 +92,7 @@ namespace VkMana
 		static void PrintInstanceInfo();
 		static void PrintDeviceInfo(vk::PhysicalDevice gpu);
 
-		static bool FindQueueFamily(uint32_t outFamilyIndex, vk::PhysicalDevice gpu, vk::QueueFlags flags);
+		static bool FindQueueFamily(uint32_t& outFamilyIndex, vk::PhysicalDevice gpu, vk::QueueFlags flags);
 
 		static bool InitInstance(vk::Instance& outInstance);
 		static bool SelectGPU(vk::PhysicalDevice& outGPU, vk::Instance instance);

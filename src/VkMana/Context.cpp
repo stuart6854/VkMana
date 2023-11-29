@@ -124,7 +124,7 @@ namespace VkMana
 
 		auto swapchainImages = m_device.getSwapchainImagesKHR(newSurfaceInfo.Swapchain);
 		newSurfaceInfo.Images.resize(swapchainImages.size());
-		for (auto i = 0; i < swapchainImages.size(); ++i)
+		for (auto i = 0u; i < swapchainImages.size(); ++i)
 		{
 			ImageCreateInfo info{
 				.Width = imageWidth,
@@ -195,10 +195,10 @@ namespace VkMana
 		m_queueInfo.GraphicsQueue.submit(submitInfo, fence);
 
 		m_presentWaitSemaphores.push_back(signalSemaphore);
-		GetFrame().Garbage->Bin(signalSemaphore);
+		frame.Garbage->Bin(signalSemaphore);
 
-		GetFrame().FrameFences.push_back(fence);
-		GetFrame().Garbage->Bin(fence);
+		frame.FrameFences.push_back(fence);
+		frame.Garbage->Bin(fence);
 	}
 
 	void Context::Present()
@@ -224,9 +224,9 @@ namespace VkMana
 		UNUSED(m_queueInfo.GraphicsQueue.presentKHR(presentInfo));
 		for (auto i = 0; i < results.size(); ++i)
 		{
-			auto result = results[i];
-			auto& surface = m_surfaces[i];
 			// #TODO: Handle present result.
+			// auto result = results[i];
+			// auto& surface = m_surfaces[i];
 		}
 
 		m_presentWaitSemaphores.clear();
@@ -306,7 +306,7 @@ namespace VkMana
 
 		std::vector<vk::DescriptorSetLayoutBinding> layoutBindings(bindings.size());
 		std::vector<vk::DescriptorBindingFlags> bindingFlags(bindings.size());
-		for (auto i = 0; i < bindings.size(); ++i)
+		for (auto i = 0u; i < bindings.size(); ++i)
 		{
 			const auto& binding = bindings[i];
 			layoutBindings[i] = { binding.Binding, binding.Type, binding.Count, binding.StageFlags };
@@ -345,7 +345,7 @@ namespace VkMana
 		HashCombine(hash, info.PushConstantRange);
 
 		std::vector<vk::DescriptorSetLayout> setLayouts(info.SetLayouts.size());
-		for (auto i = 0; i < info.SetLayouts.size(); ++i)
+		for (auto i = 0u; i < info.SetLayouts.size(); ++i)
 		{
 			HashCombine(hash, i);
 			if (info.SetLayouts[i])
@@ -510,7 +510,7 @@ namespace VkMana
 				auto mipWidth = int32_t(info.Width);
 				auto mipHeight = int32_t(info.Height);
 
-				for (uint32_t i = 1; i < info.MipLevels; ++i)
+				for (uint32_t i = 1u; i < info.MipLevels; ++i)
 				{
 					// Transition src mip to TransferSrc
 					ImageTransitionInfo srcTransition{
@@ -748,10 +748,10 @@ namespace VkMana
 			VM_INFO("  - {}", ext.extensionName.data());
 	}
 
-	bool Context::FindQueueFamily(uint32_t outFamilyIndex, vk::PhysicalDevice gpu, vk::QueueFlags flags)
+	bool Context::FindQueueFamily(uint32_t& outFamilyIndex, vk::PhysicalDevice gpu, vk::QueueFlags flags)
 	{
 		auto families = gpu.getQueueFamilyProperties();
-		for (auto i = 0; i < families.size(); ++i)
+		for (auto i = 0u; i < families.size(); ++i)
 		{
 			if (families[i].queueFlags & flags)
 			{

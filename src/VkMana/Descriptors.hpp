@@ -4,8 +4,6 @@
 #include "Image.hpp"
 #include "Buffer.hpp"
 
-#include <glm/ext/scalar_uint_sized.hpp>
-
 namespace VkMana
 {
 	class Context;

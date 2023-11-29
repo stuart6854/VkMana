@@ -35,7 +35,7 @@ add_subdirectory(sdl2)
 set_property(TARGET SDL2-static PROPERTY FOLDER "ThirdParty")
 
 # GLM
-# add_subdirectory(glm)
+add_subdirectory(glm)
 
 add_subdirectory(stb)
 add_subdirectory(tinygltf)

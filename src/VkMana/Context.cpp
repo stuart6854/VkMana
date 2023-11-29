@@ -1,4 +1,5 @@
 #include "Context.hpp"
+#include "vulkan/vulkan_wayland.h"
 
 #define VMA_IMPLEMENTATION
 #define VMA_STATIC_VULKAN_FUNCTIONS 0
@@ -780,6 +781,8 @@ namespace VkMana
 			VK_KHR_SURFACE_EXTENSION_NAME,
 #ifdef _WIN32
 			VK_KHR_WIN32_SURFACE_EXTENSION_NAME,
+#elif __linux__
+			VK_KHR_WAYLAND_SURFACE_EXTENSION_NAME,
 #endif
 		};
 

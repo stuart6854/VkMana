@@ -8,6 +8,8 @@
 	#ifndef NOMINMAX
 		#define NOMINMAX
 	#endif
+#elif defined(__linux__) && !defined(VK_USE_PLATFORM_WAYLAND_KHR)
+	#define VK_USE_PLATFORM_WAYLAND_KHR
 #endif
 
 #if defined(VULKAN_H_) || defined(VULKAN_CORE_H_)

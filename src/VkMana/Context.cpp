@@ -1,6 +1,7 @@
 #include "Context.hpp"
 
 #define VMA_IMPLEMENTATION
+#define VMA_STATIC_VULKAN_FUNCTIONS 0
 #include <vk_mem_alloc.h>
 
 VULKAN_HPP_DEFAULT_DISPATCH_LOADER_DYNAMIC_STORAGE
@@ -49,11 +50,15 @@ namespace VkMana
 		if (!InitDevice(m_device, m_queueInfo, m_gpu))
 			return false;
 
+		vma::VulkanFunctions vulkanFunctions{};
+		vulkanFunctions.setVkGetInstanceProcAddr(VULKAN_HPP_DEFAULT_DISPATCHER.vkGetInstanceProcAddr);
+		vulkanFunctions.setVkGetDeviceProcAddr(VULKAN_HPP_DEFAULT_DISPATCHER.vkGetDeviceProcAddr);
 		vma::AllocatorCreateInfo allocInfo{};
 		allocInfo.setInstance(m_instance);
 		allocInfo.setPhysicalDevice(m_gpu);
 		allocInfo.setDevice(m_device);
 		allocInfo.setVulkanApiVersion(VK_API_VERSION_1_3);
+		allocInfo.setPVulkanFunctions(&vulkanFunctions);
 		m_allocator = vma::createAllocator(allocInfo);
 
 		if (!SetupFrames())

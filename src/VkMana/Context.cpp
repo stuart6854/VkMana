@@ -510,7 +510,7 @@ namespace VkMana
 				auto mipWidth = int32_t(info.Width);
 				auto mipHeight = int32_t(info.Height);
 
-				for (uint32_t i = 1u; i < info.MipLevels; ++i)
+				for (auto i = 1u; i < uint32_t(info.MipLevels); ++i)
 				{
 					// Transition src mip to TransferSrc
 					ImageTransitionInfo srcTransition{

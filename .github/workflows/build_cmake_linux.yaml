@@ -25,9 +25,6 @@ jobs:
         with:
           submodules: recursive
 
-      - name: Install dependencies (Vulkan SDK, etc.)
-        run: apt install vulkan-utils
-
       - name: Configure CMake
         run: cmake -B ${{ github.workspace }}/build -DCMAKE_CXX_COMPILER=${{ matrix.cpp_compiler }} -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }}
 

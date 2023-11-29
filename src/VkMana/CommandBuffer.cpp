@@ -26,7 +26,7 @@ namespace VkMana
 				hasDepthStencil = true;
 
 				ImageTransitionInfo transitionInfo{
-					.Image = target.Image->GetImage(),
+					.TargetImage = target.Image->GetImage(),
 					.OldLayout = target.PreLayout,
 					.NewLayout = vk::ImageLayout::eDepthStencilAttachmentOptimal,
 				};
@@ -43,7 +43,7 @@ namespace VkMana
 				attachment.setImageLayout(vk::ImageLayout::eColorAttachmentOptimal);
 
 				ImageTransitionInfo transitionInfo{
-					.Image = target.Image->GetImage(),
+					.TargetImage = target.Image->GetImage(),
 					.OldLayout = target.PreLayout,
 					.NewLayout = vk::ImageLayout::eColorAttachmentOptimal,
 				};
@@ -75,7 +75,7 @@ namespace VkMana
 			if (target.IsDepthStencil)
 			{
 				ImageTransitionInfo transitionInfo{
-					.Image = target.Image->GetImage(),
+					.TargetImage = target.Image->GetImage(),
 					.OldLayout = vk::ImageLayout::eDepthStencilAttachmentOptimal,
 					.NewLayout = target.PostLayout,
 				};
@@ -84,7 +84,7 @@ namespace VkMana
 			else
 			{
 				ImageTransitionInfo transitionInfo{
-					.Image = target.Image->GetImage(),
+					.TargetImage = target.Image->GetImage(),
 					.OldLayout = vk::ImageLayout::eColorAttachmentOptimal,
 					.NewLayout = target.PostLayout,
 				};
@@ -220,14 +220,14 @@ namespace VkMana
 		}
 
 		vk::ImageMemoryBarrier2 barrier{};
-		barrier.setImage(info.Image->GetImage());
+		barrier.setImage(info.TargetImage->GetImage());
 		barrier.setOldLayout(info.OldLayout);
 		barrier.setNewLayout(info.NewLayout);
 		barrier.setDstStageMask(srcStage);
 		barrier.setDstAccessMask(srcAccess);
 		barrier.setSrcStageMask(dstStage);
 		barrier.setSrcAccessMask(dstAccess);
-		barrier.subresourceRange.setAspectMask(info.Image->GetAspect());
+		barrier.subresourceRange.setAspectMask(info.TargetImage->GetAspect());
 		barrier.subresourceRange.setBaseMipLevel(info.BaseMipLevel);
 		barrier.subresourceRange.setLevelCount(info.MipLevelCount);
 		barrier.subresourceRange.setBaseArrayLayer(info.BaseArrayLayer);

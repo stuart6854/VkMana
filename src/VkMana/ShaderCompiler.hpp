@@ -17,9 +17,9 @@ namespace VkMana
 
 	struct ShaderCompileInfo
 	{
-		SourceLanguage SourceLanguage;
-		std::filesystem::path SourceFilename;
-		std::string SourceStr;
+		SourceLanguage SrcLanguage;
+		std::filesystem::path SrcFilename;
+		std::string SrcString;
 		vk::ShaderStageFlagBits Stage;
 		std::string EntryPoint = "main"; // Must be "main" for GLSL.
 		bool Debug = false;

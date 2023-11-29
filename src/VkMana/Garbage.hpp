@@ -8,10 +8,10 @@ namespace VkMana
 {
 	class Context;
 
-	class Garbage : public IntrusivePtrEnabled<Garbage>
+	class GarbageBin : public IntrusivePtrEnabled<GarbageBin>
 	{
 	public:
-		~Garbage();
+		~GarbageBin();
 
 		void Bin(vk::Semaphore semaphore);
 		void Bin(vk::Fence fence);
@@ -29,7 +29,7 @@ namespace VkMana
 	private:
 		friend class Context;
 
-		Garbage(Context* context);
+		GarbageBin(Context* context);
 
 	private:
 		Context* m_ctx;

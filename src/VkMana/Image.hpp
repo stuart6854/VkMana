@@ -65,7 +65,7 @@ namespace VkMana
 
 	struct ImageViewCreateInfo
 	{
-		const Image* Image = nullptr;
+		const Image* TargetImage = nullptr;
 		uint32_t BaseMipLevel = 0;
 		uint32_t MipLevelCount = 1;
 		uint32_t BaseArrayLayer = 0;

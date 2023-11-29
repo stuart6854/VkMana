@@ -138,9 +138,9 @@ int main()
 	auto pipelineLayout = context.CreatePipelineLayout(pipelineLayoutInfo);
 
 	VkMana::ShaderCompileInfo compileInfo{
-		.SourceLanguage = VkMana::SourceLanguage::GLSL,
-		.SourceFilename = "",
-		.SourceStr = TriangleVertexShaderSrc,
+		.SrcLanguage = VkMana::SourceLanguage::GLSL,
+		.SrcFilename = "",
+		.SrcString = TriangleVertexShaderSrc,
 		.Stage = vk::ShaderStageFlagBits::eVertex,
 		.Debug = true,
 	};
@@ -151,7 +151,7 @@ int main()
 		return 1;
 	}
 
-	compileInfo.SourceStr = TriangleFragmentShaderSrc;
+	compileInfo.SrcString = TriangleFragmentShaderSrc;
 	compileInfo.Stage = vk::ShaderStageFlagBits::eFragment;
 	auto fragSpirvOpt = VkMana::CompileShader(compileInfo);
 	if (!fragSpirvOpt)

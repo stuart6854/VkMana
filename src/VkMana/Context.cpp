@@ -15,7 +15,7 @@ namespace VkMana
 
 		while (!m_surfaces.empty())
 		{
-			RemoveSurface(m_surfaces.front().WSI);
+			RemoveSurface(m_surfaces.front().WindowSurface);
 		}
 		m_surfaces.clear();
 
@@ -97,7 +97,7 @@ namespace VkMana
 	bool Context::AddSurface(WSI* wsi)
 	{
 		auto& newSurfaceInfo = m_surfaces.emplace_back();
-		newSurfaceInfo.WSI = wsi;
+		newSurfaceInfo.WindowSurface = wsi;
 		newSurfaceInfo.Surface = wsi->CreateSurface(m_instance);
 
 		uint32_t imageWidth = 0;
@@ -141,7 +141,7 @@ namespace VkMana
 
 	void Context::RemoveSurface(WSI* wsi)
 	{
-		auto it = std::ranges::find_if(m_surfaces, [&](const SurfaceInfo& surfaceInfo) { return surfaceInfo.WSI == wsi; });
+		auto it = std::ranges::find_if(m_surfaces, [&](const SurfaceInfo& surfaceInfo) { return surfaceInfo.WindowSurface == wsi; });
 		if (it == m_surfaces.end())
 			return;
 
@@ -170,7 +170,7 @@ namespace VkMana
 
 		for (auto& surfaceInfo : m_surfaces)
 		{
-			surfaceInfo.WSI->PollEvents();
+			surfaceInfo.WindowSurface->PollEvents();
 
 			auto acquireSemaphore = m_device.createSemaphore({});
 			auto result = m_device.acquireNextImageKHR(surfaceInfo.Swapchain, UINT64_MAX, acquireSemaphore);
@@ -267,7 +267,7 @@ namespace VkMana
 
 	auto Context::GetSurfaceRenderPass(WSI* wsi) -> RenderPassInfo
 	{
-		auto it = std::ranges::find_if(m_surfaces, [&](const SurfaceInfo& surfaceInfo) { return surfaceInfo.WSI == wsi; });
+		auto it = std::ranges::find_if(m_surfaces, [&](const SurfaceInfo& surfaceInfo) { return surfaceInfo.WindowSurface == wsi; });
 		if (it == m_surfaces.end())
 			return {};
 
@@ -489,7 +489,7 @@ namespace VkMana
 
 			// Transition all mip levels to TransferDst.
 			ImageTransitionInfo preTransitionInfo{
-				.Image = imageHandle.Get(),
+				.TargetImage = imageHandle.Get(),
 				.OldLayout = vk::ImageLayout::eUndefined,
 				.NewLayout = vk::ImageLayout::eTransferDstOptimal,
 				.MipLevelCount = uint32_t(info.MipLevels),
@@ -513,7 +513,7 @@ namespace VkMana
 				{
 					// Transition src mip to TransferSrc
 					ImageTransitionInfo srcTransition{
-						.Image = imageHandle.Get(),
+						.TargetImage = imageHandle.Get(),
 						.OldLayout = vk::ImageLayout::eTransferDstOptimal,
 						.NewLayout = vk::ImageLayout::eTransferSrcOptimal,
 						.BaseMipLevel = i - 1,
@@ -536,7 +536,7 @@ namespace VkMana
 
 					// Transition src mip to ShaderReadOnly
 					ImageTransitionInfo shaderReadTransition{
-						.Image = imageHandle.Get(),
+						.TargetImage = imageHandle.Get(),
 						.OldLayout = vk::ImageLayout::eTransferSrcOptimal,
 						.NewLayout = vk::ImageLayout::eShaderReadOnlyOptimal,
 						.BaseMipLevel = i - 1,
@@ -552,7 +552,7 @@ namespace VkMana
 
 				// Transition last mip level to ShaderReadOnly
 				ImageTransitionInfo postTransitionInfo{
-					.Image = imageHandle.Get(),
+					.TargetImage = imageHandle.Get(),
 					.OldLayout = vk::ImageLayout::eTransferDstOptimal,
 					.NewLayout = vk::ImageLayout::eShaderReadOnlyOptimal,
 					.BaseMipLevel = uint32_t(info.MipLevels) - 1,
@@ -564,7 +564,7 @@ namespace VkMana
 			{
 				// Transition all mip levels to ShaderReadOnly
 				ImageTransitionInfo postTransitionInfo{
-					.Image = imageHandle.Get(),
+					.TargetImage = imageHandle.Get(),
 					.OldLayout = vk::ImageLayout::eTransferDstOptimal,
 					.NewLayout = vk::ImageLayout::eShaderReadOnlyOptimal,
 					.MipLevelCount = uint32_t(info.MipLevels),
@@ -897,7 +897,7 @@ namespace VkMana
 		for (auto& frame : m_frames)
 		{
 			frame.CmdPool = IntrusivePtr(new CommandPool(this, m_queueInfo.GraphicsFamilyIndex));
-			frame.Garbage = IntrusivePtr(new Garbage(this));
+			frame.Garbage = IntrusivePtr(new GarbageBin(this));
 			frame.DescriptorAllocator = IntrusivePtr(new DescriptorAllocator(this, 30));
 		}
 

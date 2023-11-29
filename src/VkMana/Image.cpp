@@ -22,7 +22,7 @@ namespace VkMana
 			if (type == ImageViewType::Texture)
 			{
 				viewInfo = {
-					.Image = this,
+					.TargetImage = this,
 					.BaseMipLevel = 0,
 					.MipLevelCount = uint32_t(m_info.MipLevels),
 					.BaseArrayLayer = 0,
@@ -32,7 +32,7 @@ namespace VkMana
 			else if (type == ImageViewType::RenderTarget)
 			{
 				viewInfo = {
-					.Image = this,
+					.TargetImage = this,
 					.BaseMipLevel = 0,
 					.MipLevelCount = 1,
 					.BaseArrayLayer = 0,

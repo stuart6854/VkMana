@@ -296,9 +296,9 @@ int main()
 	auto pipelineLayout = context.CreatePipelineLayout(pipelineLayoutInfo);
 
 	VkMana::ShaderCompileInfo compileInfo{
-		.SourceLanguage = VkMana::SourceLanguage::GLSL,
-		.SourceFilename = "",
-		.SourceStr = VertexShaderSrc,
+		.SrcLanguage = VkMana::SourceLanguage::GLSL,
+		.SrcFilename = "",
+		.SrcString = VertexShaderSrc,
 		.Stage = vk::ShaderStageFlagBits::eVertex,
 		.Debug = true,
 	};
@@ -309,7 +309,7 @@ int main()
 		return 1;
 	}
 
-	compileInfo.SourceStr = FragmentShaderSrc;
+	compileInfo.SrcString = FragmentShaderSrc;
 	compileInfo.Stage = vk::ShaderStageFlagBits::eFragment;
 	auto fragSpirvOpt = VkMana::CompileShader(compileInfo);
 	if (!fragSpirvOpt)

@@ -1,4 +1,5 @@
 #include "Renderer.hpp"
+#include "StaticMesh.hpp"
 
 #include <VkMana/ShaderCompiler.hpp>
 
@@ -58,7 +59,7 @@ namespace VkMana::Sample
 
 	void Renderer::Submit(StaticMesh* mesh, glm::mat4 transform)
 	{
-		m_staticInstances.emplace_back(mesh, transform);
+		m_staticInstances.emplace_back(Instance<StaticMesh>{ mesh, transform });
 
 		for (auto& mat : mesh->GetMaterials())
 		{
@@ -144,8 +145,8 @@ namespace VkMana::Sample
 		m_gBufferPipelineLayout = m_ctx->CreatePipelineLayout(layoutInfo);
 
 		ShaderCompileInfo compileInfo{
-			.SourceLanguage = SourceLanguage::GLSL,
-			.SourceFilename = "assets/shaders/deferred_gbuffer.vert",
+			.SrcLanguage = SourceLanguage::GLSL,
+			.SrcFilename = "assets/shaders/deferred_gbuffer.vert",
 			.Stage = vk::ShaderStageFlagBits::eVertex,
 			.Debug = true,
 		};
@@ -157,7 +158,7 @@ namespace VkMana::Sample
 		}
 
 		compileInfo.Stage = vk::ShaderStageFlagBits::eFragment;
-		compileInfo.SourceFilename = "assets/shaders/deferred_gbuffer.frag";
+		compileInfo.SrcFilename = "assets/shaders/deferred_gbuffer.frag";
 		auto fragmentSpirvOpt = CompileShader(compileInfo);
 		if (!fragmentSpirvOpt)
 		{
@@ -209,8 +210,8 @@ namespace VkMana::Sample
 		m_compositionPipelineLayout = m_ctx->CreatePipelineLayout(layoutInfo);
 
 		ShaderCompileInfo compileInfo{
-			.SourceLanguage = SourceLanguage::GLSL,
-			.SourceFilename = "assets/shaders/deferred_composition.vert",
+			.SrcLanguage = SourceLanguage::GLSL,
+			.SrcFilename = "assets/shaders/deferred_composition.vert",
 			.Stage = vk::ShaderStageFlagBits::eVertex,
 			.Debug = true,
 		};
@@ -222,7 +223,7 @@ namespace VkMana::Sample
 		}
 
 		compileInfo.Stage = vk::ShaderStageFlagBits::eFragment;
-		compileInfo.SourceFilename = "assets/shaders/deferred_composition.frag";
+		compileInfo.SrcFilename = "assets/shaders/deferred_composition.frag";
 		auto fragmentSpirvOpt = CompileShader(compileInfo);
 		if (!fragmentSpirvOpt)
 		{
@@ -252,8 +253,8 @@ namespace VkMana::Sample
 		m_screenPipelineLayout = m_ctx->CreatePipelineLayout(layoutInfo);
 
 		ShaderCompileInfo compileInfo{
-			.SourceLanguage = SourceLanguage::GLSL,
-			.SourceFilename = "assets/shaders/fullscreen_quad.vert",
+			.SrcLanguage = SourceLanguage::GLSL,
+			.SrcFilename = "assets/shaders/fullscreen_quad.vert",
 			.Stage = vk::ShaderStageFlagBits::eVertex,
 			.Debug = true,
 		};
@@ -265,7 +266,7 @@ namespace VkMana::Sample
 		}
 
 		compileInfo.Stage = vk::ShaderStageFlagBits::eFragment;
-		compileInfo.SourceFilename = "assets/shaders/fullscreen_quad.frag";
+		compileInfo.SrcFilename = "assets/shaders/fullscreen_quad.frag";
 		auto fragmentSpirvOpt = CompileShader(compileInfo);
 		if (!fragmentSpirvOpt)
 		{

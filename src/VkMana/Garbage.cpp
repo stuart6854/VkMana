@@ -4,62 +4,62 @@
 
 namespace VkMana
 {
-	Garbage::~Garbage()
+	GarbageBin::~GarbageBin()
 	{
 		EmptyBins();
 	}
 
-	void Garbage::Bin(vk::Semaphore semaphore)
+	void GarbageBin::Bin(vk::Semaphore semaphore)
 	{
 		m_semaphores.push_back(semaphore);
 	}
 
-	void Garbage::Bin(vk::Fence fence)
+	void GarbageBin::Bin(vk::Fence fence)
 	{
 		m_fences.push_back(fence);
 	}
 
-	void Garbage::Bin(vk::DescriptorSetLayout layout)
+	void GarbageBin::Bin(vk::DescriptorSetLayout layout)
 	{
 		m_setLayouts.push_back(layout);
 	}
 
-	void Garbage::Bin(vk::PipelineLayout layout)
+	void GarbageBin::Bin(vk::PipelineLayout layout)
 	{
 		m_pipelineLayouts.push_back(layout);
 	}
 
-	void Garbage::Bin(vk::Pipeline pipeline)
+	void GarbageBin::Bin(vk::Pipeline pipeline)
 	{
 		m_pipelines.push_back(pipeline);
 	}
 
-	void Garbage::Bin(vk::Image image)
+	void GarbageBin::Bin(vk::Image image)
 	{
 		m_images.push_back(image);
 	}
 
-	void Garbage::Bin(vk::ImageView view)
+	void GarbageBin::Bin(vk::ImageView view)
 	{
 		m_imageViews.push_back(view);
 	}
 
-	void Garbage::Bin(vk::Sampler sampler)
+	void GarbageBin::Bin(vk::Sampler sampler)
 	{
 		m_samplers.push_back(sampler);
 	}
 
-	void Garbage::Bin(vk::Buffer buffer)
+	void GarbageBin::Bin(vk::Buffer buffer)
 	{
 		m_buffers.push_back(buffer);
 	}
 
-	void Garbage::Bin(vma::Allocation alloc)
+	void GarbageBin::Bin(vma::Allocation alloc)
 	{
 		m_allocs.push_back(alloc);
 	}
 
-	void Garbage::EmptyBins()
+	void GarbageBin::EmptyBins()
 	{
 		for (auto& v : m_semaphores)
 			m_ctx->GetDevice().destroy(v);
@@ -94,7 +94,7 @@ namespace VkMana
 		m_allocs.clear();
 	}
 
-	Garbage::Garbage(Context* context)
+	GarbageBin::GarbageBin(Context* context)
 		: m_ctx(context)
 	{
 	}

@@ -53,18 +53,18 @@ namespace VkMana
 		else
 			options.SetOptimizationLevel(shaderc_optimization_level_performance);
 
-		if(info.SourceLanguage == SourceLanguage::GLSL)
+		if (info.SrcLanguage == SourceLanguage::GLSL)
 			options.SetSourceLanguage(shaderc_source_language_glsl);
-		else if(info.SourceLanguage == SourceLanguage::HLSL)
+		else if (info.SrcLanguage == SourceLanguage::HLSL)
 			options.SetSourceLanguage(shaderc_source_language_hlsl);
 
 		const char* sourceFile = "_no_file_";
-		if (!info.SourceFilename.empty())
-			sourceFile = info.SourceFilename.string().c_str();
+		if (!info.SrcFilename.empty())
+			sourceFile = info.SrcFilename.string().c_str();
 
 		auto kind = GetShaderKind(info.Stage);
 		shaderc::Compiler compiler;
-		auto result = compiler.CompileGlslToSpv(info.SourceStr, kind, sourceFile, options);
+		auto result = compiler.CompileGlslToSpv(info.SrcString, kind, sourceFile, options);
 		if (result.GetCompilationStatus() != shaderc_compilation_status_success)
 		{
 			VM_ERR("Shader Compile Error:\n{}", result.GetErrorMessage());
@@ -78,17 +78,17 @@ namespace VkMana
 
 	auto CompileShader(ShaderCompileInfo info) -> std::optional<ShaderBinary>
 	{
-		if (!info.SourceFilename.empty())
+		if (!info.SrcFilename.empty())
 		{
-			auto opt = ReadFileStr(info.SourceFilename);
+			auto opt = ReadFileStr(info.SrcFilename);
 			if (opt)
-				info.SourceStr = opt.value();
+				info.SrcString = opt.value();
 			else
 			{
-				VM_ERR("Failed to read Shader source from file: {}", info.SourceFilename.string());
+				VM_ERR("Failed to read Shader source from file: {}", info.SrcFilename.string());
 			}
 		}
-		if (info.SourceStr.empty())
+		if (info.SrcString.empty())
 		{
 			VM_ERR("No shader source to compile.");
 			return std::nullopt;

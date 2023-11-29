@@ -14,7 +14,7 @@ namespace VkMana
 
 	struct ImageTransitionInfo
 	{
-		const Image* Image = nullptr;
+		const Image* TargetImage = nullptr;
 		vk::ImageLayout OldLayout = vk::ImageLayout::eUndefined;
 		vk::ImageLayout NewLayout = vk::ImageLayout::eUndefined;
 		uint32_t BaseMipLevel = 0;

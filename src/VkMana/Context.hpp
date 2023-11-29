@@ -107,7 +107,7 @@ namespace VkMana
 
 			DescriptorAllocatorHandle DescriptorAllocator;
 
-			IntrusivePtr<Garbage> Garbage;
+			IntrusivePtr<GarbageBin> Garbage;
 		};
 		std::vector<PerFrame> m_frames;
 		uint32_t m_frameIndex;
@@ -117,7 +117,7 @@ namespace VkMana
 
 		struct SurfaceInfo
 		{
-			WSI* WSI = nullptr;
+			WSI* WindowSurface = nullptr;
 			vk::SurfaceKHR Surface;
 			vk::SwapchainKHR Swapchain;
 			uint32_t ImageIndex = 0;

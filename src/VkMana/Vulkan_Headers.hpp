@@ -23,11 +23,9 @@
 #include <vulkan/vulkan.h>
 #define VULKAN_HPP_DISPATCH_LOADER_DYNAMIC 1
 #include <vulkan/vulkan.hpp>
-#include <vma/vk_mem_alloc.h>
 #include <vk_mem_alloc.hpp>
 #include "Logging.hpp"
 #include <vulkan/vulkan_hash.hpp>
-#include <vulkan/utility/vk_format_utils.h>
 
 #ifdef VULKAN_DEBUG
 	#define VK_ASSERT(x)                                                \

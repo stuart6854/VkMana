@@ -47,13 +47,13 @@ namespace VkMana
 	auto Image::GetAspect() const -> vk::ImageAspectFlags
 	{
 		vk::ImageAspectFlags aspect{};
-		if (vkuFormatIsColor(VkFormat(m_info.Format)))
+		if (FormatIsColor(m_info.Format))
 			aspect = vk::ImageAspectFlagBits::eColor;
 		else
 		{
-			if (vkuFormatHasDepth(VkFormat(m_info.Format)))
+			if (FormatHasDepth(m_info.Format))
 				aspect |= vk::ImageAspectFlagBits::eDepth;
-			if (vkuFormatHasStencil(VkFormat(m_info.Format)))
+			if (FormatHasStencil(m_info.Format))
 				aspect |= vk::ImageAspectFlagBits::eStencil;
 		}
 		return aspect;

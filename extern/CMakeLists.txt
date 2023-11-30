@@ -5,6 +5,7 @@ add_subdirectory(SPIRV-Tools)
 add_subdirectory(glslang)
 
 # vma-hpp
+option(VMA_HPP_INSTALL "Install vma-hpp" OFF)
 add_subdirectory(vma-hpp)
 
 # ShaderC

@@ -16,5 +16,7 @@ option(SHADERC_ENABLE_SHARED_CRT "Use the shared CRT instead of the static CRT" 
 add_subdirectory(shaderc)
 
 # FmtLib
-option(FMT_INSTALL "Generate the install target." OFF)
-add_subdirectory(fmt)
+if (NOT TARGET fmt)
+    option(FMT_INSTALL "Generate the install target." OFF)
+    add_subdirectory(fmt)
+endif ()

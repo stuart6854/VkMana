@@ -50,7 +50,7 @@ namespace VkMana
 			return ImageCreateInfo{
 				.Width = width,
 				.Height = height,
-				.MipLevels = -1,
+				.MipLevels = mipLevels,
 				.Format = vk::Format::eR8G8B8A8Unorm,
 				.Usage = vk::ImageUsageFlagBits::eSampled | vk::ImageUsageFlagBits::eTransferDst | vk::ImageUsageFlagBits::eTransferSrc,
 				.Flags = ImageCreateFlags_GenMipMaps,

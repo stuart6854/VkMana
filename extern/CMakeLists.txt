@@ -4,6 +4,7 @@ if (NOT ${Vulkan_FOUND})
 endif ()
 
 # vma-hpp
+option(VMA_HPP_INSTALL "Install vma-hpp" OFF)
 add_subdirectory(vma-hpp)
 
 # FmtLib

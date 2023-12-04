@@ -14,7 +14,7 @@ add_library(VkMana
 target_include_directories(VkMana PRIVATE "./")
 target_include_directories(VkMana SYSTEM INTERFACE "./")
 
-target_link_libraries(VkMana PRIVATE shaderc shaderc_util PUBLIC fmt::fmt Vulkan::Headers VulkanMemoryAllocator-Hpp)
+target_link_libraries(VkMana PRIVATE Vulkan::shaderc_combined Vulkan::dxc_lib PUBLIC fmt::fmt Vulkan::Headers VulkanMemoryAllocator-Hpp)
 
 target_compile_features(VkMana PUBLIC cxx_std_20)
 

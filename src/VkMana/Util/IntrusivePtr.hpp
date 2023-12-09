@@ -132,7 +132,7 @@ namespace VkMana
 		auto operator->() const -> const T* { return m_data; }
 		explicit operator bool() const { return m_data != nullptr; }
 		bool operator==(const IntrusivePtr& other) const { return m_data == other.m_data; }
-		bool operator!=(const IntrusivePtr& other) const { return *this != other; }
+		bool operator!=(const IntrusivePtr& other) const { return !(*this == other); }
 
 		template <typename U>
 		auto operator=(const IntrusivePtr<U>& other) -> IntrusivePtr&

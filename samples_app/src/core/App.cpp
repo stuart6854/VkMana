@@ -2,6 +2,9 @@
 
 #include <VkMana/Context.hpp>
 
+#define GLFW_INCLUDE_NONE
+#include <GLFW/glfw3.h>
+
 namespace VkMana::SamplesApp
 {
 	constexpr auto WindowTitle = "VkMana - Samples App";
@@ -12,10 +15,10 @@ namespace VkMana::SamplesApp
 	{
 		Init();
 
-		double lastFrameTime = double(SDL_GetTicks()) / 1000.0f;
+		double lastFrameTime = glfwGetTime();
 		while (m_isRunning)
 		{
-			const auto currentFrameTime = double(SDL_GetTicks()) / 1000.0f;
+			const auto currentFrameTime = glfwGetTime();
 			const auto deltaTime = float(currentFrameTime - lastFrameTime);
 			lastFrameTime = currentFrameTime;
 
@@ -41,20 +44,23 @@ namespace VkMana::SamplesApp
 	{
 		m_isRunning = true;
 
-		auto* sdlWindow = SDL_CreateWindow(WindowTitle,
-			SDL_WINDOWPOS_UNDEFINED,
-			SDL_WINDOWPOS_UNDEFINED,
-			InitialWindowWidth,
-			InitialWindowHeight,
-			SDL_WINDOW_VULKAN | SDL_WINDOW_RESIZABLE);
-		if (!sdlWindow)
+		if (!glfwInit())
 		{
-			VM_ERR("Failed to create SDL window");
+			VM_ERR("Failed to initialise GLFW");
 			m_isRunning = false;
 			return;
 		}
 
-		m_window = std::make_unique<Window>(sdlWindow);
+		glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
+		auto* glfwWindow = glfwCreateWindow(InitialWindowWidth, InitialWindowHeight, WindowTitle, nullptr, nullptr);
+		if (glfwWindow == nullptr)
+		{
+			VM_ERR("Failed to create GLFW window");
+			m_isRunning = false;
+			return;
+		}
+
+		m_window = std::make_unique<Window>(glfwWindow);
 
 		m_ctx = IntrusivePtr(new Context);
 		if (!m_ctx->Init(m_window.get()))
@@ -78,6 +84,9 @@ namespace VkMana::SamplesApp
 		m_samples.clear();
 
 		m_ctx = nullptr;
+
+		m_window = nullptr;
+		glfwTerminate();
 	}
 
 } // namespace VkMana::SamplesApp

@@ -6,26 +6,13 @@ CPMAddPackage(NAME glm
 )
 
 CPMAddPackage(
-        NAME sdl2
-        GITHUB_REPOSITORY libsdl-org/SDL
-        GIT_TAG release-2.28.5
+        NAME glfw
+        GITHUB_REPOSITORY glfw/glfw
+        GIT_TAG 3.3.8
         SYSTEM ON
         OPTIONS
-        "SDL2_DISABLE_SDL2MAIN ON"
-        "SDL2_DISABLE_INSTALL ON"
-        "SDL2_DISABLE_UNINSTALL ON"
-        "SDL_SHARED OFF"
-        "SDL_TEST OFF"
-        "SDL_TESTS OFF"
-        "SDL_OPENGL OFF"
-        "SDL_OPENGLES OFF"
-        "SDL_DIRECTX OFF"
-        "SDL_METAL OFF"
-        "SDL_AUDIO OFF"
-        "SDL_HAPTIC OFF"
-        "SDL_Hidapi OFF"
-        "SDL_Sensor OFF"
-        "SDL_Locale OFF"
+        "GLFW_BUILD_DOCS OFF"
+        "GLFW_INSTALL OFF"
 )
 
 CPMAddPackage(
@@ -67,6 +54,6 @@ add_executable(samples_app
 )
 target_include_directories(samples_app PRIVATE src)
 
-target_link_libraries(samples_app PRIVATE VkMana glm SDL2-static stb tinygltf tinyobjloader)
+target_link_libraries(samples_app PRIVATE VkMana glm glfw stb tinygltf tinyobjloader)
 
 target_compile_features(samples_app PRIVATE cxx_std_17)

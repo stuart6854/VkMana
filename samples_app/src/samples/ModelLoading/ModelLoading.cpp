@@ -70,7 +70,7 @@ namespace VkMana::SamplesApp
 				m_setLayout.Get(),
 		   },
 	   };
-		auto pipelineLayout = ctx.CreatePipelineLayout(pipelineLayoutInfo);
+		m_pipelineLayout = ctx.CreatePipelineLayout(pipelineLayoutInfo);
 
 		ShaderCompileInfo compileInfo{
 			.SrcLanguage = SourceLanguage::GLSL,
@@ -109,21 +109,19 @@ namespace VkMana::SamplesApp
 			.Topology = vk::PrimitiveTopology::eTriangleList,
 			.ColorTargetFormats = { vk::Format::eB8G8R8A8Srgb },
 			.DepthTargetFormat = vk::Format::eD24UnormS8Uint,
-			.Layout = pipelineLayout.Get(),
+			.Layout = m_pipelineLayout.Get(),
 		};
 		m_pipeline = ctx.CreateGraphicsPipeline(pipelineInfo);
 		if (m_pipeline == nullptr)
 			return false;
 
-		Mesh mesh;
-		if (!LoadObjMesh(mesh, ctx, "assets/models/viking_room.obj"))
+		if (!LoadObjMesh(m_mesh, ctx, "assets/models/viking_room.obj"))
 		{
 			VM_ERR("Failed to load mesh.");
 			return false;
 		}
 
-		VkMana::ImageHandle texture;
-		if (!LoadTexture(texture, ctx, "assets/models/viking_room.png"))
+		if (!LoadTexture(m_texture, ctx, "assets/models/viking_room.png"))
 		{
 			VM_ERR("Failed to load texture.");
 			return false;
@@ -135,7 +133,15 @@ namespace VkMana::SamplesApp
 		return true;
 	}
 
-	void SampleModelLoading::OnUnload() {}
+	void SampleModelLoading::OnUnload(SamplesApp& app, Context& ctx)
+	{
+		m_mesh = {};
+		m_texture = nullptr;
+		m_pipeline = nullptr;
+		m_pipelineLayout = nullptr;
+		m_setLayout = nullptr;
+		m_depthTarget = nullptr;
+	}
 
 	void SampleModelLoading::Tick(float deltaTime, SamplesApp& app, Context& ctx)
 	{

@@ -81,7 +81,10 @@ namespace VkMana::SamplesApp
 		return m_pipeline != nullptr;
 	}
 
-	void SampleHelloTriangle::OnUnload() {}
+	void SampleHelloTriangle::OnUnload(SamplesApp& app, Context& ctx)
+	{
+		m_pipeline = nullptr;
+	}
 
 	void SampleHelloTriangle::Tick(float deltaTime, SamplesApp& app, Context& ctx)
 	{

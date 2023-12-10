@@ -11,7 +11,7 @@
 
 namespace VkMana::SamplesApp
 {
-	class Renderer
+	class Renderer : public IntrusivePtrEnabled<Renderer>
 	{
 	public:
 		Renderer() = default;
@@ -50,8 +50,8 @@ namespace VkMana::SamplesApp
 
 	private:
 		WSI* m_mainWindow = nullptr;
-		glm::uvec2 m_mainWindowSize;
-		Context* m_ctx;
+		glm::uvec2 m_mainWindowSize{};
+		Context* m_ctx = nullptr;
 
 		ImageHandle m_whiteImage = nullptr;
 		ImageHandle m_blackImage = nullptr;
@@ -118,4 +118,4 @@ namespace VkMana::SamplesApp
 		std::vector<const Material*> m_materials;
 	};
 
-} // namespace VkMana::Sample
+} // namespace VkMana::SamplesApp

@@ -15,18 +15,18 @@ namespace VkMana::SamplesApp
 	{
 	public:
 		explicit SampleSandbox()
-			: SampleBase("Model Loading")
+			: SampleBase("Sandbox")
 		{
 		}
 		~SampleSandbox() override = default;
 
 		bool Onload(SamplesApp& app, Context& ctx) override;
-		void OnUnload() override;
+		void OnUnload(SamplesApp& app, Context& ctx) override;
 
 		void Tick(float deltaTime, SamplesApp& app, Context& ctx) override;
 
 	private:
-		Renderer m_renderer;
+		IntrusivePtr<Renderer> m_renderer = nullptr;
 
 		StaticMeshHandle m_staticMesh = nullptr;
 	};

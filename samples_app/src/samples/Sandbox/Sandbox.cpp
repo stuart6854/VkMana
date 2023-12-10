@@ -9,20 +9,21 @@ namespace VkMana::SamplesApp
 	{
 		auto& window = app.GetWindow();
 
-		if (!m_renderer.Init(window, ctx))
+		m_renderer = IntrusivePtr(new Renderer);
+		if (!m_renderer->Init(window, ctx))
 		{
 			VM_ERR("Failed to initialise renderer");
 			return false;
 		}
 
-		m_staticMesh = m_renderer.CreateStaticMesh();
+		m_staticMesh = m_renderer->CreateStaticMesh();
 		if (!m_staticMesh->LoadFromFile("assets/models/viking_room.obj"))
 		{
 			VM_ERR("Failed to load mesh");
 			return false;
 		}
 
-		if (!LoadGLTFModel(*m_staticMesh, m_renderer, "assets/models/runestone/scene.gltf"))
+		if (!LoadGLTFModel(*m_staticMesh, *m_renderer, "assets/models/runestone/scene.gltf"))
 		// if (!LoadGLTFModel(*staticMesh, renderer, "assets/models/submesh_test/scene.gltf"))
 		{
 			VM_ERR("Failed to load GLTF model");
@@ -32,7 +33,11 @@ namespace VkMana::SamplesApp
 		return true;
 	}
 
-	void SampleSandbox::OnUnload() {}
+	void SampleSandbox::OnUnload(SamplesApp& app, Context& ctx)
+	{
+		m_staticMesh = nullptr;
+		m_renderer = nullptr;
+	}
 
 	void SampleSandbox::Tick(float deltaTime, SamplesApp& app, Context& ctx)
 	{
@@ -46,13 +51,13 @@ namespace VkMana::SamplesApp
 		constexpr glm::vec3 cameraTarget = { 0, 0.5f, 0 };
 		const auto viewMat = glm::lookAtLH(cameraPos, cameraTarget, glm::vec3(0, 1, 0));
 
-		m_renderer.SetSceneCamera(projMat, viewMat);
+		m_renderer->SetSceneCamera(projMat, viewMat);
 
 		glm::mat4 transformMat = glm::mat4(1.0f);
 		transformMat = glm::scale(transformMat, glm::vec3(0.5f));
-		m_renderer.Submit(m_staticMesh.Get(), transformMat);
+		m_renderer->Submit(m_staticMesh.Get(), transformMat);
 
-		m_renderer.Flush();
+		m_renderer->Flush();
 	}
 
 } // namespace VkMana::SamplesApp

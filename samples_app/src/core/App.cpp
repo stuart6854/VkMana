@@ -107,7 +107,7 @@ namespace VkMana::SamplesApp
 
 	void SamplesApp::Cleanup()
 	{
-		m_samples[m_activeSampleIndex]->OnUnload();
+		m_samples[m_activeSampleIndex]->OnUnload(*this, *m_ctx);
 		m_samples.clear();
 
 		m_ctx = nullptr;
@@ -128,7 +128,7 @@ namespace VkMana::SamplesApp
 
 		const auto lastSampleIndex = m_activeSampleIndex;
 		if (m_activeSampleIndex >= 0 && m_activeSampleIndex < m_samples.size())
-			m_samples[m_activeSampleIndex]->OnUnload();
+			m_samples[m_activeSampleIndex]->OnUnload(*this, *m_ctx);
 
 		m_activeSampleIndex = index;
 

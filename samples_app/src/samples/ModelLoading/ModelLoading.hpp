@@ -18,7 +18,7 @@ namespace VkMana::SamplesApp
 		~SampleModelLoading() override = default;
 
 		bool Onload(SamplesApp& app, Context& ctx) override;
-		void OnUnload() override;
+		void OnUnload(SamplesApp& app, Context& ctx) override;
 
 		void Tick(float deltaTime, SamplesApp& app, Context& ctx) override;
 
@@ -35,6 +35,7 @@ namespace VkMana::SamplesApp
 	private:
 		ImageHandle m_depthTarget = nullptr;
 		SetLayoutHandle m_setLayout = nullptr;
+		PipelineLayoutHandle m_pipelineLayout = nullptr;
 		PipelineHandle m_pipeline = nullptr;
 		ImageHandle m_texture = nullptr;
 		Mesh m_mesh;

@@ -44,6 +44,7 @@ CPMAddPackage(
 add_executable(samples_app
         src/main.cpp
         src/core/App.cpp
+        src/core/Input.cpp
         src/core/stb_impls.cpp
         src/samples/HelloTriangle/HelloTriangle.cpp
         src/samples/ModelLoading/ModelLoading.cpp

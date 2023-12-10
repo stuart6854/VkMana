@@ -54,9 +54,9 @@ namespace VkMana::SamplesApp
 {
 	bool SampleModelLoading::Onload(SamplesApp& app, Context& ctx)
 	{
-		auto* window = app.GetWindow();
+		auto& window = app.GetWindow();
 
-		auto depthImageInfo = VkMana::ImageCreateInfo::DepthStencilTarget(window->GetSurfaceWidth(), window->GetSurfaceHeight(), false);
+		auto depthImageInfo = VkMana::ImageCreateInfo::DepthStencilTarget(window.GetSurfaceWidth(), window.GetSurfaceHeight(), false);
 		m_depthTarget = ctx.CreateImage(depthImageInfo, nullptr);
 
 		std::vector<VkMana::SetLayoutBinding> setBindings{
@@ -139,9 +139,9 @@ namespace VkMana::SamplesApp
 
 	void SampleModelLoading::Tick(float deltaTime, SamplesApp& app, Context& ctx)
 	{
-		auto* window = app.GetWindow();
-		const auto windowWidth = window->GetSurfaceWidth();
-		const auto windowHeight = window->GetSurfaceHeight();
+		auto& window = app.GetWindow();
+		const auto windowWidth = window.GetSurfaceWidth();
+		const auto windowHeight = window.GetSurfaceHeight();
 		const auto windowAspect = float(windowWidth) / float(windowHeight);
 
 		m_pushConsts.projMatrix = glm::perspectiveLH_ZO(glm::radians(60.0f), windowAspect, 0.1f, 600.0f);
@@ -152,7 +152,7 @@ namespace VkMana::SamplesApp
 		textureSet->Write(m_texture->GetImageView(VkMana::ImageViewType::Texture), ctx.GetLinearSampler(), 0);
 		const auto rpDepthTarget =
 			VkMana::RenderPassTarget::DefaultDepthStencilTarget(m_depthTarget->GetImageView(VkMana::ImageViewType::RenderTarget));
-		auto rpInfo = ctx.GetSurfaceRenderPass(window);
+		auto rpInfo = ctx.GetSurfaceRenderPass(&window);
 		rpInfo.Targets.push_back(rpDepthTarget);
 
 		cmd->BeginRenderPass(rpInfo);

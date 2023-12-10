@@ -18,11 +18,13 @@ namespace VkMana::SamplesApp
 
 		void Run();
 
-		auto GetWindow() const -> auto* { return m_window.get(); }
+		auto GetWindow() const -> auto& { return *m_window; }
 
 	private:
 		void Init();
 		void Cleanup();
+
+		void SetSampleIndex(int32_t index);
 
 	private:
 		bool m_isRunning = false;
@@ -30,7 +32,7 @@ namespace VkMana::SamplesApp
 		ContextHandle m_ctx = nullptr;
 
 		std::vector<std::unique_ptr<SampleBase>> m_samples;
-		uint32_t m_activeSampleIndex = 0;
+		int32_t m_activeSampleIndex = -1;
 	};
 
 	template <typename T>

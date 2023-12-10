@@ -13,15 +13,12 @@ using namespace VkMana;
 
 namespace VkMana::SamplesApp
 {
-	bool Renderer::Init(WSI* mainWindow)
+	bool Renderer::Init(WSI& mainWindow, Context& ctx)
 	{
-		m_ctx = IntrusivePtr(new Context);
-		if (!m_ctx->Init(mainWindow))
-		{
-			return false;
-		}
-		m_mainWindow = mainWindow;
+		m_mainWindow = &mainWindow;
 		m_mainWindowSize = { m_mainWindow->GetSurfaceWidth(), m_mainWindow->GetSurfaceHeight() };
+
+		m_ctx = &ctx;
 
 		{ // White image
 			const std::vector<uint8_t> WhitePixels = { 255, 255, 255, 255 };
@@ -74,8 +71,6 @@ namespace VkMana::SamplesApp
 
 	void Renderer::Flush()
 	{
-		m_ctx->BeginFrame();
-
 		GetImageIndex(m_whiteImage.Get());
 		GetImageIndex(m_blackImage.Get());
 
@@ -92,9 +87,6 @@ namespace VkMana::SamplesApp
 		ScreenPass(cmd);
 
 		m_ctx->Submit(cmd);
-
-		m_ctx->EndFrame();
-		m_ctx->Present();
 
 		m_knownBindlessImages.clear();
 		m_bindlessImages.clear();
@@ -385,4 +377,4 @@ namespace VkMana::SamplesApp
 		return index;
 	}
 
-} // namespace VkMana::Sample
+} // namespace VkMana::SamplesApp

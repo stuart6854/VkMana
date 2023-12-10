@@ -7,9 +7,9 @@ namespace VkMana::SamplesApp
 {
 	bool SampleSandbox::Onload(SamplesApp& app, Context& ctx)
 	{
-		auto* window = app.GetWindow();
+		auto& window = app.GetWindow();
 
-		if (!m_renderer.Init(window))
+		if (!m_renderer.Init(window, ctx))
 		{
 			VM_ERR("Failed to initialise renderer");
 			return false;
@@ -36,9 +36,9 @@ namespace VkMana::SamplesApp
 
 	void SampleSandbox::Tick(float deltaTime, SamplesApp& app, Context& ctx)
 	{
-		auto* window = app.GetWindow();
-		const auto windowWidth = window->GetSurfaceWidth();
-		const auto windowHeight = window->GetSurfaceHeight();
+		auto& window = app.GetWindow();
+		const auto windowWidth = window.GetSurfaceWidth();
+		const auto windowHeight = window.GetSurfaceHeight();
 		const auto windowAspect = float(windowWidth) / float(windowHeight);
 
 		const auto projMat = glm::perspectiveLH_ZO(glm::radians(60.0f), windowAspect, 0.1f, 500.0f);

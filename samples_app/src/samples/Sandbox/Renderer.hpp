@@ -19,7 +19,7 @@ namespace VkMana::SamplesApp
 
 		/* State */
 
-		bool Init(WSI* mainWindow);
+		bool Init(WSI& mainWindow, Context& ctx);
 
 		void SetSceneCamera(const glm::mat4& projMatrix, const glm::mat4& viewMatrix);
 
@@ -49,9 +49,9 @@ namespace VkMana::SamplesApp
 		auto GetMaterialIndex(const Material* material) -> uint32_t;
 
 	private:
-		ContextHandle m_ctx = nullptr;
 		WSI* m_mainWindow = nullptr;
 		glm::uvec2 m_mainWindowSize;
+		Context* m_ctx;
 
 		ImageHandle m_whiteImage = nullptr;
 		ImageHandle m_blackImage = nullptr;

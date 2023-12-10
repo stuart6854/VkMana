@@ -85,16 +85,16 @@ namespace VkMana::SamplesApp
 
 	void SampleHelloTriangle::Tick(float deltaTime, SamplesApp& app, Context& ctx)
 	{
-		auto* window = app.GetWindow();
-		const auto windowWidth = window->GetSurfaceWidth();
-		const auto windowHeight = window->GetSurfaceHeight();
+		auto& window = app.GetWindow();
+		const auto windowWidth = window.GetSurfaceWidth();
+		const auto windowHeight = window.GetSurfaceHeight();
 
 		auto cmd = ctx.RequestCmd();
 
-		const auto rpInfo = ctx.GetSurfaceRenderPass(app.GetWindow());
+		const auto rpInfo = ctx.GetSurfaceRenderPass(&app.GetWindow());
 		cmd->BeginRenderPass(rpInfo);
 		cmd->BindPipeline(m_pipeline.Get());
-		cmd->SetViewport(0, 0, windowWidth, windowHeight);
+		cmd->SetViewport(0, 0, float(windowWidth), float(windowHeight));
 		cmd->SetScissor(0, 0, windowWidth, windowHeight);
 		cmd->Draw(3, 0);
 		cmd->EndRenderPass();

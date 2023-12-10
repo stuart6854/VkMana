@@ -22,11 +22,35 @@ namespace VkMana::SamplesApp
 			const auto deltaTime = float(currentFrameTime - lastFrameTime);
 			lastFrameTime = currentFrameTime;
 
+			m_window->NewFrame();
+
 			if (!m_window->IsAlive())
 			{
 				m_isRunning = false;
 				break;
 			}
+
+			const auto& input = m_window->GetInput();
+			if (input.IsKeyUp(Key::One))
+				SetSampleIndex(0);
+			if (input.IsKeyUp(Key::Two))
+				SetSampleIndex(1);
+			if (input.IsKeyUp(Key::Three))
+				SetSampleIndex(2);
+			if (input.IsKeyUp(Key::Four))
+				SetSampleIndex(3);
+			if (input.IsKeyUp(Key::Five))
+				SetSampleIndex(4);
+			if (input.IsKeyUp(Key::Six))
+				SetSampleIndex(5);
+			if (input.IsKeyUp(Key::Seven))
+				SetSampleIndex(6);
+			if (input.IsKeyUp(Key::Eight))
+				SetSampleIndex(7);
+			if (input.IsKeyUp(Key::Nine))
+				SetSampleIndex(8);
+			if (input.IsKeyUp(Key::Zero))
+				SetSampleIndex(9);
 
 			m_ctx->BeginFrame();
 
@@ -70,12 +94,15 @@ namespace VkMana::SamplesApp
 			return;
 		}
 
-		if (!m_samples[m_activeSampleIndex]->Onload(*this, *m_ctx))
+		m_activeSampleIndex = -1; // This is to ensure we load the first sample
+		SetSampleIndex(0);
+
+		/*if (!m_samples[m_activeSampleIndex]->Onload(*this, *m_ctx))
 		{
 			VM_ERR("Failed to load sample: {}", m_samples[m_activeSampleIndex]->GetName());
 			m_isRunning = false;
 			return;
-		}
+		}*/
 	}
 
 	void SamplesApp::Cleanup()
@@ -87,6 +114,35 @@ namespace VkMana::SamplesApp
 
 		m_window = nullptr;
 		glfwTerminate();
+	}
+
+	void SamplesApp::SetSampleIndex(const int32_t index)
+	{
+		if (index < 0)
+			return;
+		if (index >= m_samples.size())
+			return;
+
+		if (index == m_activeSampleIndex)
+			return;
+
+		const auto lastSampleIndex = m_activeSampleIndex;
+		if (m_activeSampleIndex >= 0 && m_activeSampleIndex < m_samples.size())
+			m_samples[m_activeSampleIndex]->OnUnload();
+
+		m_activeSampleIndex = index;
+
+		VM_INFO("Loading sample: {}", m_samples[m_activeSampleIndex]->GetName());
+		if (!m_samples[m_activeSampleIndex]->Onload(*this, *m_ctx))
+		{
+			VM_ERR("Failed to load sample: {}", m_samples[index]->GetName());
+
+			m_activeSampleIndex = lastSampleIndex;
+			if (m_activeSampleIndex >= 0 && m_activeSampleIndex < m_samples.size())
+				m_samples[m_activeSampleIndex]->Onload(*this, *m_ctx); // It should be safe to assume the last sample loads okay... Right???
+		}
+
+		VM_INFO("Sample loaded: {}", m_samples[m_activeSampleIndex]->GetName());
 	}
 
 } // namespace VkMana::SamplesApp

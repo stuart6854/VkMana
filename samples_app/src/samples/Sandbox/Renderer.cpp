@@ -5,7 +5,6 @@
 
 #include <fstream>
 #include <string>
-#include <sstream>
 
 constexpr auto MaxBindlessImages = 100;
 

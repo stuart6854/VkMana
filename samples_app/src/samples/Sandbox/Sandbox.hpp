@@ -5,10 +5,6 @@
 
 #include "samples/SampleBase.hpp"
 
-#include <VkMana/Pipeline.hpp>
-
-#include <glm/ext/matrix_float4x4.hpp>
-
 namespace VkMana::SamplesApp
 {
 	class SampleSandbox final : public SampleBase

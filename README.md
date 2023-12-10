@@ -15,11 +15,22 @@ This library is designed as a simplified interface to Vulkan to be used for my o
 
 # How to use
 
-This library uses the CMake build system.
+This library uses the [CMake](https://cmake.org) build system and [CPM](https://github.com/cpm-cmake/CPM.cmake) for automatic dependency management.
 
 To clone:
 
-```commandline
+```shell
 git clone --recursive https://github.com/stuart6854/VkMana.git
 ```
+
+To build:
+```shell
+cd ./VkMana
+mkdir build
+cd build
+cmake -DCMAKE_BUILD_TYPE=Release ..
+cmake --build . --config Release
+```
+
+**_Important_**: The sample app must be run from the project root (so it can access the assets).
 

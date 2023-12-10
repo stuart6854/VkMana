@@ -41,7 +41,7 @@ void main()
 
 namespace VkMana::SamplesApp
 {
-	bool SampleHelloTriangle::Onload(Context& ctx)
+	bool SampleHelloTriangle::Onload(SamplesApp& app, Context& ctx)
 	{
 		const PipelineLayoutCreateInfo pipelineLayoutInfo{};
 		auto pipelineLayout = ctx.CreatePipelineLayout(pipelineLayoutInfo);

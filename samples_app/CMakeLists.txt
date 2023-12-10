@@ -58,6 +58,7 @@ add_executable(samples_app
         src/main.cpp
         src/core/App.cpp
         src/samples/HelloTriangle/HelloTriangle.cpp
+        src/samples/ModelLoading/ModelLoading.cpp
 )
 target_include_directories(samples_app PRIVATE src)
 

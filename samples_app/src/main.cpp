@@ -1,93 +1,16 @@
 #include "core/App.hpp"
 #include "samples/HelloTriangle/HelloTriangle.hpp"
-
-#define SDL_MAIN_HANDLED
-#include <SDL2/SDL.h>
-#include <SDL2/SDL_vulkan.h>
-#include <SDL2/SDL_syswm.h>
-#define VULKAN_DEBUG
-#include <VkMana/Logging.hpp>
-#include <VkMana/Context.hpp>
-#include <VkMana/ShaderCompiler.hpp>
-
-#include <iostream>
-#include <filesystem>
-#include <string>
-
-using namespace VkMana::SamplesApp;
-
-constexpr auto WindowTitle = "VkMana - Samples App";
-constexpr auto WindowWidth = 1280;
-constexpr auto WindowHeight = 720;
-constexpr auto WindowAspect = float(WindowWidth) / float(WindowHeight);
+#include "samples/ModelLoading/ModelLoading.hpp"
 
 int main()
 {
-#if 0
-	VM_INFO("VkMana - Sample - Sandbox");
-	VM_INFO("Path: {}", std::filesystem::current_path().string());
-
-	auto* window = SDL_CreateWindow(
-		WindowTitle, SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, 1280, 720, SDL_WINDOW_VULKAN | SDL_WINDOW_RESIZABLE);
-
-	SDL2WSI wsi(window);
-
-	Renderer renderer;
-	if (!renderer.Init(&wsi))
-	{
-		VM_ERR("Failed to initialise Renderer.");
-		return 1;
-	}
-
-	auto staticMesh = renderer.CreateStaticMesh();
-	if (!staticMesh->LoadFromFile("assets/models/viking_room.obj"))
-	{
-		VM_ERR("Failed to load mesh!");
-		return 1;
-	}
-
-	if (!LoadGLTFModel(*staticMesh, renderer, "assets/models/runestone/scene.gltf"))
-	// if (!LoadGLTFModel(*staticMesh, renderer, "assets/models/submesh_test/scene.gltf"))
-	{
-		VM_ERR("Failed to load GLTF model.");
-		return 1;
-	}
-
-	double lastFrameTime = double(SDL_GetTicks()) / 1000.0f;
-	bool isRunning = true;
-	while (isRunning)
-	{
-		const auto currentFrameTime = double(SDL_GetTicks()) / 1000.0f;
-		const auto deltaTime = float(currentFrameTime - lastFrameTime);
-		lastFrameTime = currentFrameTime;
-
-		if (!wsi.IsAlive())
-			isRunning = false;
-
-		auto windowTitle = fmt::format("{} - {}ms", WindowTitle, uint32_t(deltaTime * 1000));
-		SDL_SetWindowTitle(window, windowTitle.c_str());
-
-		auto projMat = glm::perspectiveLH_ZO(glm::radians(60.0f), WindowAspect, 0.1f, 500.0f);
-		const glm::vec3 cameraPos = { -3, 3, -4 };
-		const glm::vec3 cameraTarget = { 0, 0.5f, 0 };
-		auto viewMat = glm::lookAtLH(cameraPos, cameraTarget, glm::vec3(0, 1, 0));
-
-		renderer.SetSceneCamera(projMat, viewMat);
-
-		glm::mat4 transformMat = glm::mat4(1.0f);
-		transformMat = glm::scale(transformMat, glm::vec3(0.5f));
-		renderer.Submit(staticMesh.Get(), transformMat);
-
-		renderer.Flush();
-	}
-
-	// renderer.Shutdown();
-#endif
+	using namespace VkMana::SamplesApp;
 
 	SamplesApp app{};
 
 	/* Add Samples */
 	app.AddSample<SampleHelloTriangle>();
+	app.AddSample<SampleModelLoading>();
 
 	/* Run App */
 	app.Run();

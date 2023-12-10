@@ -15,7 +15,7 @@ namespace VkMana::SamplesApp
 		}
 		~SampleHelloTriangle() override = default;
 
-		bool Onload(Context& ctx) override;
+		bool Onload(SamplesApp& app, Context& ctx) override;
 		void OnUnload() override;
 
 		void Tick(float deltaTime, SamplesApp& app, Context& ctx) override;

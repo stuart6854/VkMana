@@ -20,7 +20,7 @@ namespace VkMana::SamplesApp
 
 		auto GetName() const -> const auto& { return m_sampleName; }
 
-		virtual bool Onload(Context& ctx) = 0;
+		virtual bool Onload(SamplesApp& app, Context& ctx) = 0;
 		virtual void OnUnload() = 0;
 
 		virtual void Tick(float deltaTime, SamplesApp& app, Context& ctx) = 0;

@@ -14,16 +14,16 @@ namespace VkMana::SamplesApp
 		Minus = 45,		 /* - */
 		Period = 46,	 /* . */
 		Slash = 47,		 /* / */
-		One = 48,
-		Two = 49,
-		Three = 50,
-		Four = 51,
-		Five = 52,
-		Six = 53,
-		Seven = 54,
-		Eight = 55,
-		Nine = 56,
-		Zero = 57,
+		Zero = 48,
+		One = 49,
+		Two = 50,
+		Three = 51,
+		Four = 52,
+		Five = 53,
+		Six = 54,
+		Seven = 55,
+		Eight = 56,
+		Nine = 57,
 		Semicolon = 59, /* ; */
 		Equal = 61,		/* = */
 		A = 65,

@@ -331,11 +331,6 @@ namespace VkMana
 		layoutInfo.setPNext(&bindingsFlagsInfo);
 		const auto layout = m_device.createDescriptorSetLayout(layoutInfo);
 
-		for (auto& frame : m_frames)
-		{
-			frame.DescriptorAllocator = IntrusivePtr(new DescriptorAllocator(this, 100));
-		}
-
 		return IntrusivePtr(new SetLayout(this, layout, hash));
 	}
 
@@ -901,7 +896,7 @@ namespace VkMana
 		{
 			frame.CmdPool = IntrusivePtr(new CommandPool(this, m_queueInfo.GraphicsFamilyIndex));
 			frame.Garbage = IntrusivePtr(new GarbageBin(this));
-			frame.DescriptorAllocator = IntrusivePtr(new DescriptorAllocator(this, 30));
+			frame.DescriptorAllocator = IntrusivePtr(new DescriptorAllocator(this, 100));
 		}
 
 		m_frameIndex = 0;

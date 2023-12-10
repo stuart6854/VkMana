@@ -7,8 +7,9 @@ endif ()
 option(VMA_HPP_INSTALL "Install vma-hpp" OFF)
 add_subdirectory(vma-hpp)
 
-# FmtLib
-if (NOT TARGET fmt)
-    option(FMT_INSTALL "Generate the install target." OFF)
-    add_subdirectory(fmt)
-endif ()
+CPMAddPackage(
+        NAME fmt
+        GIT_TAG 10.1.1
+        GITHUB_REPOSITORY fmtlib/fmt
+        OPTIONS "FMT_INSTALL OFF"
+)

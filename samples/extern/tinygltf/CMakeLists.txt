@@ -1,3 +1,0 @@
-add_library(tinygltf INTERFACE)
-target_include_directories(tinygltf INTERFACE .)
-target_compile_definitions(tinygltf INTERFACE TINYGLTF_NO_INCLUDE_STB_IMAGE TINYGLTF_USE_CPP14)

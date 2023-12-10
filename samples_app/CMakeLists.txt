@@ -57,8 +57,13 @@ CPMAddPackage(
 add_executable(samples_app
         src/main.cpp
         src/core/App.cpp
+        src/core/stb_impls.cpp
         src/samples/HelloTriangle/HelloTriangle.cpp
         src/samples/ModelLoading/ModelLoading.cpp
+        src/samples/Sandbox/Sandbox.cpp
+        src/samples/Sandbox/Renderer.cpp
+        src/samples/Sandbox/StaticMesh.cpp
+        src/samples/Sandbox/ModelLoader.cpp
 )
 target_include_directories(samples_app PRIVATE src)
 

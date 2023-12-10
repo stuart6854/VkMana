@@ -1,6 +1,7 @@
 #include "core/App.hpp"
 #include "samples/HelloTriangle/HelloTriangle.hpp"
 #include "samples/ModelLoading/ModelLoading.hpp"
+#include "samples/Sandbox/Sandbox.hpp"
 
 int main()
 {
@@ -11,6 +12,8 @@ int main()
 	/* Add Samples */
 	app.AddSample<SampleHelloTriangle>();
 	app.AddSample<SampleModelLoading>();
+
+	app.AddSample<SampleSandbox>();
 
 	/* Run App */
 	app.Run();

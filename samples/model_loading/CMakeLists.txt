@@ -1,5 +1,0 @@
-add_executable(sample_model_loading main.cpp)
-
-target_link_libraries(sample_model_loading PRIVATE VkMana glm tinyobjloader stb)
-
-target_compile_features(sample_model_loading PRIVATE cxx_std_20)

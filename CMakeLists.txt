@@ -11,6 +11,5 @@ add_subdirectory(extern)
 add_subdirectory(src)
 
 if (VKMANA_BUILD_SAMPLES)
-    #    add_subdirectory(samples EXCLUDE_FROM_ALL)
     add_subdirectory(samples_app EXCLUDE_FROM_ALL)
 endif ()

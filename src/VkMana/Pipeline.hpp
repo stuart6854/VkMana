@@ -44,7 +44,7 @@ namespace VkMana
 		vk::Format DepthTargetFormat = vk::Format::eUndefined;
 		vk::Format StencilTargetFormat = vk::Format::eUndefined;
 
-		PipelineLayout* Layout = nullptr;
+		IntrusivePtr<PipelineLayout> Layout = nullptr;
 	};
 
 	class PipelineLayout : public IntrusivePtrEnabled<PipelineLayout>
@@ -80,11 +80,11 @@ namespace VkMana
 	private:
 		friend class Context;
 
-		Pipeline(Context* context, vk::PipelineLayout layout, vk::Pipeline pipeline, vk::PipelineBindPoint bindPoint);
+		Pipeline(Context* context, const IntrusivePtr<PipelineLayout>& layout, vk::Pipeline pipeline, vk::PipelineBindPoint bindPoint);
 
 	private:
 		Context* m_ctx;
-		vk::PipelineLayout m_layout;
+		IntrusivePtr<PipelineLayout> m_layout;
 		vk::Pipeline m_pipeline;
 		vk::PipelineBindPoint m_bindPoint;
 	};

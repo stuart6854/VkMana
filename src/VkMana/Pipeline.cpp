@@ -24,7 +24,7 @@ namespace VkMana
 			m_ctx->DestroyPipeline(m_pipeline);
 	}
 
-	Pipeline::Pipeline(Context* context, vk::PipelineLayout layout, vk::Pipeline pipeline, vk::PipelineBindPoint bindPoint)
+	Pipeline::Pipeline(Context* context, const IntrusivePtr<PipelineLayout>& layout, vk::Pipeline pipeline, vk::PipelineBindPoint bindPoint)
 		: m_ctx(context)
 		, m_layout(layout)
 		, m_pipeline(pipeline)

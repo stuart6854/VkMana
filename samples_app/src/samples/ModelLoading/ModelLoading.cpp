@@ -109,7 +109,7 @@ namespace VkMana::SamplesApp
 			.Topology = vk::PrimitiveTopology::eTriangleList,
 			.ColorTargetFormats = { vk::Format::eB8G8R8A8Srgb },
 			.DepthTargetFormat = vk::Format::eD24UnormS8Uint,
-			.Layout = m_pipelineLayout.Get(),
+			.Layout = m_pipelineLayout,
 		};
 		m_pipeline = ctx.CreateGraphicsPipeline(pipelineInfo);
 		if (m_pipeline == nullptr)

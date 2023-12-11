@@ -113,7 +113,7 @@ namespace VkMana
 
 	void CommandBuffer::SetPushConstants(vk::ShaderStageFlags shaderStages, uint32_t offset, uint32_t size, const void* data)
 	{
-		m_cmd.pushConstants(m_pipeline->GetLayout(), shaderStages, offset, size, data);
+		m_cmd.pushConstants(m_pipeline->GetLayout()->GetLayout(), shaderStages, offset, size, data);
 	}
 
 	void CommandBuffer::BindDescriptorSets(
@@ -123,7 +123,7 @@ namespace VkMana
 		for (auto i = 0u; i < sets.size(); ++i)
 			descSets[i] = sets[i]->GetSet();
 
-		m_cmd.bindDescriptorSets(m_pipeline->GetBindPoint(), m_pipeline->GetLayout(), firstSet, descSets, dynamicOffsets);
+		m_cmd.bindDescriptorSets(m_pipeline->GetBindPoint(), m_pipeline->GetLayout()->GetLayout(), firstSet, descSets, dynamicOffsets);
 	}
 
 	void CommandBuffer::BindIndexBuffer(const Buffer* buffer, uint64_t offsetBytes, vk::IndexType indexType)

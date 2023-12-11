@@ -449,7 +449,7 @@ namespace VkMana
 		pipelineInfo.setPNext(&renderingInfo);
 		auto pipeline = m_device.createGraphicsPipeline({}, pipelineInfo).value; // #TODO: Pipeline Cache
 
-		return IntrusivePtr(new Pipeline(this, info.Layout->GetLayout(), pipeline, vk::PipelineBindPoint::eGraphics));
+		return IntrusivePtr(new Pipeline(this, info.Layout, pipeline, vk::PipelineBindPoint::eGraphics));
 	}
 
 	auto Context::CreateImage(ImageCreateInfo info, const ImageDataSource* initialData) -> ImageHandle

@@ -172,7 +172,7 @@ namespace VkMana::SamplesApp
 			.Topology =  vk::PrimitiveTopology::eTriangleList,
 			.ColorTargetFormats = { positionImageInfo.Format, normalImageInfo.Format, albedoImageInfo.Format },
 			.DepthTargetFormat = depthImageInfo.Format,
-			.Layout = m_gBufferPipelineLayout.Get(),
+			.Layout = m_gBufferPipelineLayout,
 		};
 		m_gBufferStaticPipeline = m_ctx->CreateGraphicsPipeline(pipelineInfo);
 
@@ -227,7 +227,7 @@ namespace VkMana::SamplesApp
 			.Fragment = fragmentSpirvOpt.value(),
 			.Topology = vk::PrimitiveTopology::eTriangleList,
 			.ColorTargetFormats = { compositionImageInfo.Format },
-			.Layout = m_compositionPipelineLayout.Get(),
+			.Layout = m_compositionPipelineLayout,
 		};
 		m_compositionPipeline = m_ctx->CreateGraphicsPipeline(pipelineInfo);
 	}
@@ -270,7 +270,7 @@ namespace VkMana::SamplesApp
 			.Fragment = fragmentSpirvOpt.value(),
 			.Topology = vk::PrimitiveTopology::eTriangleList,
 			.ColorTargetFormats = { vk::Format::eB8G8R8A8Srgb },
-			.Layout = m_screenPipelineLayout.Get(),
+			.Layout = m_screenPipelineLayout,
 		};
 		m_screenPipeline = m_ctx->CreateGraphicsPipeline(pipelineInfo);
 	}

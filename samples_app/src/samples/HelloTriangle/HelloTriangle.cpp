@@ -74,7 +74,7 @@ namespace VkMana::SamplesApp
 			.Fragment = fragSpirvOpt.value(),
 			.Topology = vk::PrimitiveTopology::eTriangleList,
 			.ColorTargetFormats = { vk::Format::eB8G8R8A8Srgb },
-			.Layout = pipelineLayout.Get(),
+			.Layout = pipelineLayout,
 		};
 		m_pipeline = ctx.CreateGraphicsPipeline(pipelineInfo);
 

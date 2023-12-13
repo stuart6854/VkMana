@@ -18,10 +18,11 @@ jobs:
       - name: get-cmake
         uses: lukka/get-cmake@latest
 
-      - name: setup-vk-sdk
-        uses: TWoolhouse/setup-vulkan-sdk@v1.1.0
+      - name: Install Vulkan SDK
+        uses: humbletim/install-vulkan-sdk@v1.1.1
         with:
-          version: latest            
+          version: latest      
+          cache: true      
 
       - uses: actions/checkout@v3
         with:

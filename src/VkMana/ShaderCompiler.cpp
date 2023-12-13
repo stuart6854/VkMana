@@ -129,7 +129,10 @@ namespace VkMana
 	auto CompileHLSL(const ShaderCompileInfo& info) -> std::optional<ShaderBinary>
 	{
 		HRESULT hres;
-
+#ifdef __clang__
+	#pragma clang diagnostic push
+	#pragma clang diagnostic ignored "-Wlanguage-extension-token"
+#endif
 		CComPtr<IDxcLibrary> library;
 		hres = DxcCreateInstance(CLSID_DxcLibrary, IID_PPV_ARGS(&library));
 		if (FAILED(hres))
@@ -153,6 +156,9 @@ namespace VkMana
 			VM_ERR("Failed to inititalise DXC Utility.");
 			return std::nullopt;
 		}
+#ifdef __clang__
+	#pragma clang diagnostic push
+#endif
 
 		uint32_t codePage = DXC_CP_ACP;
 		CComPtr<IDxcBlobEncoding> sourceBlob;

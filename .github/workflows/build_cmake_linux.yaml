@@ -24,6 +24,11 @@ jobs:
       - name: get-cmake
         uses: lukka/get-cmake@latest
 
+      - name: Install Vulkan SDK
+        uses: jakoch/install-vulkan-sdk-action@v1.0.1
+        with:
+          cache: true      
+
       - uses: actions/checkout@v3
         with:
           submodules: recursive

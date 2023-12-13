@@ -25,7 +25,7 @@ jobs:
         uses: lukka/get-cmake@latest
 
       - name: Install Vulkan SDK
-        uses: stuart6854/install-vulkan-sdk-action@fix-linux-sdk-url
+        uses: stuart6854/install-vulkan-sdk-action@fix-download-urls
         with:
           cache: true      
 

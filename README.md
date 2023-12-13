@@ -1,6 +1,7 @@
 # VkMana
 
-[![CMake Build](https://github.com/stuart6854/VkMana/actions/workflows/cmake_build.yaml/badge.svg?branch=main)](https://github.com/stuart6854/VkMana/actions/workflows/cmake_build.yaml)
+[![Build CMake/Windows](https://github.com/stuart6854/VkMana/actions/workflows/build_cmake_windows.yaml/badge.svg?branch=main)](https://github.com/stuart6854/VkMana/actions/workflows/build_cmake_windows.yaml)
+[![Build CMake/Linux](https://github.com/stuart6854/VkMana/actions/workflows/build_cmake_linux.yaml/badge.svg?branch=main)](https://github.com/stuart6854/VkMana/actions/workflows/build_cmake_linux.yaml)
 
 A C++20 Vulkan library.
 

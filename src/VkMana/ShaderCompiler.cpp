@@ -5,7 +5,8 @@
 #include <Unknwnbase.h>
 #include <dxc/dxcapi.h>
 #ifdef _WIN32
-	#include <atlacc.h>
+	#include <wrl/client.h>
+	#define CComPtr Microsoft::WRL::ComPtr
 #else
 	#include <dxc/WinAdapter.h>
 #endif

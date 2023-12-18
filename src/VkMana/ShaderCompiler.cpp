@@ -2,14 +2,16 @@
 
 #include <shaderc/shaderc.hpp>
 
-#include <Unknwnbase.h>
-#include <dxc/dxcapi.h>
 #ifdef _WIN32
 	#include <wrl/client.h>
 	#define CComPtr Microsoft::WRL::ComPtr
-#else
+#endif
+
+#ifdef __linux__
 	#include <dxc/WinAdapter.h>
 #endif
+
+#include <dxc/dxcapi.h>
 
 #include <fstream>
 #include <sstream>

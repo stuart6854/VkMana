@@ -83,6 +83,8 @@ namespace VkMana
 		auto GetFrameBufferCount() const -> auto { return m_frames.size(); }
 		auto GetFrameIndex() const -> auto { return m_frameIndex; }
 
+		auto GetSwapchain(WSI& wsi) const -> vk::SwapchainKHR;
+
 		auto GetNearestSampler() const -> auto { return m_nearestSampler.Get(); }
 		auto GetLinearSampler() const -> auto { return m_linearSampler.Get(); }
 

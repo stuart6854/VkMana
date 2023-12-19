@@ -722,6 +722,16 @@ namespace VkMana
 		m_device.setDebugUtilsObjectNameEXT(nameInfo);
 	}
 
+	auto Context::GetSwapchain(WSI& wsi) const -> vk::SwapchainKHR
+	{
+		for (const auto& surface : m_surfaces)
+		{
+			if (surface.WindowSurface == &wsi)
+				return surface.Swapchain;
+		}
+		return nullptr;
+	}
+
 	void Context::PrintInstanceInfo()
 	{
 		auto layers = vk::enumerateInstanceLayerProperties();

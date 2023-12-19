@@ -73,8 +73,11 @@ namespace VkMana
 
 		/* Getters */
 
+		auto GetPhysicalDevice() const -> auto { return m_gpu; }
 		auto GetDevice() const -> auto { return m_device; }
 		auto GetAllocator() const -> auto { return m_allocator; }
+
+		auto GetGraphicsQueue() const -> auto { return m_queueInfo.GraphicsQueue; }
 
 		auto GetFrameBufferCount() const -> auto { return m_frames.size(); }
 		auto GetFrameIndex() const -> auto { return m_frameIndex; }

@@ -77,6 +77,7 @@ namespace VkMana
 		auto GetDevice() const -> auto { return m_device; }
 		auto GetAllocator() const -> auto { return m_allocator; }
 
+		auto GetGraphicsQueueFamily() const -> auto { return m_queueInfo.GraphicsFamilyIndex; }
 		auto GetGraphicsQueue() const -> auto { return m_queueInfo.GraphicsQueue; }
 
 		auto GetFrameBufferCount() const -> auto { return m_frames.size(); }

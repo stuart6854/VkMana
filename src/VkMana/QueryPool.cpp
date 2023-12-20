@@ -22,7 +22,7 @@ namespace VkMana
 	}
 
 	bool QueryPool::GetResults32(
-		uint32_t firstQuery, uint32_t queryCount, vk::QueryResultFlags resultFlags, std::vector<uint32_t>& outResults)
+		std::vector<uint32_t>& outResults, uint32_t firstQuery, uint32_t queryCount, vk::QueryResultFlags resultFlags)
 	{
 		assert(!(resultFlags & vk::QueryResultFlagBits::e64));
 
@@ -45,7 +45,7 @@ namespace VkMana
 	}
 
 	bool QueryPool::GetResults64(
-		uint32_t firstQuery, uint32_t queryCount, vk::QueryResultFlags resultFlags, std::vector<uint64_t>& outResults)
+		std::vector<uint64_t>& outResults, uint32_t firstQuery, uint32_t queryCount, vk::QueryResultFlags resultFlags)
 	{
 		resultFlags |= vk::QueryResultFlagBits::e64;
 

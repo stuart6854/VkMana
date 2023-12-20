@@ -10,6 +10,7 @@
 #include "Pipeline.hpp"
 #include "Image.hpp"
 #include "Buffer.hpp"
+#include "QueryPool.hpp"
 
 #include <unordered_map>
 
@@ -52,6 +53,7 @@ namespace VkMana
 		auto CreateImageView(const Image* image, const ImageViewCreateInfo& info) -> ImageViewHandle;
 		auto CreateSampler(const SamplerCreateInfo& info) -> SamplerHandle;
 		auto CreateBuffer(const BufferCreateInfo& info, const BufferDataSource* initialData = nullptr) -> BufferHandle;
+		auto CreateQueryPool(const QueryPoolCreateInfo& info) -> QueryPoolHandle;
 
 		void DestroySetLayout(vk::DescriptorSetLayout setLayout);
 		void DestroyPipelineLayout(vk::PipelineLayout pipelineLayout);
@@ -61,6 +63,7 @@ namespace VkMana
 		void DestroySampler(vk::Sampler sampler);
 		void DestroyBuffer(vk::Buffer buffer);
 		void DestroyAllocation(vma::Allocation alloc);
+		void DestroyQueryPool(vk::QueryPool pool);
 
 		/* Debug */
 

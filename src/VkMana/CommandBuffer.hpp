@@ -5,6 +5,7 @@
 #include "Pipeline.hpp"
 #include "Image.hpp"
 #include "Buffer.hpp"
+#include "QueryPool.hpp"
 
 // #TODO: Batch pipeline barriers (image transitions)
 
@@ -56,6 +57,16 @@ namespace VkMana
 		const Buffer* SrcBuffer = nullptr;
 		const Image* DstImage = nullptr;
 	};
+	struct QueryCopyInfo
+	{
+		const QueryPool* queryPool;
+		uint32_t firstQuery;
+		uint32_t queryCount;
+		const Buffer* dstBuffer;
+		uint64_t dstOffset;
+		uint64_t stride;
+		vk::QueryResultFlags flags;
+	};
 
 	class CommandBuffer : public IntrusivePtrEnabled<CommandBuffer>
 	{
@@ -85,6 +96,10 @@ namespace VkMana
 
 		void CopyBuffer(const BufferCopyInfo& info);
 		void CopyBufferToImage(const BufferToImageCopyInfo& info);
+
+		void BeginQuery(const QueryPool* queryPool, uint32_t queryIndex, vk::QueryControlFlags flags = {});
+		void EndQuery(const QueryPool* queryPool, uint32_t queryIndex);
+		void CopyQueryResultsToBuffer(const QueryCopyInfo& info);
 
 		/* Getters */
 

@@ -648,6 +648,17 @@ namespace VkMana
 		return bufferHandle;
 	}
 
+	auto Context::CreateQueryPool(const QueryPoolCreateInfo& info) -> QueryPoolHandle
+	{
+		vk::QueryPoolCreateInfo poolInfo{};
+		poolInfo.setQueryType(info.queryType);
+		poolInfo.setQueryCount(info.queryCount);
+		poolInfo.setPipelineStatistics(info.pipelineStatistics);
+		auto pool = m_device.createQueryPool(poolInfo);
+
+		return IntrusivePtr(new QueryPool(this, pool));
+	}
+
 	void Context::DestroySetLayout(vk::DescriptorSetLayout setLayout)
 	{
 		GetFrame().Garbage->Bin(setLayout);
@@ -667,7 +678,7 @@ namespace VkMana
 	{
 		GetFrame().Garbage->Bin(image);
 	}
-
+	/**/
 	void Context::DestroyImageView(vk::ImageView view)
 	{
 		GetFrame().Garbage->Bin(view);
@@ -686,6 +697,11 @@ namespace VkMana
 	void Context::DestroyAllocation(vma::Allocation alloc)
 	{
 		GetFrame().Garbage->Bin(alloc);
+	}
+
+	void Context::DestroyQueryPool(vk::QueryPool pool)
+	{
+		GetFrame().Garbage->Bin(pool);
 	}
 
 	void Context::SetName(const Buffer& buffer, const std::string& name)

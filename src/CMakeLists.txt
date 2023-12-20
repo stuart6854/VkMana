@@ -8,6 +8,7 @@ add_library(VkMana
         VkMana/Pipeline.cpp
         VkMana/Image.cpp
         VkMana/Buffer.cpp
+        VkMana/QueryPool.cpp
         VkMana/ShaderCompiler.cpp
 )
 

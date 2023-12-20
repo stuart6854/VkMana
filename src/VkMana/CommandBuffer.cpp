@@ -290,6 +290,27 @@ namespace VkMana
 		m_cmd.copyBufferToImage2(copyInfo);
 	}
 
+	void CommandBuffer::BeginQuery(const QueryPool* queryPool, uint32_t queryIndex, vk::QueryControlFlags flags)
+	{
+		m_cmd.beginQuery(queryPool->GetPool(), queryIndex, flags);
+	}
+
+	void CommandBuffer::EndQuery(const QueryPool* queryPool, uint32_t queryIndex)
+	{
+		m_cmd.endQuery(queryPool->GetPool(), queryIndex);
+	}
+
+	void CommandBuffer::CopyQueryResultsToBuffer(const QueryCopyInfo& info)
+	{
+		m_cmd.copyQueryPoolResults(info.queryPool->GetPool(),
+			info.firstQuery,
+			info.queryCount,
+			info.dstBuffer->GetBuffer(),
+			info.dstOffset,
+			info.stride,
+			info.flags);
+	}
+
 	CommandBuffer::CommandBuffer(Context* context, vk::CommandBuffer cmd)
 		: m_ctx(context)
 		, m_cmd(cmd)

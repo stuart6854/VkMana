@@ -59,6 +59,11 @@ namespace VkMana
 		m_allocs.push_back(alloc);
 	}
 
+	void GarbageBin::Bin(vk::QueryPool pool)
+	{
+		m_queryPools.push_back(pool);
+	}
+
 	void GarbageBin::EmptyBins()
 	{
 		for (auto& v : m_semaphores)
@@ -81,6 +86,8 @@ namespace VkMana
 			m_ctx->GetDevice().destroy(v);
 		for (auto& v : m_allocs)
 			m_ctx->GetAllocator().freeMemory(v);
+		for (auto& v : m_queryPools)
+			m_ctx->GetDevice().destroy(v);
 
 		m_semaphores.clear();
 		m_fences.clear();
@@ -92,6 +99,7 @@ namespace VkMana
 		m_images.clear();
 		m_buffers.clear();
 		m_allocs.clear();
+		m_queryPools.clear();
 	}
 
 	GarbageBin::GarbageBin(Context* context)

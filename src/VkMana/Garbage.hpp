@@ -23,6 +23,7 @@ namespace VkMana
 		void Bin(vk::Sampler sampler);
 		void Bin(vk::Buffer buffer);
 		void Bin(vma::Allocation alloc);
+		void Bin(vk::QueryPool pool);
 
 		void EmptyBins();
 
@@ -43,6 +44,7 @@ namespace VkMana
 		std::vector<vk::Sampler> m_samplers;
 		std::vector<vk::Buffer> m_buffers;
 		std::vector<vma::Allocation> m_allocs;
+		std::vector<vk::QueryPool> m_queryPools;
 	};
 
 } // namespace VkMana

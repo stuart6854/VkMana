@@ -21,9 +21,9 @@ namespace VkMana
 		void ResetQueries(uint32_t firstQuery, uint32_t queryCount) const;
 
 		bool GetResults32(
-			std::vector<uint32_t>& outResults, uint32_t firstQuery, uint32_t queryCount, vk::QueryResultFlags resultFlags = {});
+			std::vector<uint32_t>& outResults, uint32_t firstQuery, uint32_t queryCount, vk::QueryResultFlags resultFlags = {}) const;
 		bool GetResults64(
-			std::vector<uint64_t>& outResults, uint32_t firstQuery, uint32_t queryCount, vk::QueryResultFlags resultFlags = {});
+			std::vector<uint64_t>& outResults, uint32_t firstQuery, uint32_t queryCount, vk::QueryResultFlags resultFlags = {}) const;
 
 		auto GetPool() const -> auto { return m_pool; }
 		auto GetQueryCount() const -> auto { return m_queryCount; }

@@ -14,15 +14,8 @@ namespace VkMana
 		m_ctx->GetDevice().resetQueryPool(m_pool, firstQuery, queryCount);
 	}
 
-	void QueryPool::GetQueryResults(
-		uint32_t firstQuery, uint32_t queryCount, uint64_t dataSize, void* data, uint64_t stride, vk::QueryResultFlags flags)
-	{
-		auto result = m_ctx->GetDevice().getQueryPoolResults(m_pool, firstQuery, queryCount, dataSize, data, stride, flags);
-		UNUSED(result);
-	}
-
 	bool QueryPool::GetResults32(
-		std::vector<uint32_t>& outResults, uint32_t firstQuery, uint32_t queryCount, vk::QueryResultFlags resultFlags)
+		std::vector<uint32_t>& outResults, uint32_t firstQuery, uint32_t queryCount, vk::QueryResultFlags resultFlags) const
 	{
 		assert(!(resultFlags & vk::QueryResultFlagBits::e64));
 
@@ -45,7 +38,7 @@ namespace VkMana
 	}
 
 	bool QueryPool::GetResults64(
-		std::vector<uint64_t>& outResults, uint32_t firstQuery, uint32_t queryCount, vk::QueryResultFlags resultFlags)
+		std::vector<uint64_t>& outResults, uint32_t firstQuery, uint32_t queryCount, vk::QueryResultFlags resultFlags) const
 	{
 		resultFlags |= vk::QueryResultFlagBits::e64;
 

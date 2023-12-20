@@ -97,6 +97,7 @@ namespace VkMana
 		void CopyBuffer(const BufferCopyInfo& info);
 		void CopyBufferToImage(const BufferToImageCopyInfo& info);
 
+		void ResetQueryPool(const QueryPool* queryPool, uint32_t firstQuery, uint32_t queryCount);
 		void BeginQuery(const QueryPool* queryPool, uint32_t queryIndex, vk::QueryControlFlags flags = {});
 		void EndQuery(const QueryPool* queryPool, uint32_t queryIndex);
 		void CopyQueryResultsToBuffer(const QueryCopyInfo& info);

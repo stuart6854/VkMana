@@ -290,6 +290,11 @@ namespace VkMana
 		m_cmd.copyBufferToImage2(copyInfo);
 	}
 
+	void CommandBuffer::ResetQueryPool(const QueryPool* queryPool, uint32_t firstQuery, uint32_t queryCount)
+	{
+		m_cmd.resetQueryPool(queryPool->GetPool(), firstQuery, queryCount);
+	}
+
 	void CommandBuffer::BeginQuery(const QueryPool* queryPool, uint32_t queryIndex, vk::QueryControlFlags flags)
 	{
 		m_cmd.beginQuery(queryPool->GetPool(), queryIndex, flags);

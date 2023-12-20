@@ -877,6 +877,9 @@ namespace VkMana
 
 		/* Extension Features */
 
+		vk::PhysicalDeviceHostQueryResetFeatures hostQueryResetFeatures{};
+		hostQueryResetFeatures.setHostQueryReset(VK_TRUE);
+
 		vk::PhysicalDeviceDescriptorIndexingFeatures descriptorIndexingFeatures{};
 		descriptorIndexingFeatures.setRuntimeDescriptorArray(VK_TRUE);			// Support SPIRV RuntimeDescriptorArray capability.
 		descriptorIndexingFeatures.setDescriptorBindingPartiallyBound(VK_TRUE); // Descriptor sets do not need to have valid descriptors.
@@ -886,6 +889,7 @@ namespace VkMana
 		descriptorIndexingFeatures.setDescriptorBindingSampledImageUpdateAfterBind(VK_TRUE);
 		descriptorIndexingFeatures.setDescriptorBindingStorageBufferUpdateAfterBind(VK_TRUE);
 		descriptorIndexingFeatures.setDescriptorBindingUniformBufferUpdateAfterBind(VK_TRUE);
+		descriptorIndexingFeatures.setPNext(&hostQueryResetFeatures);
 
 		vk::PhysicalDeviceSynchronization2Features sync2Features{};
 		sync2Features.setSynchronization2(VK_TRUE);

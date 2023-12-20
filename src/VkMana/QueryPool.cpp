@@ -65,6 +65,7 @@ namespace VkMana
 		, m_pool(pool)
 		, m_queryCount(queryCount)
 	{
+		ResetQueries(0, m_queryCount);
 	}
 
 } // namespace VkMana

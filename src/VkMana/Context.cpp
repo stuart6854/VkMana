@@ -656,7 +656,7 @@ namespace VkMana
 		poolInfo.setPipelineStatistics(info.pipelineStatistics);
 		auto pool = m_device.createQueryPool(poolInfo);
 
-		return IntrusivePtr(new QueryPool(this, pool));
+		return IntrusivePtr(new QueryPool(this, pool, info.queryCount));
 	}
 
 	void Context::DestroySetLayout(vk::DescriptorSetLayout setLayout)

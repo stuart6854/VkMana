@@ -26,6 +26,7 @@ namespace VkMana
 			uint32_t firstQuery, uint32_t queryCount, vk::QueryResultFlags resultFlags = {}, std::vector<uint64_t>& outResults);
 
 		auto GetPool() const -> auto { return m_pool; }
+		auto GetQueryCount() const -> auto { return m_queryCount; }
 
 	private:
 		friend class Context;

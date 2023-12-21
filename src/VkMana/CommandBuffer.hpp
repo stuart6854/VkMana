@@ -13,6 +13,22 @@ namespace VkMana
 {
 	class Context;
 
+	struct DrawIndirectCmd
+	{
+		uint32_t vertexCount;
+		uint32_t instanceCount;
+		uint32_t firstVertex;
+		uint32_t firstInstance;
+	};
+	struct DrawIndexedIndirectCmd
+	{
+		uint32_t indexCount;
+		uint32_t instanceCount;
+		uint32_t firstIndex;
+		uint32_t vertexOffset;
+		uint32_t firstInstance;
+	};
+
 	struct ImageTransitionInfo
 	{
 		const Image* TargetImage = nullptr;
@@ -90,6 +106,8 @@ namespace VkMana
 
 		void Draw(uint32_t vertexCount, uint32_t firstVertex);
 		void DrawIndexed(uint32_t indexCount, uint32_t firstIndex, uint32_t vertexOffset);
+		void DrawIndirect(const Buffer* buffer, uint64_t offset, uint32_t drawCount, uint32_t stride);
+		void DrawIndexedIndirect(const Buffer* buffer, uint64_t offset, uint32_t drawCount, uint32_t stride);
 
 		void TransitionImage(const ImageTransitionInfo& info);
 		void BlitImage(const ImageBlitInfo& info);

@@ -452,6 +452,29 @@ namespace VkMana
 		return IntrusivePtr(new Pipeline(this, info.Layout, pipeline, vk::PipelineBindPoint::eGraphics));
 	}
 
+	auto Context::CreateComputePipeline(const ComputePipelineCreateInfo& info) -> PipelineHandle
+	{
+		vk::UniqueShaderModule shaderModule{};
+		vk::PipelineShaderStageCreateInfo stageInfo{};
+		if (!info.compute.SPIRVBinary.empty())
+		{
+			vk::ShaderModuleCreateInfo moduleInfo{};
+			moduleInfo.setCode(info.compute.SPIRVBinary);
+			shaderModule = m_device.createShaderModuleUnique(moduleInfo);
+
+			stageInfo.setStage(vk::ShaderStageFlagBits::eCompute);
+			stageInfo.setModule(shaderModule.get());
+			stageInfo.setPName(info.compute.EntryPoint.c_str());
+		}
+
+		vk::ComputePipelineCreateInfo pipelineInfo{};
+		pipelineInfo.setStage(stageInfo);
+		pipelineInfo.setLayout(info.layout->GetLayout());
+		auto pipeline = m_device.createComputePipeline({}, pipelineInfo).value; // #TODO: Pipeline cache
+
+		return IntrusivePtr(new Pipeline(this, info.layout, pipeline, vk::PipelineBindPoint::eCompute));
+	}
+
 	auto Context::CreateImage(ImageCreateInfo info, const ImageDataSource* initialData) -> ImageHandle
 	{
 		if (info.MipLevels == -1)

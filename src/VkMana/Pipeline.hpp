@@ -47,6 +47,12 @@ namespace VkMana
 		IntrusivePtr<PipelineLayout> Layout = nullptr;
 	};
 
+	struct ComputePipelineCreateInfo
+	{
+		ShaderInfo compute;
+		IntrusivePtr<PipelineLayout> layout = nullptr;
+	};
+
 	class PipelineLayout : public IntrusivePtrEnabled<PipelineLayout>
 	{
 	public:

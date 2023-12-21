@@ -161,6 +161,11 @@ namespace VkMana
 		m_cmd.drawIndexedIndirect(buffer->GetBuffer(), offset, drawCount, stride);
 	}
 
+	void CommandBuffer::Dispatch(uint32_t groupCountX, uint32_t groupCountY, uint32_t groupCountZ)
+	{
+		m_cmd.dispatch(groupCountX, groupCountY, groupCountZ);
+	}
+
 	void CommandBuffer::TransitionImage(const ImageTransitionInfo& info)
 	{
 		vk::PipelineStageFlags2 srcStage = {};

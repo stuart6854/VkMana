@@ -1,7 +1,7 @@
 #pragma once
 
 #include "Util/IntrusivePtr.hpp"
-#include "Vulkan_Headers.hpp"
+#include "VulkanHeaders.hpp"
 
 #include <memory>
 

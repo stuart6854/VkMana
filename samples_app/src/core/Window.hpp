@@ -2,7 +2,7 @@
 
 #include "Input.hpp"
 
-#include <VkMana/Vulkan_Headers.hpp>
+#include <VkMana/VulkanHeaders.hpp>
 
 #define GLFW_INCLUDE_NONE
 #define GLFW_INCLUDE_VULKAN

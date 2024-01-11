@@ -5,7 +5,7 @@
 #include "Pipeline.hpp"
 #include "QueryPool.hpp"
 #include "RenderPass.hpp"
-#include "Vulkan_Common.hpp"
+#include "VulkanCommon.hpp"
 
 // #TODO: Batch pipeline barriers (image transitions)
 

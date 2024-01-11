@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Vulkan_Common.hpp"
+#include "VulkanCommon.hpp"
 
 #include <vector>
 

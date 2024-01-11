@@ -1,7 +1,7 @@
 #pragma once
 
 #include "Descriptors.hpp"
-#include "Vulkan_Common.hpp"
+#include "VulkanCommon.hpp"
 
 #include <vector>
 

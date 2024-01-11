@@ -2,7 +2,7 @@
 
 #include "Buffer.hpp"
 #include "Image.hpp"
-#include "Vulkan_Common.hpp"
+#include "VulkanCommon.hpp"
 
 namespace VkMana
 {

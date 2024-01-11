@@ -10,7 +10,7 @@
 #include "Pipeline.hpp"
 #include "QueryPool.hpp"
 #include "SwapChain.hpp"
-#include "Vulkan_Common.hpp"
+#include "VulkanCommon.hpp"
 
 #include <unordered_map>
 

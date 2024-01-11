@@ -1,7 +1,7 @@
 #pragma once
 
 #include "Pipeline.hpp"
-#include "Vulkan_Common.hpp"
+#include "VulkanCommon.hpp"
 
 #include <filesystem>
 #include <optional>

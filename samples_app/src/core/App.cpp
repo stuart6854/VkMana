@@ -125,6 +125,7 @@ namespace VkMana::SamplesApp
         m_samples[m_activeSampleIndex]->OnUnload(*this, *m_ctx);
         m_samples.clear();
 
+        m_swapChain = nullptr;
         m_ctx = nullptr;
 
         m_window = nullptr;

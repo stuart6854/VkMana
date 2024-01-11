@@ -240,19 +240,20 @@ namespace VkMana
 
     auto Context::CreateComputePipeline(const ComputePipelineCreateInfo& info) -> PipelineHandle { return Pipeline::NewCompute(this, info); }
 
-    auto Context::CreateImage(ImageCreateInfo info, const ImageDataSource* initialData) -> ImageHandle
+    auto Context::CreateImage(ImageCreateInfo info, const ImageDataSource* pInitialData) -> ImageHandle
     {
         auto pImage = Image::New(this, info);
 
-        if(initialData)
+        if(pInitialData)
         {
             // Staging buffer.
             BufferDataSource bufferSource{
-                .Size = initialData->size,
-                .Data = initialData->data,
+                .size = pInitialData->size,
+                .pData = pInitialData->data,
             };
-            auto stagingBuffer = CreateBuffer(BufferCreateInfo::Staging(initialData->size), &bufferSource);
-            SetName(*stagingBuffer, "image_upload_staging_buffer");
+            auto pStagingBuffer = CreateBuffer(BufferCreateInfo::Staging(pInitialData->size), &bufferSource);
+            assert(pStagingBuffer->IsHostAccessible());
+            SetName(*pStagingBuffer, "image_upload_staging_buffer");
             auto cmd = RequestCmd();
 
             // Transition all mip levels to TransferDst.
@@ -265,7 +266,7 @@ namespace VkMana
             cmd->TransitionImage(preTransitionInfo); // #TODO: Transition all mip levels to TransferDst
 
             BufferToImageCopyInfo copyInfo{
-                .SrcBuffer = stagingBuffer.Get(),
+                .SrcBuffer = pStagingBuffer.Get(),
                 .DstImage = pImage.Get(),
             };
             cmd->CopyBufferToImage(copyInfo);
@@ -377,46 +378,35 @@ namespace VkMana
         return IntrusivePtr(new Sampler(this, sampler));
     }
 
-    auto Context::CreateBuffer(const BufferCreateInfo& info, const BufferDataSource* initialData) -> BufferHandle
+    auto Context::CreateBuffer(const BufferCreateInfo& info, const BufferDataSource* pInitialData) -> BufferHandle
     {
-        vk::BufferCreateInfo bufferInfo{};
-        bufferInfo.setSize(info.Size);
-        bufferInfo.setUsage(info.Usage);
+        auto pBuffer = Buffer::New(this, info);
 
-        vma::AllocationCreateInfo allocInfo{};
-        allocInfo.setUsage(info.MemUsage);
-        allocInfo.setFlags(info.AllocFlags);
-
-        auto [buffer, allocation] = m_allocator.createBuffer(bufferInfo, allocInfo);
-
-        auto bufferHandle = IntrusivePtr(new Buffer(this, buffer, allocation, info));
-
-        if(initialData)
+        if(pInitialData != nullptr)
         {
-            if(bufferHandle->IsHostAccessible())
+            if(pBuffer->IsHostAccessible())
             {
-                auto* mapped = m_allocator.mapMemory(allocation);
-                std::memcpy(mapped, initialData->Data, initialData->Size);
-                m_allocator.unmapMemory(allocation);
+                pBuffer->WriteHostAccessible(0, pInitialData->size, pInitialData->pData);
             }
             else
             {
                 // Staging buffer.
-                auto stagingBuffer = CreateBuffer(BufferCreateInfo::Staging(info.Size), initialData);
-                SetName(*stagingBuffer, "buffer_upload_staging_buffer");
+                auto pStagingBuffer = CreateBuffer(BufferCreateInfo::Staging(info.size), pInitialData);
+                assert(pStagingBuffer->IsHostAccessible());
+                SetName(*pStagingBuffer, "buffer_upload_staging_buffer");
                 auto cmd = RequestCmd();
 
                 BufferCopyInfo copyInfo{
-                    .SrcBuffer = stagingBuffer.Get(),
-                    .DstBuffer = bufferHandle.Get(),
-                    .Size = info.Size,
+                    .SrcBuffer = pStagingBuffer.Get(),
+                    .DstBuffer = pBuffer.Get(),
+                    .Size = info.size,
                 };
                 cmd->CopyBuffer(copyInfo);
                 SubmitStaging(cmd);
             }
         }
 
-        return bufferHandle;
+        return pBuffer;
     }
 
     auto Context::CreateQueryPool(const QueryPoolCreateInfo& info) -> QueryPoolHandle

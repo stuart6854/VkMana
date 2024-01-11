@@ -226,17 +226,17 @@ namespace VkMana::SamplesApp
         }
 
         VkMana::BufferDataSource vtxDataSrc{
-            .Size = sizeof(Vertex) * vertices.size(),
-            .Data = vertices.data(),
+            .size = sizeof(Vertex) * vertices.size(),
+            .pData = vertices.data(),
         };
-        auto vtxBufferInfo = VkMana::BufferCreateInfo::Vertex(vtxDataSrc.Size);
+        auto vtxBufferInfo = VkMana::BufferCreateInfo::Vertex(vtxDataSrc.size);
         outMesh.VertexBuffer = ctx.CreateBuffer(vtxBufferInfo, &vtxDataSrc);
 
         VkMana::BufferDataSource idxDataSrc{
-            .Size = sizeof(uint16_t) * indices.size(),
-            .Data = indices.data(),
+            .size = sizeof(uint16_t) * indices.size(),
+            .pData = indices.data(),
         };
-        auto idxBufferInfo = VkMana::BufferCreateInfo::Index(idxDataSrc.Size);
+        auto idxBufferInfo = VkMana::BufferCreateInfo::Index(idxDataSrc.size);
         outMesh.IndexBuffer = ctx.CreateBuffer(idxBufferInfo, &idxDataSrc);
 
         outMesh.IndexCount = indices.size();

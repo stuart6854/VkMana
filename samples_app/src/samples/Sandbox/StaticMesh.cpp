@@ -63,8 +63,8 @@ namespace VkMana::SamplesApp
     {
         const auto bufferInfo = BufferCreateInfo::Vertex(sizeof(StaticVertex) * vertices.size());
         const BufferDataSource initialData{
-            .Size = bufferInfo.Size,
-            .Data = vertices.data(),
+            .size = bufferInfo.size,
+            .pData = vertices.data(),
         };
         m_vertexBuffer = m_renderer->GetContext()->CreateBuffer(bufferInfo, &initialData);
     }
@@ -73,8 +73,8 @@ namespace VkMana::SamplesApp
     {
         const auto bufferInfo = BufferCreateInfo::Index(sizeof(uint16_t) * triangles.size());
         const BufferDataSource initialData{
-            .Size = bufferInfo.Size,
-            .Data = triangles.data(),
+            .size = bufferInfo.size,
+            .pData = triangles.data(),
         };
         m_indexBuffer = m_renderer->GetContext()->CreateBuffer(bufferInfo, &initialData);
     }

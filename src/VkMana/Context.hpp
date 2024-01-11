@@ -48,10 +48,10 @@ namespace VkMana
         auto CreatePipelineLayout(const PipelineLayoutCreateInfo& info) -> PipelineLayoutHandle;
         auto CreateGraphicsPipeline(const GraphicsPipelineCreateInfo& info) -> PipelineHandle;
         auto CreateComputePipeline(const ComputePipelineCreateInfo& info) -> PipelineHandle;
-        auto CreateImage(ImageCreateInfo info, const ImageDataSource* initialData = nullptr) -> ImageHandle;
+        auto CreateImage(ImageCreateInfo info, const ImageDataSource* pInitialData = nullptr) -> ImageHandle;
         auto CreateImageView(const Image* image, const ImageViewCreateInfo& info) -> ImageViewHandle;
         auto CreateSampler(const SamplerCreateInfo& info) -> SamplerHandle;
-        auto CreateBuffer(const BufferCreateInfo& info, const BufferDataSource* initialData = nullptr) -> BufferHandle;
+        auto CreateBuffer(const BufferCreateInfo& info, const BufferDataSource* pInitialData = nullptr) -> BufferHandle;
         auto CreateQueryPool(const QueryPoolCreateInfo& info) -> QueryPoolHandle;
 
         void DestroySetLayout(vk::DescriptorSetLayout setLayout);

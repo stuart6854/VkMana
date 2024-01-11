@@ -78,13 +78,15 @@ namespace VkMana
     };
     using PipelineLayoutHandle = IntrusivePtr<PipelineLayout>;
 
-    class Pipeline : public IntrusivePtrEnabled<Pipeline>
+    class Pipeline : public GPUResource<Pipeline>
     {
     public:
         static auto NewGraphics(Context* pContext, const GraphicsPipelineCreateInfo& info) -> IntrusivePtr<Pipeline>;
         static auto NewCompute(Context* pContext, const ComputePipelineCreateInfo& info) -> IntrusivePtr<Pipeline>;
 
         ~Pipeline();
+
+        void SetDebugName(const std::string& name) override;
 
         auto GetLayout() const -> auto { return m_layout; }
         auto GetPipeline() const -> auto { return m_pipeline; }
@@ -94,7 +96,6 @@ namespace VkMana
         Pipeline(Context* pContext, const IntrusivePtr<PipelineLayout>& layout, vk::Pipeline pipeline, vk::PipelineBindPoint bindPoint);
 
     private:
-        Context* m_ctx;
         IntrusivePtr<PipelineLayout> m_layout;
         vk::Pipeline m_pipeline;
         vk::PipelineBindPoint m_bindPoint;

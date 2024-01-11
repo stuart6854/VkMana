@@ -36,10 +36,16 @@ namespace VkMana
     Image::~Image()
     {
         if(m_image && m_ownsImage)
-            m_ctx->DestroyImage(m_image);
+            GetContext()->DestroyImage(m_image);
 
         if(m_allocation)
-            m_ctx->DestroyAllocation(m_allocation);
+            GetContext()->DestroyAllocation(m_allocation);
+    }
+
+    void Image::SetDebugName(const std::string& name)
+    {
+        std::string debugName = "[Image] " + name;
+        SetObjectDebugName(GetContext()->GetDevice(), m_image, debugName.c_str());
     }
 
     auto Image::GetImageView(ImageViewType type) -> ImageView*
@@ -68,7 +74,7 @@ namespace VkMana
                     .arrayLayerCount = 1,
                 };
             }
-            view = m_ctx->CreateImageView(this, viewInfo);
+            view = GetContext()->CreateImageView(this, viewInfo);
         }
         return view.Get();
     }
@@ -98,7 +104,7 @@ namespace VkMana
         uint32_t mipLevels,
         vk::Format format
     )
-        : m_ctx(context)
+        : GPUResource<Image>(context)
         , m_image(image)
         , m_allocation(allocation)
         , m_ownsImage(true)
@@ -112,7 +118,7 @@ namespace VkMana
     }
 
     Image::Image(Context* context, vk::Image image, uint32_t width, uint32_t height, vk::Format format)
-        : m_ctx(context)
+        : GPUResource<Image>(context)
         , m_image(image)
         , m_allocation(nullptr)
         , m_ownsImage(false)

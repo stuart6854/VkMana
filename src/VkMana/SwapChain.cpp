@@ -51,6 +51,7 @@ namespace VkMana
                 VM_ERR("Failed to create SwapChain (BackBuffer image {} was not created)", i);
                 return nullptr;
             }
+            backBufferImages[i]->SetDebugName("BackBuffer " + std::to_string(i));
         }
         assert(backBufferImages.size() > 0);
 

@@ -22,12 +22,14 @@ namespace VkMana::SamplesApp
             const auto imageInfo = ImageCreateInfo::Texture(1, 1, 1);
             const ImageDataSource imageDataSrc{ .size = 1 * 1 * 4, .data = WhitePixels.data() };
             m_whiteImage = m_ctx->CreateImage(imageInfo, &imageDataSrc);
+            m_whiteImage->SetDebugName("White");
         }
         { // Black image
             const std::vector<uint8_t> BlackPixels = { 0, 0, 0, 255 };
             const auto imageInfo = ImageCreateInfo::Texture(1, 1, 1);
             const ImageDataSource imageDataSrc{ .size = 1 * 1 * 4, .data = BlackPixels.data() };
             m_blackImage = m_ctx->CreateImage(imageInfo, &imageDataSrc);
+            m_whiteImage->SetDebugName("Black");
         }
 
         m_bindlessSetLayout = m_ctx->CreateSetLayout({
@@ -36,6 +38,7 @@ namespace VkMana::SamplesApp
              MaxBindlessImages, vk::ShaderStageFlagBits::eFragment,
              vk::DescriptorBindingFlagBits::ePartiallyBound },
         });
+        // #TODO: m_bindlessSetLayout->SetDebugName("Bindless");
 
         SetupGBufferPass();
         SetupCompositionPass();
@@ -71,9 +74,11 @@ namespace VkMana::SamplesApp
         GetImageIndex(m_blackImage.Get());
 
         m_bindlessSet = m_ctx->RequestDescriptorSet(m_bindlessSetLayout.Get());
+        // #TODO: m_bindlessSet->SetDebugName("Bindless");
         m_bindlessSet->WriteArray(0, 0, m_bindlessImages, m_ctx->GetLinearSampler());
 
         auto cmd = m_ctx->RequestCmd();
+        // #TODO: cmd->SetDebugName("Main");
 
         cmd->SetViewport(0, float(m_mainWindow->GetSurfaceHeight()), float(m_mainWindow->GetSurfaceWidth()), -float(m_mainWindow->GetSurfaceHeight()));
         cmd->SetScissor(0, 0, m_mainWindow->GetSurfaceWidth(), m_mainWindow->GetSurfaceHeight());
@@ -98,18 +103,22 @@ namespace VkMana::SamplesApp
     {
         const auto depthImageInfo = ImageCreateInfo::DepthStencilTarget(m_mainWindow->GetSurfaceWidth(), m_mainWindow->GetSurfaceHeight(), false);
         m_depthTargetImage = m_ctx->CreateImage(depthImageInfo);
+        m_depthTargetImage->SetDebugName("Sandbox_DepthTarget");
 
         const auto positionImageInfo
             = ImageCreateInfo::ColorTarget(m_mainWindow->GetSurfaceWidth(), m_mainWindow->GetSurfaceHeight(), vk::Format::eR16G16B16A16Sfloat);
         m_positionTargetImage = m_ctx->CreateImage(positionImageInfo);
+        m_positionTargetImage->SetDebugName("Sandbox_PositionTarget");
 
         const auto normalImageInfo
             = ImageCreateInfo::ColorTarget(m_mainWindow->GetSurfaceWidth(), m_mainWindow->GetSurfaceHeight(), vk::Format::eR16G16B16A16Sfloat);
         m_normalTargetImage = m_ctx->CreateImage(normalImageInfo);
+        m_normalTargetImage->SetDebugName("Sandbox_NormalTarget");
 
         const auto albedoImageInfo
             = ImageCreateInfo::ColorTarget(m_mainWindow->GetSurfaceWidth(), m_mainWindow->GetSurfaceHeight(), vk::Format::eR8G8B8A8Unorm);
         m_albedoTargetImage = m_ctx->CreateImage(albedoImageInfo);
+        m_albedoTargetImage->SetDebugName("Sandbox_AlbedoTarget");
 
         m_gBufferPass.targets = {
             RenderPassTarget::DefaultColorTarget(m_positionTargetImage->GetImageView(ImageViewType::RenderTarget)),
@@ -121,12 +130,14 @@ namespace VkMana::SamplesApp
         m_cameraSetLayout = m_ctx->CreateSetLayout({
             { 0, vk::DescriptorType::eUniformBuffer, 1, vk::ShaderStageFlagBits::eVertex },
         });
+        // #TODO: m_cameraSetLayout->SetDebugName()
 
         const PipelineLayoutCreateInfo layoutInfo{
             .PushConstantRange = { vk::ShaderStageFlagBits::eVertex | vk::ShaderStageFlagBits::eFragment, 0, sizeof(PushConstantData) },
             .SetLayouts = { m_bindlessSetLayout.Get(), m_cameraSetLayout.Get() },
         };
         m_gBufferPipelineLayout = m_ctx->CreatePipelineLayout(layoutInfo);
+        // #TODO: m_cameraSetLayout->SetDebugName()
 
         ShaderCompileInfo compileInfo{
             .srcLanguage = SourceLanguage::GLSL,
@@ -169,9 +180,11 @@ namespace VkMana::SamplesApp
             .pPipelineLayout = m_gBufferPipelineLayout,
         };
         m_gBufferStaticPipeline = m_ctx->CreateGraphicsPipeline(pipelineInfo);
+        m_gBufferStaticPipeline->SetDebugName("Sandbox_Static");
 
         const auto cameraUniformBufferInfo = BufferCreateInfo::Uniform(sizeof(m_cameraUniformData) * 2);
         m_cameraUniformBuffer = m_ctx->CreateBuffer(cameraUniformBufferInfo);
+        m_cameraUniformBuffer->SetDebugName("Sandbox_Camera_Uniforms");
     }
 
     void Renderer::SetupCompositionPass()
@@ -179,6 +192,7 @@ namespace VkMana::SamplesApp
         const auto compositionImageInfo
             = ImageCreateInfo::ColorTarget(m_mainWindow->GetSurfaceWidth(), m_mainWindow->GetSurfaceHeight(), vk::Format::eR8G8B8A8Unorm);
         m_compositionTargetImage = m_ctx->CreateImage(compositionImageInfo);
+        m_compositionTargetImage->SetDebugName("Sandbox_CompositeTarget");
 
         m_compositionPass.targets = {
             RenderPassTarget::DefaultColorTarget(m_compositionTargetImage->GetImageView(ImageViewType::RenderTarget)),
@@ -226,6 +240,7 @@ namespace VkMana::SamplesApp
             .pPipelineLayout = m_compositionPipelineLayout,
         };
         m_compositionPipeline = m_ctx->CreateGraphicsPipeline(pipelineInfo);
+        m_compositionPipeline->SetDebugName("Sandbox_Composition");
     }
 
     void Renderer::SetupScreenPass()
@@ -270,6 +285,7 @@ namespace VkMana::SamplesApp
             .pPipelineLayout = m_screenPipelineLayout,
         };
         m_screenPipeline = m_ctx->CreateGraphicsPipeline(pipelineInfo);
+        m_screenPipeline->SetDebugName("Sandbox_Screen");
     }
 
     void Renderer::GBufferPass(CmdBuffer& cmd)

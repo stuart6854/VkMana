@@ -183,11 +183,17 @@ namespace VkMana
     Pipeline::~Pipeline()
     {
         if(m_pipeline)
-            m_ctx->DestroyPipeline(m_pipeline);
+            GetContext()->DestroyPipeline(m_pipeline);
+    }
+
+    void Pipeline::SetDebugName(const std::string& name)
+    {
+        std::string debugName = "[Pipeline] " + name;
+        SetObjectDebugName(GetContext()->GetDevice(), m_pipeline, debugName.c_str());
     }
 
     Pipeline::Pipeline(Context* pContext, const IntrusivePtr<PipelineLayout>& layout, vk::Pipeline pipeline, vk::PipelineBindPoint bindPoint)
-        : m_ctx(pContext)
+        : GPUResource<Pipeline>(pContext)
         , m_layout(layout)
         , m_pipeline(pipeline)
         , m_bindPoint(bindPoint)

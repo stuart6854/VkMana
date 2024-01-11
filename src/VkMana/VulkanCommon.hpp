@@ -1,12 +1,26 @@
 #pragma once
 
+#include "GPUResource.hpp"
 #include "Util/IntrusivePtr.hpp"
 #include "VulkanHeaders.hpp"
 
 #include <memory>
+#include <string_view>
 
 namespace VkMana
 {
+    template <typename T>
+    void SetObjectDebugName(vk::Device device, T handle, const char* pName)
+    {
+        static_assert(vk::isVulkanHandleType<T>::value == true);
+
+        vk::DebugUtilsObjectNameInfoEXT nameInfo{};
+        nameInfo.objectType = handle.objectType;
+        nameInfo.objectHandle = reinterpret_cast<uint64_t>(static_cast<T::CType>(handle));
+        nameInfo.pObjectName = pName;
+        device.setDebugUtilsObjectNameEXT(nameInfo);
+    }
+
     template <class T>
     inline void HashCombine(std::size_t& seed, const T& v)
     {

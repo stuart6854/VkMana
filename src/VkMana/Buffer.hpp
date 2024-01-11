@@ -66,12 +66,14 @@ namespace VkMana
     class Buffer;
     using BufferHandle = IntrusivePtr<Buffer>;
 
-    class Buffer : public IntrusivePtrEnabled<Buffer>
+    class Buffer : public GPUResource<Buffer>
     {
     public:
         static auto New(Context* pContext, const BufferCreateInfo& info) -> BufferHandle;
 
         ~Buffer();
+
+        void SetDebugName(const std::string& name) override;
 
         void WriteHostAccessible(uint64_t offset, uint64_t size, const void* pData) const;
 
@@ -84,7 +86,6 @@ namespace VkMana
         Buffer(Context* context, vk::Buffer buffer, vma::Allocation allocation, const BufferCreateInfo& info);
 
     private:
-        Context* m_ctx;
         vk::Buffer m_buffer;
         vma::Allocation m_allocation;
         BufferCreateInfo m_info;

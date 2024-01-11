@@ -63,6 +63,7 @@ namespace VkMana::SamplesApp
             { 0, vk::DescriptorType::eCombinedImageSampler, 1, vk::ShaderStageFlagBits::eFragment },
         };
         m_setLayout = ctx.CreateSetLayout(setBindings);
+        // #TODO: m_setLayout->SetDebugName("ModelLoading")
 
         VkMana::PipelineLayoutCreateInfo pipelineLayoutInfo{
 			.PushConstantRange = { vk::ShaderStageFlagBits::eVertex, 0, 192 },
@@ -71,6 +72,7 @@ namespace VkMana::SamplesApp
 		   },
 	   };
         m_pipelineLayout = ctx.CreatePipelineLayout(pipelineLayoutInfo);
+        // #TODO: m_pipelineLayout->SetDebugName("ModelLoading")
 
         ShaderCompileInfo compileInfo{
             .srcLanguage = SourceLanguage::GLSL,
@@ -116,17 +118,22 @@ namespace VkMana::SamplesApp
         if(m_pipeline == nullptr)
             return false;
 
+        m_pipeline->SetDebugName("ModelLoading");
+
         if(!LoadObjMesh(m_mesh, ctx, "assets/models/viking_room.obj"))
         {
             VM_ERR("Failed to load mesh.");
             return false;
         }
+        m_mesh.IndexBuffer->SetDebugName("VikingRoom_Index");
+        m_mesh.VertexBuffer->SetDebugName("VikingRoom_Vertex");
 
         if(!LoadTexture(m_texture, ctx, "assets/models/viking_room.png"))
         {
             VM_ERR("Failed to load texture.");
             return false;
         }
+        m_texture->SetDebugName("VikingRoom");
 
         m_pushConsts.viewMatrix = glm::lookAtLH(glm::vec3(-1, 0.5f, -1), glm::vec3(0, -0.2f, 0), glm::vec3(0, 1, 0));
         m_pushConsts.modelMatrix = glm::mat4(1.0f);
@@ -154,8 +161,10 @@ namespace VkMana::SamplesApp
         m_pushConsts.projMatrix = glm::perspectiveLH_ZO(glm::radians(60.0f), windowAspect, 0.1f, 600.0f);
 
         auto cmd = ctx.RequestCmd();
+        // #TODO: cmd->SetDebugName("Main")
 
         auto textureSet = ctx.RequestDescriptorSet(m_setLayout.Get());
+        // #TODO: textureSet->SetDebugName("ModelLoading_Texture")
         textureSet->Write(m_texture->GetImageView(VkMana::ImageViewType::Texture), ctx.GetLinearSampler(), 0);
         const auto rpDepthTarget = VkMana::RenderPassTarget::DefaultDepthStencilTarget(m_depthTarget->GetImageView(VkMana::ImageViewType::RenderTarget));
         auto rpInfo = app.GetSwapChain()->GetRenderPass();

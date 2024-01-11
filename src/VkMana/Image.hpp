@@ -86,12 +86,14 @@ namespace VkMana
         vk::SamplerMipmapMode mipMapMode = vk::SamplerMipmapMode::eLinear;
     };
 
-    class Image : public IntrusivePtrEnabled<Image>
+    class Image : public GPUResource<Image>
     {
     public:
         static auto New(Context* pContext, const ImageCreateInfo& info) -> IntrusivePtr<Image>;
 
-        ~Image();
+        ~Image() override;
+
+        void SetDebugName(const std::string& name) override;
 
         auto GetImageView(ImageViewType type) -> ImageView*;
 
@@ -119,7 +121,6 @@ namespace VkMana
         Image(Context* context, vk::Image image, uint32_t width, uint32_t height, vk::Format format);
 
     private:
-        Context* m_ctx;
         vk::Image m_image;
         vma::Allocation m_allocation;
         bool m_ownsImage;

@@ -45,6 +45,7 @@ namespace VkMana::SamplesApp
     {
         const PipelineLayoutCreateInfo pipelineLayoutInfo{};
         auto pipelineLayout = ctx.CreatePipelineLayout(pipelineLayoutInfo);
+        // #TODO: pipelineLayout->SetName("Triangle");
 
         ShaderCompileInfo compileInfo{
             .srcLanguage = SourceLanguage::GLSL,
@@ -81,6 +82,7 @@ namespace VkMana::SamplesApp
             .pPipelineLayout = pipelineLayout,
         };
         m_pipeline = ctx.CreateGraphicsPipeline(pipelineInfo);
+        m_pipeline->SetDebugName("Triangle");
 
         return m_pipeline != nullptr;
     }
@@ -94,6 +96,7 @@ namespace VkMana::SamplesApp
         const auto windowHeight = window.GetSurfaceHeight();
 
         auto cmd = ctx.RequestCmd();
+        // #TODO: cmd->SetName("Main");
 
         cmd->BeginRenderPass(app.GetSwapChain()->GetRenderPass());
         cmd->BindPipeline(m_pipeline.Get());

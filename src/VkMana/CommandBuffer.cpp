@@ -288,7 +288,7 @@ namespace VkMana
         region.setBufferOffset(0);
         region.setBufferRowLength(0);
         region.setBufferImageHeight(0);
-        region.setImageExtent({ info.DstImage->GetWidth(), info.DstImage->GetHeight(), info.DstImage->GetDepth() });
+        region.setImageExtent({ info.DstImage->GetWidth(), info.DstImage->GetHeight(), info.DstImage->GetDepthOrArrayLayers() });
         region.imageSubresource.setAspectMask(info.DstImage->GetAspect());
         region.imageSubresource.setMipLevel(0);
         region.imageSubresource.setBaseArrayLayer(0);

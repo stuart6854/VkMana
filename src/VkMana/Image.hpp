@@ -18,7 +18,7 @@ namespace VkMana
     {
         uint32_t Width = 1;
         uint32_t Height = 1;
-        uint32_t Depth = 1;
+        uint32_t depthOrArrayLayers = 1;
         int32_t MipLevels = -1; // -1 = Automatically determine max mip levels.
         uint32_t ArrayLayers = 1;
         vk::Format Format = vk::Format::eUndefined;
@@ -90,31 +90,46 @@ namespace VkMana
     class Image : public IntrusivePtrEnabled<Image>
     {
     public:
+        static auto New(Context* pContext, const ImageCreateInfo& info) -> IntrusivePtr<Image>;
+
         ~Image();
 
         auto GetImageView(ImageViewType type) -> ImageView*;
 
         auto GetImage() const -> auto { return m_image; }
-        auto GetWidth() const -> auto { return m_info.Width; }
-        auto GetHeight() const -> auto { return m_info.Height; }
-        auto GetDepth() const -> auto { return m_info.Depth; }
-        auto GetMipLevels() const -> auto { return uint32_t(m_info.MipLevels); }
-        auto GetArrayLayers() const -> auto { return m_info.ArrayLayers; }
-        auto GetFormat() const -> auto { return m_info.Format; }
+        auto GetWidth() const -> auto { return m_width; }
+        auto GetHeight() const -> auto { return m_height; }
+        auto GetDepthOrArrayLayers() const -> auto { return m_depthOrArrayLayers; }
+        auto GetMipLevels() const -> auto { return m_mipLevels; }
+        auto GetFormat() const -> auto { return m_format; }
         auto GetAspect() const -> vk::ImageAspectFlags;
 
     private:
-        friend class Context;
+        friend class SwapChain;
 
-        Image(Context* context, vk::Image image, const ImageCreateInfo& info);
-        Image(Context* context, vk::Image image, vma::Allocation allocation, const ImageCreateInfo& info);
+        Image(
+            Context* context,
+            vk::Image image,
+            vma::Allocation allocation,
+            uint32_t width,
+            uint32_t height,
+            uint32_t depthOrArrayLayers,
+            uint32_t mipLevels,
+            vk::Format format
+        );
+        Image(Context* context, vk::Image image, uint32_t width, uint32_t height, vk::Format format);
 
     private:
         Context* m_ctx;
         vk::Image m_image;
         vma::Allocation m_allocation;
-        ImageCreateInfo m_info;
         bool m_ownsImage;
+
+        uint32_t m_width;
+        uint32_t m_height;
+        uint32_t m_depthOrArrayLayers;
+        uint32_t m_mipLevels;
+        vk::Format m_format;
 
         std::array<ImageViewHandle, uint8_t(ImageViewType::Count)> m_views;
     };

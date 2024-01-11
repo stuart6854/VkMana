@@ -12,12 +12,10 @@ using namespace VkMana;
 
 namespace VkMana::SamplesApp
 {
-    bool Renderer::Init(WSI& mainWindow, Context& ctx)
+    bool Renderer::Init(Context& ctx, Window& mainWindow)
     {
-        m_mainWindow = &mainWindow;
-        m_mainWindowSize = { m_mainWindow->GetSurfaceWidth(), m_mainWindow->GetSurfaceHeight() };
-
         m_ctx = &ctx;
+        m_mainWindow = &mainWindow;
 
         { // White image
             const std::vector<uint8_t> WhitePixels = { 255, 255, 255, 255 };
@@ -33,10 +31,10 @@ namespace VkMana::SamplesApp
         }
 
         m_bindlessSetLayout = m_ctx->CreateSetLayout({
-            {0,
+            { 0,
              vk::DescriptorType::eCombinedImageSampler,
              MaxBindlessImages, vk::ShaderStageFlagBits::eFragment,
-             vk::DescriptorBindingFlagBits::ePartiallyBound},
+             vk::DescriptorBindingFlagBits::ePartiallyBound },
         });
 
         SetupGBufferPass();
@@ -67,7 +65,7 @@ namespace VkMana::SamplesApp
         }
     }
 
-    void Renderer::Flush()
+    void Renderer::Flush(SwapChainHandle pSwapChain)
     {
         GetImageIndex(m_whiteImage.Get());
         GetImageIndex(m_blackImage.Get());
@@ -77,12 +75,12 @@ namespace VkMana::SamplesApp
 
         auto cmd = m_ctx->RequestCmd();
 
-        cmd->SetViewport(0, float(m_mainWindowSize.y), float(m_mainWindowSize.x), -float(m_mainWindowSize.y));
-        cmd->SetScissor(0, 0, m_mainWindowSize.x, m_mainWindowSize.y);
+        cmd->SetViewport(0, float(m_mainWindow->GetSurfaceHeight()), float(m_mainWindow->GetSurfaceWidth()), -float(m_mainWindow->GetSurfaceHeight()));
+        cmd->SetScissor(0, 0, m_mainWindow->GetSurfaceWidth(), m_mainWindow->GetSurfaceHeight());
 
         GBufferPass(cmd);
         CompositionPass(cmd);
-        ScreenPass(cmd);
+        ScreenPass(cmd, pSwapChain);
 
         m_ctx->Submit(cmd);
 
@@ -98,16 +96,19 @@ namespace VkMana::SamplesApp
 
     void Renderer::SetupGBufferPass()
     {
-        const auto depthImageInfo = ImageCreateInfo::DepthStencilTarget(m_mainWindowSize.x, m_mainWindowSize.y, false);
+        const auto depthImageInfo = ImageCreateInfo::DepthStencilTarget(m_mainWindow->GetSurfaceWidth(), m_mainWindow->GetSurfaceHeight(), false);
         m_depthTargetImage = m_ctx->CreateImage(depthImageInfo);
 
-        const auto positionImageInfo = ImageCreateInfo::ColorTarget(m_mainWindowSize.x, m_mainWindowSize.y, vk::Format::eR16G16B16A16Sfloat);
+        const auto positionImageInfo
+            = ImageCreateInfo::ColorTarget(m_mainWindow->GetSurfaceWidth(), m_mainWindow->GetSurfaceHeight(), vk::Format::eR16G16B16A16Sfloat);
         m_positionTargetImage = m_ctx->CreateImage(positionImageInfo);
 
-        const auto normalImageInfo = ImageCreateInfo::ColorTarget(m_mainWindowSize.x, m_mainWindowSize.y, vk::Format::eR16G16B16A16Sfloat);
+        const auto normalImageInfo
+            = ImageCreateInfo::ColorTarget(m_mainWindow->GetSurfaceWidth(), m_mainWindow->GetSurfaceHeight(), vk::Format::eR16G16B16A16Sfloat);
         m_normalTargetImage = m_ctx->CreateImage(normalImageInfo);
 
-        const auto albedoImageInfo = ImageCreateInfo::ColorTarget(m_mainWindowSize.x, m_mainWindowSize.y, vk::Format::eR8G8B8A8Unorm);
+        const auto albedoImageInfo
+            = ImageCreateInfo::ColorTarget(m_mainWindow->GetSurfaceWidth(), m_mainWindow->GetSurfaceHeight(), vk::Format::eR8G8B8A8Unorm);
         m_albedoTargetImage = m_ctx->CreateImage(albedoImageInfo);
 
         m_gBufferPass.Targets = {
@@ -118,7 +119,7 @@ namespace VkMana::SamplesApp
         };
 
         m_cameraSetLayout = m_ctx->CreateSetLayout({
-            {0, vk::DescriptorType::eUniformBuffer, 1, vk::ShaderStageFlagBits::eVertex},
+            { 0, vk::DescriptorType::eUniformBuffer, 1, vk::ShaderStageFlagBits::eVertex },
         });
 
         const PipelineLayoutCreateInfo layoutInfo{
@@ -174,7 +175,8 @@ namespace VkMana::SamplesApp
 
     void Renderer::SetupCompositionPass()
     {
-        const auto compositionImageInfo = ImageCreateInfo::ColorTarget(m_mainWindowSize.x, m_mainWindowSize.y, vk::Format::eR8G8B8A8Unorm);
+        const auto compositionImageInfo
+            = ImageCreateInfo::ColorTarget(m_mainWindow->GetSurfaceWidth(), m_mainWindow->GetSurfaceHeight(), vk::Format::eR8G8B8A8Unorm);
         m_compositionTargetImage = m_ctx->CreateImage(compositionImageInfo);
 
         m_compositionPass.Targets = {
@@ -182,9 +184,9 @@ namespace VkMana::SamplesApp
         };
 
         m_compositionSetLayout = m_ctx->CreateSetLayout({
-            {0, vk::DescriptorType::eCombinedImageSampler, 1, vk::ShaderStageFlagBits::eFragment},
-            {1, vk::DescriptorType::eCombinedImageSampler, 1, vk::ShaderStageFlagBits::eFragment},
-            {2, vk::DescriptorType::eCombinedImageSampler, 1, vk::ShaderStageFlagBits::eFragment},
+            { 0, vk::DescriptorType::eCombinedImageSampler, 1, vk::ShaderStageFlagBits::eFragment },
+            { 1, vk::DescriptorType::eCombinedImageSampler, 1, vk::ShaderStageFlagBits::eFragment },
+            { 2, vk::DescriptorType::eCombinedImageSampler, 1, vk::ShaderStageFlagBits::eFragment },
         });
 
         const PipelineLayoutCreateInfo layoutInfo{
@@ -227,7 +229,7 @@ namespace VkMana::SamplesApp
     void Renderer::SetupScreenPass()
     {
         m_screenSetLayout = m_ctx->CreateSetLayout({
-            {0, vk::DescriptorType::eCombinedImageSampler, 1, vk::ShaderStageFlagBits::eFragment},
+            { 0, vk::DescriptorType::eCombinedImageSampler, 1, vk::ShaderStageFlagBits::eFragment },
         });
 
         const PipelineLayoutCreateInfo layoutInfo{
@@ -326,12 +328,12 @@ namespace VkMana::SamplesApp
         cmd->EndRenderPass();
     }
 
-    void Renderer::ScreenPass(CmdBuffer& cmd)
+    void Renderer::ScreenPass(CmdBuffer& cmd, SwapChainHandle pSwapChain)
     {
         auto screenTextureSet = m_ctx->RequestDescriptorSet(m_screenSetLayout.Get());
         screenTextureSet->Write(m_compositionTargetImage->GetImageView(ImageViewType::Texture), m_ctx->GetLinearSampler(), 0);
 
-        cmd->BeginRenderPass(m_ctx->GetSurfaceRenderPass(m_mainWindow));
+        cmd->BeginRenderPass(pSwapChain->GetRenderPass());
         cmd->BindPipeline(m_screenPipeline.Get());
         cmd->BindDescriptorSets(0, { screenTextureSet.Get() }, {});
         cmd->Draw(3, 0);

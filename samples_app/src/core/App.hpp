@@ -1,9 +1,14 @@
 #pragma once
 
 #include "Window.hpp"
+
 #include "samples/SampleBase.hpp"
 
 #include <VkMana/Context.hpp>
+
+#define GLFW_INCLUDE_NONE
+#define GLFW_INCLUDE_VULKAN
+#include <GLFW/glfw3.h>
 
 namespace VkMana::SamplesApp
 {
@@ -19,6 +24,7 @@ namespace VkMana::SamplesApp
         void Run();
 
         auto GetWindow() const -> auto& { return *m_window; }
+        auto GetSwapChain() -> auto& { return m_swapChain; }
 
     private:
         void Init();
@@ -30,6 +36,7 @@ namespace VkMana::SamplesApp
         bool m_isRunning = false;
         std::unique_ptr<Window> m_window = nullptr;
         ContextHandle m_ctx = nullptr;
+        SwapChainHandle m_swapChain = nullptr;
 
         std::vector<std::unique_ptr<SampleBase>> m_samples;
         int32_t m_activeSampleIndex = -1;

@@ -1,8 +1,7 @@
 #include "App.hpp"
 
-#include <VkMana/Context.hpp>
-
 #define GLFW_INCLUDE_NONE
+#define GLFW_INCLUDE_VULKAN
 #include <GLFW/glfw3.h>
 
 namespace VkMana::SamplesApp
@@ -58,7 +57,7 @@ namespace VkMana::SamplesApp
             sample->Tick(deltaTime, *this, *m_ctx);
 
             m_ctx->EndFrame();
-            m_ctx->Present();
+            m_swapChain->Present();
         }
 
         Cleanup();
@@ -87,9 +86,25 @@ namespace VkMana::SamplesApp
         m_window = std::make_unique<Window>(glfwWindow);
 
         m_ctx = Context::New();
-        if(!m_ctx->Init(m_window.get()))
+        if(!m_ctx->Init())
         {
             VM_ERR("Failed to initialise VkMana context.");
+            m_isRunning = false;
+            return;
+        }
+
+        VkSurfaceKHR vkSurface = nullptr;
+        if(glfwCreateWindowSurface(m_ctx->GetInstance(), glfwWindow, nullptr, &vkSurface) != VK_SUCCESS)
+        {
+            VM_ERR("Failed to create Vulkan Surface");
+            m_isRunning = false;
+            return;
+        }
+
+        m_swapChain = m_ctx->CreateSwapChain(vkSurface, InitialWindowWidth, InitialWindowHeight);
+        if(m_swapChain == nullptr)
+        {
+            VM_ERR("Failed to create VkMana SwapChain");
             m_isRunning = false;
             return;
         }

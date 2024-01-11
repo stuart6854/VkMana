@@ -91,8 +91,7 @@ namespace VkMana::SamplesApp
 
         auto cmd = ctx.RequestCmd();
 
-        const auto rpInfo = ctx.GetSurfaceRenderPass(&app.GetWindow());
-        cmd->BeginRenderPass(rpInfo);
+        cmd->BeginRenderPass(app.GetSwapChain()->GetRenderPass());
         cmd->BindPipeline(m_pipeline.Get());
         cmd->SetViewport(0, 0, float(windowWidth), float(windowHeight));
         cmd->SetScissor(0, 0, windowWidth, windowHeight);

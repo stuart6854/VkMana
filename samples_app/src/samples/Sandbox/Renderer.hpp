@@ -2,6 +2,7 @@
 
 #include "Material.hpp"
 #include "StaticMesh.hpp"
+#include "core/Window.hpp"
 
 #include <VkMana/Context.hpp>
 
@@ -19,13 +20,13 @@ namespace VkMana::SamplesApp
 
         /* State */
 
-        bool Init(WSI& mainWindow, Context& ctx);
+        bool Init(Context& ctx, Window& mainWindow);
 
         void SetSceneCamera(const glm::mat4& projMatrix, const glm::mat4& viewMatrix);
 
         void Submit(StaticMesh* mesh, glm::mat4 transform);
 
-        void Flush();
+        void Flush(SwapChainHandle pSwapChain);
 
         /* Resources */
 
@@ -43,15 +44,14 @@ namespace VkMana::SamplesApp
 
         void GBufferPass(CmdBuffer& cmd);
         void CompositionPass(CmdBuffer& cmd);
-        void ScreenPass(CmdBuffer& cmd);
+        void ScreenPass(CmdBuffer& cmd, SwapChainHandle pSwapChain);
 
         auto GetImageIndex(Image* image) -> uint32_t;
         auto GetMaterialIndex(const Material* material) -> uint32_t;
 
     private:
-        WSI* m_mainWindow = nullptr;
-        glm::uvec2 m_mainWindowSize{};
         Context* m_ctx = nullptr;
+        Window* m_mainWindow = nullptr;
 
         ImageHandle m_whiteImage = nullptr;
         ImageHandle m_blackImage = nullptr;

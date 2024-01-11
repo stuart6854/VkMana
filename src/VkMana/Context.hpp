@@ -9,8 +9,8 @@
 #include "Image.hpp"
 #include "Pipeline.hpp"
 #include "QueryPool.hpp"
+#include "SwapChain.hpp"
 #include "Vulkan_Common.hpp"
-#include "WSI.hpp"
 
 #include <unordered_map>
 
@@ -24,16 +24,12 @@ namespace VkMana
         Context() = default;
         ~Context();
 
-        bool Init(WSI* mainWSI);
-
-        bool AddSurface(WSI* wsi);
-        void RemoveSurface(WSI* wsi);
+        bool Init();
 
         /* State */
 
         void BeginFrame();
         void EndFrame();
-        void Present();
 
         /* Commands & Submission (Per Frame) */
 
@@ -44,7 +40,7 @@ namespace VkMana
 
         /* Resources */
 
-        auto GetSurfaceRenderPass(WSI* wsi) -> RenderPassInfo;
+        auto CreateSwapChain(vk::SurfaceKHR surface, uint32_t width, uint32_t height) -> SwapChainHandle;
 
         auto RequestDescriptorSet(const SetLayout* layout) -> DescriptorSetHandle;
 
@@ -79,6 +75,7 @@ namespace VkMana
 
         /* Getters */
 
+        auto GetInstance() const -> auto { return m_instance; }
         auto GetPhysicalDevice() const -> auto { return m_gpu; }
         auto GetDevice() const -> auto { return m_device; }
         auto GetAllocator() const -> auto { return m_allocator; }
@@ -88,8 +85,6 @@ namespace VkMana
 
         auto GetFrameBufferCount() const -> auto { return m_frames.size(); }
         auto GetFrameIndex() const -> auto { return m_frameIndex; }
-
-        auto GetSwapchain(WSI& wsi) const -> vk::SwapchainKHR;
 
         auto GetNearestSampler() const -> auto { return m_nearestSampler.Get(); }
         auto GetLinearSampler() const -> auto { return m_linearSampler.Get(); }
@@ -127,29 +122,6 @@ namespace VkMana
         auto GetFrame() -> auto& { return m_frames[m_frameIndex]; }
         auto GetFrame() const -> const auto& { return m_frames[m_frameIndex]; }
 
-        struct SurfaceInfo
-        {
-            WSI* WindowSurface = nullptr;
-            vk::SurfaceKHR Surface;
-            vk::SwapchainKHR Swapchain;
-            uint32_t ImageIndex = 0;
-            std::vector<ImageHandle> Images;
-        };
-        static bool CreateSwapchain(
-            vk::SwapchainKHR& outSwapchain,
-            uint32_t& outWidth,
-            uint32_t& outHeight,
-            vk::Format& outFormat,
-            vk::Device device,
-            uint32_t width,
-            uint32_t height,
-            bool vsync,
-            bool srgb,
-            vk::SwapchainKHR oldSwapchain,
-            vk::SurfaceKHR surface,
-            vk::PhysicalDevice gpu
-        );
-
     private:
         vk::Instance m_instance;
         vk::PhysicalDevice m_gpu;
@@ -161,8 +133,6 @@ namespace VkMana
         SamplerHandle m_linearSampler;
 
         QueueInfo m_queueInfo{};
-
-        std::vector<SurfaceInfo> m_surfaces;
 
         std::vector<vk::Semaphore> m_submitWaitSemaphores;
         std::vector<vk::PipelineStageFlags> m_submitWaitStageMasks;

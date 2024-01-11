@@ -10,7 +10,7 @@ namespace VkMana::SamplesApp
         auto& window = app.GetWindow();
 
         m_renderer = IntrusivePtr(new Renderer);
-        if(!m_renderer->Init(window, ctx))
+        if(!m_renderer->Init(ctx, app.GetWindow()))
         {
             VM_ERR("Failed to initialise renderer");
             return false;
@@ -41,9 +41,8 @@ namespace VkMana::SamplesApp
 
     void SampleSandbox::Tick(float deltaTime, SamplesApp& app, Context& ctx)
     {
-        auto& window = app.GetWindow();
-        const auto windowWidth = window.GetSurfaceWidth();
-        const auto windowHeight = window.GetSurfaceHeight();
+        const auto windowWidth = app.GetSwapChain()->GetBackBufferWidth();
+        const auto windowHeight = app.GetSwapChain()->GetBackBufferHeight();
         const auto windowAspect = float(windowWidth) / float(windowHeight);
 
         const auto projMat = glm::perspectiveLH_ZO(glm::radians(60.0f), windowAspect, 0.1f, 500.0f);
@@ -57,7 +56,7 @@ namespace VkMana::SamplesApp
         transformMat = glm::scale(transformMat, glm::vec3(0.5f));
         m_renderer->Submit(m_staticMesh.Get(), transformMat);
 
-        m_renderer->Flush();
+        m_renderer->Flush(app.GetSwapChain());
     }
 
 } // namespace VkMana::SamplesApp

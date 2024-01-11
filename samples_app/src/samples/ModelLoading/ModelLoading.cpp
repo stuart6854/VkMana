@@ -157,7 +157,7 @@ namespace VkMana::SamplesApp
         auto textureSet = ctx.RequestDescriptorSet(m_setLayout.Get());
         textureSet->Write(m_texture->GetImageView(VkMana::ImageViewType::Texture), ctx.GetLinearSampler(), 0);
         const auto rpDepthTarget = VkMana::RenderPassTarget::DefaultDepthStencilTarget(m_depthTarget->GetImageView(VkMana::ImageViewType::RenderTarget));
-        auto rpInfo = ctx.GetSurfaceRenderPass(&window);
+        auto rpInfo = app.GetSwapChain()->GetRenderPass();
         rpInfo.Targets.push_back(rpDepthTarget);
 
         cmd->BeginRenderPass(rpInfo);

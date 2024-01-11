@@ -1,5 +1,4 @@
 #include "Context.hpp"
-#include "vulkan/vulkan_wayland.h"
 
 #define VMA_IMPLEMENTATION
 #define VMA_STATIC_VULKAN_FUNCTIONS 0
@@ -15,12 +14,6 @@ namespace VkMana
     {
         if(m_device)
             m_device.waitIdle();
-
-        while(!m_surfaces.empty())
-        {
-            RemoveSurface(m_surfaces.front().WindowSurface);
-        }
-        m_surfaces.clear();
 
         if(m_device)
         {
@@ -42,7 +35,7 @@ namespace VkMana
         }
     }
 
-    bool Context::Init(WSI* mainWSI)
+    bool Context::Init()
     {
         VULKAN_HPP_DEFAULT_DISPATCHER.init();
 
@@ -67,8 +60,6 @@ namespace VkMana
         if(!SetupFrames())
             return false;
 
-        if(!AddSurface(mainWSI))
-            return false;
 
         std::vector<vk::DescriptorPoolSize> poolSizes{
             {       vk::DescriptorType::eUniformBuffer, 25},
@@ -97,66 +88,6 @@ namespace VkMana
         return true;
     }
 
-    bool Context::AddSurface(WSI* wsi)
-    {
-        auto& newSurfaceInfo = m_surfaces.emplace_back();
-        newSurfaceInfo.WindowSurface = wsi;
-        newSurfaceInfo.Surface = wsi->CreateSurface(m_instance);
-
-        uint32_t imageWidth = 0;
-        uint32_t imageHeight = 0;
-        vk::Format imageFormat = vk::Format::eUndefined;
-        if(!CreateSwapchain(
-               newSurfaceInfo.Swapchain,
-               imageWidth,
-               imageHeight,
-               imageFormat,
-               m_device,
-               wsi->GetSurfaceWidth(),
-               wsi->GetSurfaceHeight(),
-               wsi->IsVSync(),
-               true,
-               {},
-               newSurfaceInfo.Surface,
-               m_gpu
-           ))
-        {
-            m_instance.destroy(newSurfaceInfo.Surface);
-            m_surfaces.erase(m_surfaces.end() - 1);
-            return false;
-        }
-
-        auto swapchainImages = m_device.getSwapchainImagesKHR(newSurfaceInfo.Swapchain);
-        newSurfaceInfo.Images.resize(swapchainImages.size());
-        for(auto i = 0u; i < swapchainImages.size(); ++i)
-        {
-            ImageCreateInfo info{
-                .Width = imageWidth,
-                .Height = imageHeight,
-                .Depth = 1,
-                .MipLevels = 1,
-                .ArrayLayers = 1,
-                .Format = imageFormat,
-            };
-            newSurfaceInfo.Images[i] = IntrusivePtr(new Image(this, swapchainImages[i], info));
-        }
-
-        return true;
-    }
-
-    void Context::RemoveSurface(WSI* wsi)
-    {
-        auto it = std::ranges::find_if(m_surfaces, [&](const SurfaceInfo& surfaceInfo) { return surfaceInfo.WindowSurface == wsi; });
-        if(it == m_surfaces.end())
-            return;
-
-        auto& surfaceInfo = *it;
-        m_device.destroy(surfaceInfo.Swapchain);
-        m_instance.destroy(surfaceInfo.Surface);
-
-        m_surfaces.erase(it);
-    }
-
     void Context::BeginFrame()
     {
         m_frameIndex = (m_frameIndex + 1) % m_frames.size();
@@ -172,19 +103,6 @@ namespace VkMana
         frame.CmdPool->ResetPool();
         frame.DescriptorAllocator->ResetAllocator();
         frame.Garbage->EmptyBins();
-
-        for(auto& surfaceInfo : m_surfaces)
-        {
-            surfaceInfo.WindowSurface->PollEvents();
-
-            auto acquireSemaphore = m_device.createSemaphore({});
-            auto result = m_device.acquireNextImageKHR(surfaceInfo.Swapchain, UINT64_MAX, acquireSemaphore);
-            surfaceInfo.ImageIndex = result.value;
-
-            m_submitWaitSemaphores.push_back(acquireSemaphore);
-            m_submitWaitStageMasks.emplace_back(vk::PipelineStageFlagBits::eColorAttachmentOutput);
-            frame.Garbage->Bin(acquireSemaphore);
-        }
     }
 
     void Context::EndFrame()
@@ -203,37 +121,6 @@ namespace VkMana
 
         frame.FrameFences.push_back(fence);
         frame.Garbage->Bin(fence);
-    }
-
-    void Context::Present()
-    {
-        std::vector<vk::SwapchainKHR> swapchains;
-        std::vector<uint32_t> imageIndices;
-        swapchains.reserve(m_surfaces.size());
-        imageIndices.reserve(m_surfaces.size());
-        for(auto& surface : m_surfaces)
-        {
-            swapchains.push_back(surface.Swapchain);
-            imageIndices.push_back(surface.ImageIndex);
-        }
-
-        std::vector<vk::Result> results(swapchains.size());
-
-        vk::PresentInfoKHR presentInfo{};
-        presentInfo.setWaitSemaphores(m_presentWaitSemaphores);
-        presentInfo.setSwapchains(swapchains);
-        presentInfo.setImageIndices(imageIndices);
-        presentInfo.setResults(results);
-
-        UNUSED(m_queueInfo.GraphicsQueue.presentKHR(presentInfo));
-        for(auto i = 0; i < results.size(); ++i)
-        {
-            // #TODO: Handle present result.
-            // auto result = results[i];
-            // auto& surface = m_surfaces[i];
-        }
-
-        m_presentWaitSemaphores.clear();
     }
 
     auto Context::RequestCmd() -> CmdBuffer
@@ -270,30 +157,9 @@ namespace VkMana
         GetFrame().Garbage->Bin(fence);
     }
 
-    auto Context::GetSurfaceRenderPass(WSI* wsi) -> RenderPassInfo
+    auto Context::CreateSwapChain(vk::SurfaceKHR surface, uint32_t width, uint32_t height) -> SwapChainHandle
     {
-        auto it = std::ranges::find_if(m_surfaces, [&](const SurfaceInfo& surfaceInfo) { return surfaceInfo.WindowSurface == wsi; });
-        if(it == m_surfaces.end())
-            return {};
-
-        auto& surfaceInfo = *it;
-
-        auto& image = surfaceInfo.Images.at(surfaceInfo.ImageIndex);
-
-        RenderPassInfo info{
-			.Targets = {
-				RenderPassTarget{
-					.Image = image->GetImageView(ImageViewType::RenderTarget),
-					.IsDepthStencil = false,
-					.Clear = true,
-					.Store = true,
-					.ClearValue = { 0.0f, 0.0f, 0.0f, 0.0f },
-					.PreLayout = vk::ImageLayout::eUndefined,
-					.PostLayout = vk::ImageLayout::ePresentSrcKHR,
-				},
-			},
-		};
-        return info;
+        return SwapChain::New(this, surface, width, height);
     }
 
     auto Context::RequestDescriptorSet(const SetLayout* layout) -> DescriptorSetHandle
@@ -377,23 +243,7 @@ namespace VkMana
 
     auto Context::CreateImage(ImageCreateInfo info, const ImageDataSource* initialData) -> ImageHandle
     {
-        if(info.MipLevels == -1)
-            info.MipLevels = uint32_t(std::floor(std::log2(std::max(info.Width, info.Height)))) + 1;
-
-        vk::ImageCreateInfo imageInfo{};
-        imageInfo.setExtent({ info.Width, info.Height, info.Depth });
-        imageInfo.setMipLevels(info.MipLevels);
-        imageInfo.setArrayLayers(info.ArrayLayers);
-        imageInfo.setFormat(info.Format);
-        imageInfo.setUsage(info.Usage);
-        imageInfo.setImageType(vk::ImageType::e2D);        // #TODO: Make auto.
-        imageInfo.setSamples(vk::SampleCountFlagBits::e1); // #TODO: Make optional.
-
-        vma::AllocationCreateInfo allocInfo{};
-
-        auto [image, allocation] = m_allocator.createImage(imageInfo, allocInfo);
-
-        auto imageHandle = IntrusivePtr(new Image(this, image, allocation, info));
+        auto pImage = Image::New(this, info);
 
         if(initialData)
         {
@@ -408,31 +258,30 @@ namespace VkMana
 
             // Transition all mip levels to TransferDst.
             ImageTransitionInfo preTransitionInfo{
-                .TargetImage = imageHandle.Get(),
+                .TargetImage = pImage.Get(),
                 .OldLayout = vk::ImageLayout::eUndefined,
                 .NewLayout = vk::ImageLayout::eTransferDstOptimal,
-                .MipLevelCount = uint32_t(info.MipLevels),
+                .MipLevelCount = pImage->GetMipLevels(),
             };
             cmd->TransitionImage(preTransitionInfo); // #TODO: Transition all mip levels to TransferDst
 
             BufferToImageCopyInfo copyInfo{
                 .SrcBuffer = stagingBuffer.Get(),
-                .DstImage = imageHandle.Get(),
+                .DstImage = pImage.Get(),
             };
             cmd->CopyBufferToImage(copyInfo);
 
             if(info.Flags & ImageCreateFlags_GenMipMaps)
             {
                 // Generate MipMaps.
+                auto mipWidth = int32_t(pImage->GetWidth());
+                auto mipHeight = int32_t(pImage->GetHeight());
 
-                auto mipWidth = int32_t(info.Width);
-                auto mipHeight = int32_t(info.Height);
-
-                for(auto i = 1u; i < uint32_t(info.MipLevels); ++i)
+                for(auto i = 1u; i < pImage->GetMipLevels(); ++i)
                 {
                     // Transition src mip to TransferSrc
                     ImageTransitionInfo srcTransition{
-                        .TargetImage = imageHandle.Get(),
+                        .TargetImage = pImage.Get(),
                         .OldLayout = vk::ImageLayout::eTransferDstOptimal,
                         .NewLayout = vk::ImageLayout::eTransferSrcOptimal,
                         .BaseMipLevel = i - 1,
@@ -443,11 +292,11 @@ namespace VkMana
                     // Blit src mip to dst mip
 
                     ImageBlitInfo blitInfo{
-                        .SrcImage = imageHandle.Get(),
-                        .SrcRectEnd = {                       mipWidth,                         mipHeight, 1},
+                        .SrcImage = pImage.Get(),
+                        .SrcRectEnd = {mipWidth, mipHeight, 1, },
                         .SrcMipLevel = i - 1,
-                        .DstImage = imageHandle.Get(),
-                        .DstRectEnd = {mipWidth > 1 ? mipWidth / 2 : 1, mipHeight > 1 ? mipHeight / 2 : 1, 1},
+                        .DstImage = pImage.Get(),
+                        .DstRectEnd = { mipWidth > 1 ? mipWidth / 2 : 1, mipHeight > 1 ? mipHeight / 2 : 1, 1, },
                         .DstMipLevel = i,
                         .Filter = vk::Filter::eLinear,
                     };
@@ -455,7 +304,7 @@ namespace VkMana
 
                     // Transition src mip to ShaderReadOnly
                     ImageTransitionInfo shaderReadTransition{
-                        .TargetImage = imageHandle.Get(),
+                        .TargetImage = pImage.Get(),
                         .OldLayout = vk::ImageLayout::eTransferSrcOptimal,
                         .NewLayout = vk::ImageLayout::eShaderReadOnlyOptimal,
                         .BaseMipLevel = i - 1,
@@ -471,10 +320,10 @@ namespace VkMana
 
                 // Transition last mip level to ShaderReadOnly
                 ImageTransitionInfo postTransitionInfo{
-                    .TargetImage = imageHandle.Get(),
+                    .TargetImage = pImage.Get(),
                     .OldLayout = vk::ImageLayout::eTransferDstOptimal,
                     .NewLayout = vk::ImageLayout::eShaderReadOnlyOptimal,
-                    .BaseMipLevel = uint32_t(info.MipLevels) - 1,
+                    .BaseMipLevel = pImage->GetMipLevels() - 1,
                     .MipLevelCount = 1,
                 };
                 cmd->TransitionImage(postTransitionInfo);
@@ -483,10 +332,10 @@ namespace VkMana
             {
                 // Transition all mip levels to ShaderReadOnly
                 ImageTransitionInfo postTransitionInfo{
-                    .TargetImage = imageHandle.Get(),
+                    .TargetImage = pImage.Get(),
                     .OldLayout = vk::ImageLayout::eTransferDstOptimal,
                     .NewLayout = vk::ImageLayout::eShaderReadOnlyOptimal,
-                    .MipLevelCount = uint32_t(info.MipLevels),
+                    .MipLevelCount = pImage->GetMipLevels(),
                 };
                 cmd->TransitionImage(postTransitionInfo);
             }
@@ -494,7 +343,7 @@ namespace VkMana
             SubmitStaging(cmd);
         }
 
-        return imageHandle;
+        return pImage;
     }
 
     auto Context::CreateImageView(const Image* image, const ImageViewCreateInfo& info) -> ImageViewHandle
@@ -589,7 +438,7 @@ namespace VkMana
     void Context::DestroyPipeline(vk::Pipeline pipeline) { GetFrame().Garbage->Bin(pipeline); }
 
     void Context::DestroyImage(vk::Image image) { GetFrame().Garbage->Bin(image); }
-    /**/
+
     void Context::DestroyImageView(vk::ImageView view) { GetFrame().Garbage->Bin(view); }
 
     void Context::DestroySampler(vk::Sampler sampler) { GetFrame().Garbage->Bin(sampler); }
@@ -629,16 +478,6 @@ namespace VkMana
         nameInfo.setObjectHandle(object);
         nameInfo.setPObjectName(name.c_str());
         m_device.setDebugUtilsObjectNameEXT(nameInfo);
-    }
-
-    auto Context::GetSwapchain(WSI& wsi) const -> vk::SwapchainKHR
-    {
-        for(const auto& surface : m_surfaces)
-        {
-            if(surface.WindowSurface == &wsi)
-                return surface.Swapchain;
-        }
-        return nullptr;
     }
 
     void Context::PrintInstanceInfo()
@@ -830,58 +669,4 @@ namespace VkMana
 
         return true;
     }
-
-    bool Context::CreateSwapchain(
-        vk::SwapchainKHR& outSwapchain,
-        uint32_t& outWidth,
-        uint32_t& outHeight,
-        vk::Format& outFormat,
-        vk::Device device,
-        uint32_t width,
-        uint32_t height,
-        bool vsync,
-        bool srgb,
-        vk::SwapchainKHR oldSwapchain,
-        vk::SurfaceKHR surface,
-        vk::PhysicalDevice gpu
-    )
-    {
-        if(!surface || !gpu || !device)
-            return false;
-
-        auto surfaceCaps = gpu.getSurfaceCapabilitiesKHR(surface);
-
-        uint32_t minImageCount = surfaceCaps.minImageCount + 1;
-        if(surfaceCaps.maxImageCount != 0 && minImageCount < surfaceCaps.maxImageCount)
-            minImageCount = surfaceCaps.maxImageCount;
-
-        auto surfaceFormat = vk::SurfaceFormatKHR(vk::Format::eB8G8R8A8Srgb);
-
-        width = std::clamp(width, surfaceCaps.minImageExtent.width, surfaceCaps.maxImageExtent.width);
-        height = std::clamp(height, surfaceCaps.minImageExtent.height, surfaceCaps.maxImageExtent.height);
-
-        auto presentMode = vk::PresentModeKHR::eFifo;
-
-        vk::SwapchainCreateInfoKHR swapchainInfo{};
-        swapchainInfo.setSurface(surface);
-        swapchainInfo.setMinImageCount(minImageCount);
-        swapchainInfo.setImageFormat(surfaceFormat.format);
-        swapchainInfo.setImageColorSpace(surfaceFormat.colorSpace);
-        swapchainInfo.setImageExtent({ width, height });
-        swapchainInfo.setImageArrayLayers(1);
-        swapchainInfo.setImageUsage(vk::ImageUsageFlagBits::eColorAttachment);
-        swapchainInfo.setPreTransform(vk::SurfaceTransformFlagBitsKHR::eIdentity);
-        swapchainInfo.setCompositeAlpha(vk::CompositeAlphaFlagBitsKHR::eOpaque);
-        swapchainInfo.setPresentMode(presentMode);
-        swapchainInfo.setClipped(VK_TRUE);
-        swapchainInfo.setOldSwapchain(oldSwapchain);
-        outSwapchain = device.createSwapchainKHR(swapchainInfo);
-
-        outWidth = width;
-        outHeight = height;
-        outFormat = surfaceFormat.format;
-
-        return outSwapchain != VK_NULL_HANDLE;
-    }
-
 } // namespace VkMana

@@ -2,7 +2,7 @@
 
 #include "Input.hpp"
 
-#include <VkMana/WSI.hpp>
+#include <VkMana/Vulkan_Headers.hpp>
 
 #define GLFW_INCLUDE_NONE
 #define GLFW_INCLUDE_VULKAN
@@ -10,7 +10,7 @@
 
 namespace VkMana::SamplesApp
 {
-    class Window : public WSI
+    class Window
     {
     public:
         explicit Window(GLFWwindow* window)
@@ -20,7 +20,7 @@ namespace VkMana::SamplesApp
 
             SetupCallbacks();
         }
-        ~Window() override = default;
+        ~Window() = default;
 
         void NewFrame()
         {
@@ -28,34 +28,16 @@ namespace VkMana::SamplesApp
             PollEvents();
         }
 
-        void PollEvents() override { glfwPollEvents(); }
+        void PollEvents() const { glfwPollEvents(); }
 
-        auto CreateSurface(vk::Instance instance) -> vk::SurfaceKHR override
-        {
-            VkSurfaceKHR surface = nullptr;
-            if(glfwCreateWindowSurface(instance, m_window, nullptr, &surface) != VK_SUCCESS)
-                return nullptr;
-
-            return surface;
-        }
-
-        /*auto GetInstanceExtension() -> std::vector<const char*> override
-        {
-                uint32_t extCount = 0;
-                SDL_Vulkan_GetInstanceExtensions(Window, &extCount, nullptr);
-                std::vector<const char*> exts(extCount);
-                SDL_Vulkan_GetInstanceExtensions(Window, &extCount, exts.data());
-                return exts;
-        }*/
-
-        auto GetSurfaceWidth() -> uint32_t override
+        auto GetSurfaceWidth() -> uint32_t
         {
             int32_t w = 0;
             int32_t h = 0;
             glfwGetFramebufferSize(m_window, &w, &h);
             return w;
         }
-        auto GetSurfaceHeight() -> uint32_t override
+        auto GetSurfaceHeight() -> uint32_t
         {
             int32_t w = 0;
             int32_t h = 0;
@@ -63,24 +45,17 @@ namespace VkMana::SamplesApp
             return h;
         }
 
-        bool IsVSync() override { return true; }
-        bool IsAlive() override { return !glfwWindowShouldClose(m_window); }
-
-        void HideCursor() override { }
-        void ShowCursor() override { }
-
-        auto CreateCursor(uint32_t cursorType) -> void* override { return nullptr; }
-        void SetCursor(void* cursor) override { }
+        bool IsAlive() { return !glfwWindowShouldClose(m_window); }
 
         auto GetInput() -> auto& { return m_input; }
+
+        auto GetNativeHandle() const -> auto { return m_window; }
 
     private:
         void SetupCallbacks() const;
 
     private:
         GLFWwindow* m_window;
-        bool m_isAlive = true;
-
         Input m_input;
     };
 

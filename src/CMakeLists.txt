@@ -5,11 +5,12 @@ add_library(VkMana
     VkMana/CommandBuffer.cpp
     VkMana/Descriptors.cpp
     VkMana/DescriptorAllocator.cpp
+    VkMana/ShaderCompiler.cpp
     VkMana/Pipeline.cpp
     VkMana/Image.cpp
+    VkMana/SwapChain.cpp
     VkMana/Buffer.cpp
     VkMana/QueryPool.cpp
-    VkMana/ShaderCompiler.cpp
 )
 
 target_include_directories(VkMana PRIVATE "./")

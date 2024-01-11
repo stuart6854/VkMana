@@ -4,6 +4,17 @@
 
 namespace VkMana
 {
+    auto QueryPool::New(Context* pContext, const QueryPoolCreateInfo& info) -> QueryPoolHandle
+    {
+        vk::QueryPoolCreateInfo poolInfo{};
+        poolInfo.setQueryType(info.queryType);
+        poolInfo.setQueryCount(info.queryCount);
+        poolInfo.setPipelineStatistics(info.pipelineStatistics);
+        auto pool = pContext->GetDevice().createQueryPool(poolInfo);
+
+        return IntrusivePtr(new QueryPool(pContext, pool, info.queryCount));
+    }
+
     QueryPool::~QueryPool() { m_ctx->GetDevice().destroy(m_pool); }
 
     void QueryPool::ResetQueries(uint32_t firstQuery, uint32_t queryCount) const { m_ctx->GetDevice().resetQueryPool(m_pool, firstQuery, queryCount); }
@@ -52,8 +63,8 @@ namespace VkMana
         return result == vk::Result::eSuccess;
     }
 
-    QueryPool::QueryPool(Context* context, vk::QueryPool pool, uint32_t queryCount)
-        : m_ctx(context)
+    QueryPool::QueryPool(Context* pContext, vk::QueryPool pool, uint32_t queryCount)
+        : m_ctx(pContext)
         , m_pool(pool)
         , m_queryCount(queryCount)
     {

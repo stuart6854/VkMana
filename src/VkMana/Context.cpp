@@ -409,16 +409,7 @@ namespace VkMana
         return pBuffer;
     }
 
-    auto Context::CreateQueryPool(const QueryPoolCreateInfo& info) -> QueryPoolHandle
-    {
-        vk::QueryPoolCreateInfo poolInfo{};
-        poolInfo.setQueryType(info.queryType);
-        poolInfo.setQueryCount(info.queryCount);
-        poolInfo.setPipelineStatistics(info.pipelineStatistics);
-        auto pool = m_device.createQueryPool(poolInfo);
-
-        return IntrusivePtr(new QueryPool(this, pool, info.queryCount));
-    }
+    auto Context::CreateQueryPool(const QueryPoolCreateInfo& info) -> QueryPoolHandle { return QueryPool::New(this, info); }
 
     void Context::DestroySetLayout(vk::DescriptorSetLayout setLayout) { GetFrame().Garbage->Bin(setLayout); }
 

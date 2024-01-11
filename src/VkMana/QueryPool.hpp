@@ -13,9 +13,14 @@ namespace VkMana
         vk::QueryPipelineStatisticFlags pipelineStatistics;
     };
 
+    class QueryPool;
+    using QueryPoolHandle = IntrusivePtr<QueryPool>;
+
     class QueryPool : public IntrusivePtrEnabled<QueryPool>
     {
     public:
+        static auto New(Context* pContext, const QueryPoolCreateInfo& info) -> QueryPoolHandle;
+
         ~QueryPool();
 
         void ResetQueries(uint32_t firstQuery, uint32_t queryCount) const;
@@ -27,15 +32,12 @@ namespace VkMana
         auto GetQueryCount() const -> auto { return m_queryCount; }
 
     private:
-        friend class Context;
-
-        QueryPool(Context* context, vk::QueryPool pool, uint32_t queryCount);
+        QueryPool(Context* pContext, vk::QueryPool pool, uint32_t queryCount);
 
     private:
         Context* m_ctx;
         vk::QueryPool m_pool;
         uint32_t m_queryCount;
     };
-    using QueryPoolHandle = IntrusivePtr<QueryPool>;
 
 } // namespace VkMana

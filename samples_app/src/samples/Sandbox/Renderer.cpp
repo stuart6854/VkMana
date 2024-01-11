@@ -111,7 +111,7 @@ namespace VkMana::SamplesApp
             = ImageCreateInfo::ColorTarget(m_mainWindow->GetSurfaceWidth(), m_mainWindow->GetSurfaceHeight(), vk::Format::eR8G8B8A8Unorm);
         m_albedoTargetImage = m_ctx->CreateImage(albedoImageInfo);
 
-        m_gBufferPass.Targets = {
+        m_gBufferPass.targets = {
             RenderPassTarget::DefaultColorTarget(m_positionTargetImage->GetImageView(ImageViewType::RenderTarget)),
             RenderPassTarget::DefaultColorTarget(m_normalTargetImage->GetImageView(ImageViewType::RenderTarget)),
             RenderPassTarget::DefaultColorTarget(m_albedoTargetImage->GetImageView(ImageViewType::RenderTarget)),
@@ -180,7 +180,7 @@ namespace VkMana::SamplesApp
             = ImageCreateInfo::ColorTarget(m_mainWindow->GetSurfaceWidth(), m_mainWindow->GetSurfaceHeight(), vk::Format::eR8G8B8A8Unorm);
         m_compositionTargetImage = m_ctx->CreateImage(compositionImageInfo);
 
-        m_compositionPass.Targets = {
+        m_compositionPass.targets = {
             RenderPassTarget::DefaultColorTarget(m_compositionTargetImage->GetImageView(ImageViewType::RenderTarget)),
         };
 

@@ -82,15 +82,15 @@ namespace VkMana
         auto& pBackBufferImage = m_backBufferImages.at(m_backBufferIndex);
 
         RenderPassInfo renderPassInfo{
-            .Targets = {
+            .targets = {
                 RenderPassTarget{
-                    .Image = pBackBufferImage->GetImageView(ImageViewType::RenderTarget),
-                    .IsDepthStencil = false,
-                    .Clear = true,
-                    .Store = true,
-                    .ClearValue = { 0.0f, 0.0f, 0.0f, 1.0f },
-                    .PreLayout = vk::ImageLayout::eUndefined,
-                    .PostLayout = vk::ImageLayout::ePresentSrcKHR,
+                    .pImage = pBackBufferImage->GetImageView(ImageViewType::RenderTarget),
+                    .isDepthStencil = false,
+                    .clear = true,
+                    .store = true,
+                    .clearValue = { 0.0f, 0.0f, 0.0f, 1.0f },
+                    .preLayout = vk::ImageLayout::eUndefined,
+                    .postLayout = vk::ImageLayout::ePresentSrcKHR,
                 },
             },
         };

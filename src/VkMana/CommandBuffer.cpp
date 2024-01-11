@@ -12,22 +12,22 @@ namespace VkMana
         std::vector<vk::RenderingAttachmentInfo> colorAttachments;
         vk::RenderingAttachmentInfo depthStencilAttachment;
         bool hasDepthStencil = false;
-        for(const auto& target : info.Targets)
+        for(const auto& target : info.targets)
         {
-            if(target.IsDepthStencil)
+            if(target.isDepthStencil)
             {
                 // Depth/Stencil
                 auto& attachment = depthStencilAttachment;
-                attachment.setImageView(target.Image->GetView());
-                attachment.setLoadOp(target.Clear ? vk::AttachmentLoadOp::eClear : vk::AttachmentLoadOp::eDontCare);
-                attachment.setStoreOp(target.Store ? vk::AttachmentStoreOp::eStore : vk::AttachmentStoreOp::eDontCare);
-                attachment.setClearValue(vk::ClearDepthStencilValue(target.ClearValue[0], uint32_t(target.ClearValue[1])));
+                attachment.setImageView(target.pImage->GetView());
+                attachment.setLoadOp(target.clear ? vk::AttachmentLoadOp::eClear : vk::AttachmentLoadOp::eDontCare);
+                attachment.setStoreOp(target.store ? vk::AttachmentStoreOp::eStore : vk::AttachmentStoreOp::eDontCare);
+                attachment.setClearValue(vk::ClearDepthStencilValue(target.clearValue[0], uint32_t(target.clearValue[1])));
                 attachment.setImageLayout(vk::ImageLayout::eDepthStencilAttachmentOptimal);
                 hasDepthStencil = true;
 
                 ImageTransitionInfo transitionInfo{
-                    .pImage = target.Image->GetImage(),
-                    .oldLayout = target.PreLayout,
+                    .pImage = target.pImage->GetImage(),
+                    .oldLayout = target.preLayout,
                     .newLayout = vk::ImageLayout::eDepthStencilAttachmentOptimal,
                 };
                 TransitionImage(transitionInfo);
@@ -36,22 +36,22 @@ namespace VkMana
             {
                 // Color
                 auto& attachment = colorAttachments.emplace_back();
-                attachment.setImageView(target.Image->GetView());
-                attachment.setLoadOp(target.Clear ? vk::AttachmentLoadOp::eClear : vk::AttachmentLoadOp::eDontCare);
-                attachment.setStoreOp(target.Store ? vk::AttachmentStoreOp::eStore : vk::AttachmentStoreOp::eDontCare);
-                attachment.setClearValue(vk::ClearColorValue(target.ClearValue));
+                attachment.setImageView(target.pImage->GetView());
+                attachment.setLoadOp(target.clear ? vk::AttachmentLoadOp::eClear : vk::AttachmentLoadOp::eDontCare);
+                attachment.setStoreOp(target.store ? vk::AttachmentStoreOp::eStore : vk::AttachmentStoreOp::eDontCare);
+                attachment.setClearValue(vk::ClearColorValue(target.clearValue));
                 attachment.setImageLayout(vk::ImageLayout::eColorAttachmentOptimal);
 
                 ImageTransitionInfo transitionInfo{
-                    .pImage = target.Image->GetImage(),
-                    .oldLayout = target.PreLayout,
+                    .pImage = target.pImage->GetImage(),
+                    .oldLayout = target.preLayout,
                     .newLayout = vk::ImageLayout::eColorAttachmentOptimal,
                 };
                 TransitionImage(transitionInfo);
             }
 
-            width = std::min(width, target.Image->GetImage()->GetWidth());
-            height = std::min(height, target.Image->GetImage()->GetHeight());
+            width = std::min(width, target.pImage->GetImage()->GetWidth());
+            height = std::min(height, target.pImage->GetImage()->GetHeight());
         }
 
         vk::RenderingInfo renderingInfo{};
@@ -73,23 +73,23 @@ namespace VkMana
     {
         m_cmd.endRendering();
 
-        for(const auto& target : m_renderPass.Targets)
+        for(const auto& target : m_renderPass.targets)
         {
-            if(target.IsDepthStencil)
+            if(target.isDepthStencil)
             {
                 ImageTransitionInfo transitionInfo{
-                    .pImage = target.Image->GetImage(),
+                    .pImage = target.pImage->GetImage(),
                     .oldLayout = vk::ImageLayout::eDepthStencilAttachmentOptimal,
-                    .newLayout = target.PostLayout,
+                    .newLayout = target.postLayout,
                 };
                 TransitionImage(transitionInfo);
             }
             else
             {
                 ImageTransitionInfo transitionInfo{
-                    .pImage = target.Image->GetImage(),
+                    .pImage = target.pImage->GetImage(),
                     .oldLayout = vk::ImageLayout::eColorAttachmentOptimal,
-                    .newLayout = target.PostLayout,
+                    .newLayout = target.postLayout,
                 };
                 TransitionImage(transitionInfo);
             }

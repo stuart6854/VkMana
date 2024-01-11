@@ -159,7 +159,7 @@ namespace VkMana::SamplesApp
         textureSet->Write(m_texture->GetImageView(VkMana::ImageViewType::Texture), ctx.GetLinearSampler(), 0);
         const auto rpDepthTarget = VkMana::RenderPassTarget::DefaultDepthStencilTarget(m_depthTarget->GetImageView(VkMana::ImageViewType::RenderTarget));
         auto rpInfo = app.GetSwapChain()->GetRenderPass();
-        rpInfo.Targets.push_back(rpDepthTarget);
+        rpInfo.targets.push_back(rpDepthTarget);
 
         cmd->BeginRenderPass(rpInfo);
         cmd->BindPipeline(m_pipeline.Get());

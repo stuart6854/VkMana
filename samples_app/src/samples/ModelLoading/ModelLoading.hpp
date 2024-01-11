@@ -17,7 +17,7 @@ namespace VkMana::SamplesApp
         }
         ~SampleModelLoading() override = default;
 
-        bool Onload(SamplesApp& app, Context& ctx) override;
+        bool OnLoad(SamplesApp& app, Context& ctx) override;
         void OnUnload(SamplesApp& app, Context& ctx) override;
 
         void Tick(float deltaTime, SamplesApp& app, Context& ctx) override;

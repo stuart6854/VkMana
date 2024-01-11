@@ -5,7 +5,7 @@
 
 namespace VkMana::SamplesApp
 {
-    bool SampleSandbox::Onload(SamplesApp& app, Context& ctx)
+    bool SampleSandbox::OnLoad(SamplesApp& app, Context& ctx)
     {
         auto& window = app.GetWindow();
 

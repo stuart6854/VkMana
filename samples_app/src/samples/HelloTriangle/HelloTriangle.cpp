@@ -41,17 +41,17 @@ void main()
 
 namespace VkMana::SamplesApp
 {
-    bool SampleHelloTriangle::Onload(SamplesApp& app, Context& ctx)
+    bool SampleHelloTriangle::OnLoad(SamplesApp& app, Context& ctx)
     {
         const PipelineLayoutCreateInfo pipelineLayoutInfo{};
         auto pipelineLayout = ctx.CreatePipelineLayout(pipelineLayoutInfo);
 
         ShaderCompileInfo compileInfo{
-            .SrcLanguage = SourceLanguage::GLSL,
-            .SrcFilename = "",
-            .SrcString = TriangleVertexShaderSrc,
-            .Stage = vk::ShaderStageFlagBits::eVertex,
-            .Debug = true,
+            .srcLanguage = SourceLanguage::GLSL,
+            .srcFilename = "",
+            .srcString = TriangleVertexShaderSrc.c_str(),
+            .stage = vk::ShaderStageFlagBits::eVertex,
+            .debug = true,
         };
         const auto vertSpirvOpt = CompileShader(compileInfo);
         if(!vertSpirvOpt)
@@ -60,8 +60,8 @@ namespace VkMana::SamplesApp
             return false;
         }
 
-        compileInfo.SrcString = TriangleFragmentShaderSrc;
-        compileInfo.Stage = vk::ShaderStageFlagBits::eFragment;
+        compileInfo.srcString = TriangleFragmentShaderSrc.c_str();
+        compileInfo.stage = vk::ShaderStageFlagBits::eFragment;
         const auto fragSpirvOpt = CompileShader(compileInfo);
         if(!fragSpirvOpt)
         {
@@ -69,12 +69,16 @@ namespace VkMana::SamplesApp
             return false;
         }
 
+        const auto& vsByteCode = vertSpirvOpt.value();
+        const auto& fsByteCode = fragSpirvOpt.value();
+
         const GraphicsPipelineCreateInfo pipelineInfo{
-            .Vertex = vertSpirvOpt.value(),
-            .Fragment = fragSpirvOpt.value(),
-            .Topology = vk::PrimitiveTopology::eTriangleList,
-            .ColorTargetFormats = { vk::Format::eB8G8R8A8Srgb },
-            .Layout = pipelineLayout,
+            .vs = { vsByteCode.data(), uint32_t(vsByteCode.size()) },
+            .fs = { fsByteCode.data(), uint32_t(fsByteCode.size()) },
+            .primitiveTopology = vk::PrimitiveTopology::eTriangleList,
+            .colorTargetCount = 1,
+            .colorFormats = { vk::Format::eB8G8R8A8Srgb },
+            .pPipelineLayout = pipelineLayout,
         };
         m_pipeline = ctx.CreateGraphicsPipeline(pipelineInfo);
 

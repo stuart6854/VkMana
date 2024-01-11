@@ -79,7 +79,7 @@ namespace VkMana
 
     } // namespace
 
-    bool CompileShader(ShaderBinary& outSpirv, const std::string& glslSource, vk::ShaderStageFlagBits shaderStage, bool debug, const std::string& filename)
+    bool CompileShader(ShaderByteCode& outSpirv, const std::string& glslSource, vk::ShaderStageFlagBits shaderStage, bool debug, const std::string& filename)
     {
         assert(!filename.empty());
 
@@ -102,35 +102,36 @@ namespace VkMana
         return true;
     }
 
-    auto CompileGLSL(const ShaderCompileInfo& info) -> std::optional<ShaderBinary>
+    auto CompileGLSL(const char* srcStr, const char* srcFilename, vk::ShaderStageFlagBits stage, bool debug) -> std::optional<ShaderByteCode>
     {
         shaderc::CompileOptions options;
-        if(info.Debug)
+        if(debug)
             options.SetGenerateDebugInfo();
         else
             options.SetOptimizationLevel(shaderc_optimization_level_performance);
 
         const char* sourceFile = "_no_file_";
-        if(!info.SrcFilename.empty())
-            sourceFile = info.SrcFilename.string().c_str();
+        if(srcFilename)
+            sourceFile = srcFilename;
 
-        auto kind = GetShaderKind(info.Stage);
+        auto kind = GetShaderKind(stage);
         shaderc::Compiler compiler;
-        auto result = compiler.CompileGlslToSpv(info.SrcString, kind, sourceFile, options);
+        auto result = compiler.CompileGlslToSpv(srcStr, kind, sourceFile, options);
         if(result.GetCompilationStatus() != shaderc_compilation_status_success)
         {
             VM_ERR("Shader Compile Error:\n{}", result.GetErrorMessage());
             return std::nullopt;
         }
 
-        ShaderBinary spirv;
-        spirv.assign(result.cbegin(), result.cend());
-        return spirv;
+        ShaderByteCode byteCode((result.end() - result.begin()) * 4);
+        std::memcpy(byteCode.data(), result.cbegin(), byteCode.size());
+        return byteCode;
     }
 
-    auto CompileHLSL(const ShaderCompileInfo& info) -> std::optional<ShaderBinary>
+    auto CompileHLSL(const char* srcStr, const char* srcFilename, vk::ShaderStageFlagBits stage, const char* entryPoint, bool debug)
+        -> std::optional<ShaderByteCode>
     {
-        HRESULT hres;
+        HRESULT hres{ S_OK };
 #ifdef __clang__
     #pragma clang diagnostic push
     #pragma clang diagnostic ignored "-Wlanguage-extension-token"
@@ -164,24 +165,23 @@ namespace VkMana
 
         uint32_t codePage = DXC_CP_ACP;
         CComPtr<IDxcBlobEncoding> sourceBlob;
-        hres = utils->CreateBlob(info.SrcString.data(), uint32_t(info.SrcString.size()), codePage, &sourceBlob);
+        hres = utils->CreateBlob(srcStr, uint32_t(strlen(srcStr)), codePage, &sourceBlob);
         if(FAILED(hres))
         {
             VM_ERR("Could not create shader source blob.");
             return std::nullopt;
         }
 
-        auto targetProfile = SelectHLSLTargetProfile(info.Stage);
+        auto targetProfile = SelectHLSLTargetProfile(stage);
 
-        auto tmpStr = info.SrcFilename.string();
-        auto srcFilename = std::wstring(tmpStr.begin(), tmpStr.end());
-        auto entryPoint = std::wstring(info.EntryPoint.begin(), info.EntryPoint.end());
+        auto wSrcFilename = std::wstring(srcFilename, srcFilename + strlen(srcFilename));
+        auto wEntryPoint = std::wstring(entryPoint, entryPoint + strlen(entryPoint));
 
         // Compiler args
         std::vector<LPCWSTR> arguments{
-            srcFilename.c_str(), // (Optional) Name of the shader file to be displayed e.g in error messages
-            L"-E",               // Shader main entry point
-            entryPoint.c_str(),
+            wSrcFilename.c_str(), // (Optional) Name of the shader file to be displayed e.g in error messages
+            L"-E",                // Shader main entry point
+            wEntryPoint.c_str(),
             L"-T", // Shader target profile
             targetProfile.c_str(),
             L"-spirv" // Compile to SPIRV
@@ -215,37 +215,44 @@ namespace VkMana
         result->GetResult(&code);
 
         auto* p = reinterpret_cast<uint32_t*>(code->GetBufferPointer());
-        auto n = code->GetBufferSize() / sizeof(uint32_t);
-        ShaderBinary spirv;
-        spirv.reserve(n);
+        auto n = code->GetBufferSize();
+        ShaderByteCode spirv(n);
         std::copy_n(p, n, std::back_inserter(spirv));
         return spirv;
     }
 
-    auto CompileShader(ShaderCompileInfo info) -> std::optional<ShaderBinary>
+    auto CompileShader(const ShaderCompileInfo& info) -> std::optional<ShaderByteCode>
     {
-        if(!info.SrcFilename.empty())
+        std::string srcStr;
+        if(info.srcString != nullptr)
         {
-            auto opt = ReadFileStr(info.SrcFilename);
+            srcStr = info.srcString;
+        }
+
+        if(info.srcString == nullptr && info.srcFilename != nullptr)
+        {
+            auto opt = ReadFileStr(info.srcFilename);
             if(opt)
-                info.SrcString = opt.value();
+            {
+                srcStr = opt.value();
+            }
             else
             {
-                VM_ERR("Failed to read Shader source from file: {}", info.SrcFilename.string());
+                VM_ERR("Failed to read Shader source from file: {}", info.srcFilename);
             }
         }
-        if(info.SrcString.empty())
+        if(srcStr.empty())
         {
             VM_ERR("No shader source to compile.");
             return std::nullopt;
         }
 
-        switch(info.SrcLanguage)
+        switch(info.srcLanguage)
         {
         case SourceLanguage::GLSL:
-            return CompileGLSL(info);
+            return CompileGLSL(srcStr.c_str(), info.srcFilename, info.stage, info.debug);
         case SourceLanguage::HLSL:
-            return CompileHLSL(info);
+            return CompileHLSL(srcStr.c_str(), info.srcFilename, info.stage, info.entryPoint, info.debug);
         }
         VM_ERR("Unknown Shader SourceLanguage.");
         assert(false);

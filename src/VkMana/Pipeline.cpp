@@ -60,30 +60,30 @@ namespace VkMana
         std::vector<vk::UniqueShaderModule> shaderModules;
         std::vector<vk::PipelineShaderStageCreateInfo> shaderStages;
 
-        auto CreateShaderModule = [&](const auto& shaderInfo, auto shaderStage)
+        auto CreateShaderModule = [&](const ShaderInfo& shaderInfo, vk::ShaderStageFlagBits shaderStage)
         {
-            if(!shaderInfo.SPIRVBinary.empty())
-            {
-                vk::ShaderModuleCreateInfo moduleInfo{};
-                moduleInfo.setCode(shaderInfo.SPIRVBinary);
-                shaderModules.push_back(pContext->GetDevice().createShaderModuleUnique(moduleInfo));
+            assert(shaderInfo.byteCode.sizeBytes % 4 == 0);
 
-                auto& stageInfo = shaderStages.emplace_back();
-                stageInfo.setStage(shaderStage);
-                stageInfo.setModule(shaderModules.back().get());
-                stageInfo.setPName(shaderInfo.EntryPoint.c_str());
-            }
+            vk::ShaderModuleCreateInfo moduleInfo{};
+            moduleInfo.setPCode(reinterpret_cast<const uint32_t*>(shaderInfo.byteCode.pByteCode));
+            moduleInfo.setCodeSize(shaderInfo.byteCode.sizeBytes);
+            shaderModules.push_back(pContext->GetDevice().createShaderModuleUnique(moduleInfo));
+
+            auto& stageInfo = shaderStages.emplace_back();
+            stageInfo.setStage(shaderStage);
+            stageInfo.setModule(shaderModules.back().get());
+            stageInfo.setPName(shaderInfo.entryPoint);
         };
 
-        CreateShaderModule(info.Vertex, vk::ShaderStageFlagBits::eVertex);
-        CreateShaderModule(info.Fragment, vk::ShaderStageFlagBits::eFragment);
+        CreateShaderModule(info.vs, vk::ShaderStageFlagBits::eVertex);
+        CreateShaderModule(info.fs, vk::ShaderStageFlagBits::eFragment);
 
         vk::PipelineVertexInputStateCreateInfo vertexInputState{};
-        vertexInputState.setVertexAttributeDescriptions(info.VertexAttributes);
-        vertexInputState.setVertexBindingDescriptions(info.VertexBindings);
+        vertexInputState.setVertexAttributeDescriptions(info.vertexAttributes);
+        vertexInputState.setVertexBindingDescriptions(info.vertexBindings);
 
         vk::PipelineInputAssemblyStateCreateInfo inputAssemblyState{};
-        inputAssemblyState.setTopology(info.Topology);
+        inputAssemblyState.setTopology(info.primitiveTopology);
 
         vk::PipelineTessellationStateCreateInfo tessellationState{};
 
@@ -116,7 +116,7 @@ namespace VkMana
         defaultBlendAttachment.setSrcAlphaBlendFactor(vk::BlendFactor::eOne);
         defaultBlendAttachment.setDstAlphaBlendFactor(vk::BlendFactor::eOneMinusSrcAlpha);
         defaultBlendAttachment.setAlphaBlendOp(vk::BlendOp::eAdd);
-        std::vector<vk::PipelineColorBlendAttachmentState> blendAttachments(info.ColorTargetFormats.size(), defaultBlendAttachment);
+        std::vector<vk::PipelineColorBlendAttachmentState> blendAttachments(info.colorTargetCount, defaultBlendAttachment);
         vk::PipelineColorBlendStateCreateInfo colorBlendState{};
         colorBlendState.setAttachments(blendAttachments);
 
@@ -125,8 +125,9 @@ namespace VkMana
         dynamicState.setDynamicStates(dynStates);
 
         vk::PipelineRenderingCreateInfo renderingInfo{};
-        renderingInfo.setColorAttachmentFormats(info.ColorTargetFormats);
-        renderingInfo.setDepthAttachmentFormat(info.DepthTargetFormat);
+        renderingInfo.setPColorAttachmentFormats(info.colorFormats.data());
+        renderingInfo.setColorAttachmentCount(info.colorTargetCount);
+        renderingInfo.setDepthAttachmentFormat(info.depthStencilFormat);
 
         vk::GraphicsPipelineCreateInfo pipelineInfo{};
         pipelineInfo.setStages(shaderStages);
@@ -139,7 +140,7 @@ namespace VkMana
         pipelineInfo.setPDepthStencilState(&depthStencilState);
         pipelineInfo.setPColorBlendState(&colorBlendState);
         pipelineInfo.setPDynamicState(&dynamicState);
-        pipelineInfo.setLayout(info.Layout->GetLayout());
+        pipelineInfo.setLayout(info.pPipelineLayout->GetLayout());
         pipelineInfo.setPNext(&renderingInfo);
         auto graphicsPipeline = pContext->GetDevice().createGraphicsPipeline({}, pipelineInfo).value; // #TODO: Pipeline Cache
         if(graphicsPipeline == nullptr)
@@ -148,7 +149,7 @@ namespace VkMana
             return nullptr;
         }
 
-        auto pNewPipeline = IntrusivePtr(new Pipeline(pContext, info.Layout, graphicsPipeline, vk::PipelineBindPoint::eGraphics));
+        auto pNewPipeline = IntrusivePtr(new Pipeline(pContext, info.pPipelineLayout, graphicsPipeline, vk::PipelineBindPoint::eGraphics));
         return pNewPipeline;
     }
 
@@ -156,20 +157,18 @@ namespace VkMana
     {
         vk::UniqueShaderModule shaderModule{};
         vk::PipelineShaderStageCreateInfo stageInfo{};
-        if(!info.compute.SPIRVBinary.empty())
-        {
-            vk::ShaderModuleCreateInfo moduleInfo{};
-            moduleInfo.setCode(info.compute.SPIRVBinary);
-            shaderModule = pContext->GetDevice().createShaderModuleUnique(moduleInfo);
+        vk::ShaderModuleCreateInfo moduleInfo{};
+        moduleInfo.setPCode(reinterpret_cast<const uint32_t*>(info.cs.byteCode.pByteCode));
+        moduleInfo.setCodeSize(info.cs.byteCode.sizeBytes);
+        shaderModule = pContext->GetDevice().createShaderModuleUnique(moduleInfo);
 
-            stageInfo.setStage(vk::ShaderStageFlagBits::eCompute);
-            stageInfo.setModule(shaderModule.get());
-            stageInfo.setPName(info.compute.EntryPoint.c_str());
-        }
+        stageInfo.setStage(vk::ShaderStageFlagBits::eCompute);
+        stageInfo.setModule(shaderModule.get());
+        stageInfo.setPName(info.cs.entryPoint);
 
         vk::ComputePipelineCreateInfo pipelineInfo{};
         pipelineInfo.setStage(stageInfo);
-        pipelineInfo.setLayout(info.layout->GetLayout());
+        pipelineInfo.setLayout(info.pPipelineLayout->GetLayout());
         auto computePipeline = pContext->GetDevice().createComputePipeline({}, pipelineInfo).value; // #TODO: Pipeline cache
         if(computePipeline == nullptr)
         {
@@ -177,7 +176,7 @@ namespace VkMana
             return nullptr;
         }
 
-        auto pNewPipeline = IntrusivePtr(new Pipeline(pContext, info.layout, computePipeline, vk::PipelineBindPoint::eCompute));
+        auto pNewPipeline = IntrusivePtr(new Pipeline(pContext, info.pPipelineLayout, computePipeline, vk::PipelineBindPoint::eCompute));
         return pNewPipeline;
     }
 

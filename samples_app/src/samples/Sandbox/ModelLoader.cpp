@@ -40,7 +40,7 @@ namespace VkMana::SamplesApp
             }
 
             const auto imageInfo = ImageCreateInfo::Texture(gltfImage.width, gltfImage.height);
-            const ImageDataSource imageDataSrc{ .Size = pixels.size(), .Data = pixels.data() };
+            const ImageDataSource imageDataSrc{ .size = pixels.size(), .data = pixels.data() };
             return context.CreateImage(imageInfo, &imageDataSrc);
         }
 

@@ -17,11 +17,16 @@ namespace VkMana
 
     class PipelineLayout;
 
-    using ShaderBinary = std::vector<uint32_t>;
+    using ShaderByteCode = std::vector<uint8_t>;
+    struct ShaderByteCodeInfo
+    {
+        const void* pByteCode = nullptr;
+        uint32_t sizeBytes = 0;
+    };
     struct ShaderInfo
     {
-        ShaderBinary SPIRVBinary;
-        std::string EntryPoint = "main"; // Should be "main" for GLSL.
+        ShaderByteCodeInfo byteCode = {};
+        const char* entryPoint = "main"; // Should be "main" for GLSL.
     };
 
     /**
@@ -32,25 +37,25 @@ namespace VkMana
      */
     struct GraphicsPipelineCreateInfo
     {
-        ShaderInfo Vertex;
-        ShaderInfo Fragment;
+        ShaderInfo vs;
+        ShaderInfo fs;
 
-        std::vector<vk::VertexInputAttributeDescription> VertexAttributes;
-        std::vector<vk::VertexInputBindingDescription> VertexBindings;
+        std::vector<vk::VertexInputAttributeDescription> vertexAttributes;
+        std::vector<vk::VertexInputBindingDescription> vertexBindings;
 
-        vk::PrimitiveTopology Topology;
+        vk::PrimitiveTopology primitiveTopology;
 
-        std::vector<vk::Format> ColorTargetFormats;
-        vk::Format DepthTargetFormat = vk::Format::eUndefined;
-        vk::Format StencilTargetFormat = vk::Format::eUndefined;
+        uint32_t colorTargetCount = 0;
+        std::array<vk::Format, 8> colorFormats;                 // Render Targets - Color
+        vk::Format depthStencilFormat = vk::Format::eUndefined; // Render Target - Depth/Stencil
 
-        IntrusivePtr<PipelineLayout> Layout = nullptr;
+        IntrusivePtr<PipelineLayout> pPipelineLayout = nullptr;
     };
 
     struct ComputePipelineCreateInfo
     {
-        ShaderInfo compute;
-        IntrusivePtr<PipelineLayout> layout = nullptr;
+        ShaderInfo cs;
+        IntrusivePtr<PipelineLayout> pPipelineLayout = nullptr;
     };
 
     class PipelineLayout : public IntrusivePtrEnabled<PipelineLayout>

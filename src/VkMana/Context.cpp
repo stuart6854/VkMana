@@ -60,13 +60,12 @@ namespace VkMana
         if(!SetupFrames())
             return false;
 
-
         std::vector<vk::DescriptorPoolSize> poolSizes{
-            {       vk::DescriptorType::eUniformBuffer, 25},
-            {vk::DescriptorType::eUniformBufferDynamic, 25},
-            {       vk::DescriptorType::eStorageBuffer, 25},
-            {vk::DescriptorType::eStorageBufferDynamic, 25},
-            {vk::DescriptorType::eCombinedImageSampler, 25},
+            {        vk::DescriptorType::eUniformBuffer, 25 },
+            { vk::DescriptorType::eUniformBufferDynamic, 25 },
+            {        vk::DescriptorType::eStorageBuffer, 25 },
+            { vk::DescriptorType::eStorageBufferDynamic, 25 },
+            { vk::DescriptorType::eCombinedImageSampler, 25 },
         };
         vk::DescriptorPoolCreateInfo poolInfo{};
         poolInfo.setPoolSizes(poolSizes);
@@ -75,14 +74,14 @@ namespace VkMana
         m_descriptorPool = m_device.createDescriptorPool(poolInfo);
 
         m_nearestSampler = CreateSampler({
-            .MinFilter = vk::Filter::eNearest,
-            .MagFilter = vk::Filter::eNearest,
-            .MipMapMode = vk::SamplerMipmapMode::eNearest,
+            .minFilter = vk::Filter::eNearest,
+            .magFilter = vk::Filter::eNearest,
+            .mipMapMode = vk::SamplerMipmapMode::eNearest,
         });
         m_linearSampler = CreateSampler({
-            .MinFilter = vk::Filter::eLinear,
-            .MagFilter = vk::Filter::eLinear,
-            .MipMapMode = vk::SamplerMipmapMode::eLinear,
+            .minFilter = vk::Filter::eLinear,
+            .magFilter = vk::Filter::eLinear,
+            .mipMapMode = vk::SamplerMipmapMode::eLinear,
         });
 
         return true;
@@ -249,10 +248,10 @@ namespace VkMana
         {
             // Staging buffer.
             BufferDataSource bufferSource{
-                .Size = initialData->Size,
-                .Data = initialData->Data,
+                .Size = initialData->size,
+                .Data = initialData->data,
             };
-            auto stagingBuffer = CreateBuffer(BufferCreateInfo::Staging(initialData->Size), &bufferSource);
+            auto stagingBuffer = CreateBuffer(BufferCreateInfo::Staging(initialData->size), &bufferSource);
             SetName(*stagingBuffer, "image_upload_staging_buffer");
             auto cmd = RequestCmd();
 
@@ -271,7 +270,7 @@ namespace VkMana
             };
             cmd->CopyBufferToImage(copyInfo);
 
-            if(info.Flags & ImageCreateFlags_GenMipMaps)
+            if(info.flags & ImageCreateFlags_GenMipMaps)
             {
                 // Generate MipMaps.
                 auto mipWidth = int32_t(pImage->GetWidth());
@@ -353,10 +352,10 @@ namespace VkMana
         viewInfo.setFormat(image->GetFormat());
         viewInfo.setViewType(vk::ImageViewType::e2D);
         viewInfo.subresourceRange.setAspectMask(image->GetAspect());
-        viewInfo.subresourceRange.setBaseMipLevel(info.BaseMipLevel);
-        viewInfo.subresourceRange.setLevelCount(info.MipLevelCount);
-        viewInfo.subresourceRange.setBaseArrayLayer(info.BaseArrayLayer);
-        viewInfo.subresourceRange.setLayerCount(info.ArrayLayerCount);
+        viewInfo.subresourceRange.setBaseMipLevel(info.baseMipLevel);
+        viewInfo.subresourceRange.setLevelCount(info.mipLevelCount);
+        viewInfo.subresourceRange.setBaseArrayLayer(info.baseArrayLayer);
+        viewInfo.subresourceRange.setLayerCount(info.arrayLayerCount);
         auto view = m_device.createImageView(viewInfo);
 
         return IntrusivePtr(new ImageView(this, image, view, info));
@@ -365,12 +364,12 @@ namespace VkMana
     auto Context::CreateSampler(const SamplerCreateInfo& info) -> SamplerHandle
     {
         vk::SamplerCreateInfo samplerInfo{};
-        samplerInfo.setMinFilter(info.MinFilter);
-        samplerInfo.setMagFilter(info.MagFilter);
-        samplerInfo.setMipmapMode(info.MipMapMode);
-        samplerInfo.setAddressModeU(info.AddressMode);
-        samplerInfo.setAddressModeV(info.AddressMode);
-        samplerInfo.setAddressModeW(info.AddressMode);
+        samplerInfo.setMinFilter(info.minFilter);
+        samplerInfo.setMagFilter(info.magFilter);
+        samplerInfo.setMipmapMode(info.mipMapMode);
+        samplerInfo.setAddressModeU(info.addressMode);
+        samplerInfo.setAddressModeV(info.addressMode);
+        samplerInfo.setAddressModeW(info.addressMode);
         samplerInfo.setMinLod(0.0f);
         samplerInfo.setMaxLod(VK_LOD_CLAMP_NONE);
         auto sampler = m_device.createSampler(samplerInfo);

@@ -52,7 +52,7 @@ void main()
 
 namespace VkMana::SamplesApp
 {
-    bool SampleModelLoading::Onload(SamplesApp& app, Context& ctx)
+    bool SampleModelLoading::OnLoad(SamplesApp& app, Context& ctx)
     {
         auto& window = app.GetWindow();
 
@@ -60,7 +60,7 @@ namespace VkMana::SamplesApp
         m_depthTarget = ctx.CreateImage(depthImageInfo, nullptr);
 
         std::vector<VkMana::SetLayoutBinding> setBindings{
-            {0, vk::DescriptorType::eCombinedImageSampler, 1, vk::ShaderStageFlagBits::eFragment},
+            { 0, vk::DescriptorType::eCombinedImageSampler, 1, vk::ShaderStageFlagBits::eFragment },
         };
         m_setLayout = ctx.CreateSetLayout(setBindings);
 
@@ -73,11 +73,11 @@ namespace VkMana::SamplesApp
         m_pipelineLayout = ctx.CreatePipelineLayout(pipelineLayoutInfo);
 
         ShaderCompileInfo compileInfo{
-            .SrcLanguage = SourceLanguage::GLSL,
-            .SrcFilename = "",
-            .SrcString = VertexShaderSrc,
-            .Stage = vk::ShaderStageFlagBits::eVertex,
-            .Debug = true,
+            .srcLanguage = SourceLanguage::GLSL,
+            .srcFilename = "",
+            .srcString = VertexShaderSrc.c_str(),
+            .stage = vk::ShaderStageFlagBits::eVertex,
+            .debug = true,
         };
         const auto vertSpirvOpt = CompileShader(compileInfo);
         if(!vertSpirvOpt)
@@ -86,8 +86,8 @@ namespace VkMana::SamplesApp
             return false;
         }
 
-        compileInfo.SrcString = FragmentShaderSrc;
-        compileInfo.Stage = vk::ShaderStageFlagBits::eFragment;
+        compileInfo.srcString = FragmentShaderSrc.c_str();
+        compileInfo.stage = vk::ShaderStageFlagBits::eFragment;
         const auto fragSpirvOpt = CompileShader(compileInfo);
         if(!fragSpirvOpt)
         {
@@ -96,21 +96,22 @@ namespace VkMana::SamplesApp
         }
 
         const VkMana::GraphicsPipelineCreateInfo pipelineInfo{
-			.Vertex = vertSpirvOpt.value(),
-			.Fragment = fragSpirvOpt.value(),
-			.VertexAttributes = {
-				vk::VertexInputAttributeDescription(0, 0, vk::Format::eR32G32B32Sfloat, offsetof(Vertex, Position)),
-				vk::VertexInputAttributeDescription(1, 0, vk::Format::eR32G32B32Sfloat, offsetof(Vertex, Normal)),
-				vk::VertexInputAttributeDescription(2, 0, vk::Format::eR32G32Sfloat, offsetof(Vertex, TexCoord)),
-			},
-			.VertexBindings = {
-				vk::VertexInputBindingDescription(0, sizeof(Vertex), vk::VertexInputRate::eVertex),
-			},
-			.Topology = vk::PrimitiveTopology::eTriangleList,
-			.ColorTargetFormats = { vk::Format::eB8G8R8A8Srgb },
-			.DepthTargetFormat = vk::Format::eD24UnormS8Uint,
-			.Layout = m_pipelineLayout,
-		};
+            .vs = { vertSpirvOpt.value().data(), uint32_t(vertSpirvOpt.value().size()) },
+            .fs = { fragSpirvOpt.value().data(), uint32_t(fragSpirvOpt.value().size()) },
+            .vertexAttributes = {
+                    vk::VertexInputAttributeDescription(0, 0, vk::Format::eR32G32B32Sfloat, offsetof(Vertex, Position)),
+                    vk::VertexInputAttributeDescription(1, 0, vk::Format::eR32G32B32Sfloat, offsetof(Vertex, Normal)),
+                    vk::VertexInputAttributeDescription(2, 0, vk::Format::eR32G32Sfloat, offsetof(Vertex, TexCoord)),
+            },
+            .vertexBindings = {
+                    vk::VertexInputBindingDescription(0, sizeof(Vertex), vk::VertexInputRate::eVertex),
+            },
+            .primitiveTopology = vk::PrimitiveTopology::eTriangleList,
+            .colorTargetCount = 1,
+            .colorFormats = { vk::Format::eB8G8R8A8Srgb },
+            .depthStencilFormat = vk::Format::eD24UnormS8Uint,
+            .pPipelineLayout = m_pipelineLayout,
+        };
         m_pipeline = ctx.CreateGraphicsPipeline(pipelineInfo);
         if(m_pipeline == nullptr)
             return false;
@@ -258,8 +259,8 @@ namespace VkMana::SamplesApp
 
         auto imageInfo = VkMana::ImageCreateInfo::Texture(width, height);
         VkMana::ImageDataSource dataSource{
-            .Size = uint32_t(width * height * 4),
-            .Data = pixels,
+            .size = uint32_t(width * height * 4),
+            .data = pixels,
         };
         outImage = ctx.CreateImage(imageInfo, &dataSource);
 

@@ -148,13 +148,13 @@ namespace VkMana::SamplesApp
         m_activeSampleIndex = index;
 
         VM_INFO("Loading sample: {}", m_samples[m_activeSampleIndex]->GetName());
-        if(!m_samples[m_activeSampleIndex]->Onload(*this, *m_ctx))
+        if(!m_samples[m_activeSampleIndex]->OnLoad(*this, *m_ctx))
         {
             VM_ERR("Failed to load sample: {}", m_samples[index]->GetName());
 
             m_activeSampleIndex = lastSampleIndex;
             if(m_activeSampleIndex >= 0 && m_activeSampleIndex < m_samples.size())
-                m_samples[m_activeSampleIndex]->Onload(*this, *m_ctx); // It should be safe to assume the last sample loads okay... Right???
+                m_samples[m_activeSampleIndex]->OnLoad(*this, *m_ctx); // It should be safe to assume the last sample loads okay... Right???
         }
 
         VM_INFO("Sample loaded: {}", m_samples[m_activeSampleIndex]->GetName());

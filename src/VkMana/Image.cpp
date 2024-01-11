@@ -6,16 +6,16 @@ namespace VkMana
 {
     auto Image::New(Context* pContext, const ImageCreateInfo& info) -> IntrusivePtr<Image>
     {
-        auto actualMipLevels = info.MipLevels;
+        auto actualMipLevels = info.mipLevels;
         if(actualMipLevels == -1)
-            actualMipLevels = int32_t(std::floor(std::log2(std::max(info.Width, info.Height)))) + 1;
+            actualMipLevels = int32_t(std::floor(std::log2(std::max(info.width, info.height)))) + 1;
 
         vk::ImageCreateInfo imageInfo{};
-        imageInfo.setExtent({ info.Width, info.Height, info.depthOrArrayLayers });
+        imageInfo.setExtent({ info.width, info.height, info.depthOrArrayLayers });
         imageInfo.setMipLevels(uint32_t(actualMipLevels));
-        imageInfo.setArrayLayers(info.ArrayLayers);
-        imageInfo.setFormat(info.Format);
-        imageInfo.setUsage(info.Usage);
+        imageInfo.setArrayLayers(info.depthOrArrayLayers);
+        imageInfo.setFormat(info.format);
+        imageInfo.setUsage(info.usage);
         imageInfo.setImageType(vk::ImageType::e2D);        // #TODO: Make auto.
         imageInfo.setSamples(vk::SampleCountFlagBits::e1); // #TODO: Make optional.
 
@@ -28,7 +28,7 @@ namespace VkMana
             return nullptr;
         }
 
-        auto pNewImage = IntrusivePtr(new Image(pContext, image, allocation, info.Width, info.Height, info.depthOrArrayLayers, actualMipLevels, info.Format));
+        auto pNewImage = IntrusivePtr(new Image(pContext, image, allocation, info.width, info.height, info.depthOrArrayLayers, actualMipLevels, info.format));
         // #TODO: Auto create image views from info.Usage
         return pNewImage;
     }
@@ -51,21 +51,21 @@ namespace VkMana
             if(type == ImageViewType::Texture)
             {
                 viewInfo = {
-                    .TargetImage = this,
-                    .BaseMipLevel = 0,
-                    .MipLevelCount = uint32_t(m_mipLevels),
-                    .BaseArrayLayer = 0,
-                    .ArrayLayerCount = 1,
+                    .targetImage = this,
+                    .baseMipLevel = 0,
+                    .mipLevelCount = uint32_t(m_mipLevels),
+                    .baseArrayLayer = 0,
+                    .arrayLayerCount = 1,
                 };
             }
             else if(type == ImageViewType::RenderTarget)
             {
                 viewInfo = {
-                    .TargetImage = this,
-                    .BaseMipLevel = 0,
-                    .MipLevelCount = 1,
-                    .BaseArrayLayer = 0,
-                    .ArrayLayerCount = 1,
+                    .targetImage = this,
+                    .baseMipLevel = 0,
+                    .mipLevelCount = 1,
+                    .baseArrayLayer = 0,
+                    .arrayLayerCount = 1,
                 };
             }
             view = m_ctx->CreateImageView(this, viewInfo);

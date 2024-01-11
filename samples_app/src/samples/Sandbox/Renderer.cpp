@@ -20,13 +20,13 @@ namespace VkMana::SamplesApp
         { // White image
             const std::vector<uint8_t> WhitePixels = { 255, 255, 255, 255 };
             const auto imageInfo = ImageCreateInfo::Texture(1, 1, 1);
-            const ImageDataSource imageDataSrc{ .Size = 1 * 1 * 4, .Data = WhitePixels.data() };
+            const ImageDataSource imageDataSrc{ .size = 1 * 1 * 4, .data = WhitePixels.data() };
             m_whiteImage = m_ctx->CreateImage(imageInfo, &imageDataSrc);
         }
         { // Black image
             const std::vector<uint8_t> BlackPixels = { 0, 0, 0, 255 };
             const auto imageInfo = ImageCreateInfo::Texture(1, 1, 1);
-            const ImageDataSource imageDataSrc{ .Size = 1 * 1 * 4, .Data = BlackPixels.data() };
+            const ImageDataSource imageDataSrc{ .size = 1 * 1 * 4, .data = BlackPixels.data() };
             m_blackImage = m_ctx->CreateImage(imageInfo, &imageDataSrc);
         }
 
@@ -129,10 +129,10 @@ namespace VkMana::SamplesApp
         m_gBufferPipelineLayout = m_ctx->CreatePipelineLayout(layoutInfo);
 
         ShaderCompileInfo compileInfo{
-            .SrcLanguage = SourceLanguage::GLSL,
-            .SrcFilename = "assets/shaders/deferred_gbuffer.vert",
-            .Stage = vk::ShaderStageFlagBits::eVertex,
-            .Debug = true,
+            .srcLanguage = SourceLanguage::GLSL,
+            .srcFilename = "assets/shaders/deferred_gbuffer.vert",
+            .stage = vk::ShaderStageFlagBits::eVertex,
+            .debug = true,
         };
         auto vertexSpirvOpt = CompileShader(compileInfo);
         if(!vertexSpirvOpt)
@@ -141,8 +141,8 @@ namespace VkMana::SamplesApp
             return;
         }
 
-        compileInfo.Stage = vk::ShaderStageFlagBits::eFragment;
-        compileInfo.SrcFilename = "assets/shaders/deferred_gbuffer.frag";
+        compileInfo.stage = vk::ShaderStageFlagBits::eFragment;
+        compileInfo.srcFilename = "assets/shaders/deferred_gbuffer.frag";
         auto fragmentSpirvOpt = CompileShader(compileInfo);
         if(!fragmentSpirvOpt)
         {
@@ -151,22 +151,23 @@ namespace VkMana::SamplesApp
         }
 
         const GraphicsPipelineCreateInfo pipelineInfo{
-			.Vertex = vertexSpirvOpt.value(),
-			.Fragment = fragmentSpirvOpt.value(),
-			.VertexAttributes = {
-				vk::VertexInputAttributeDescription(0, 0, vk::Format::eR32G32B32Sfloat, offsetof(StaticVertex, Position)),
-				vk::VertexInputAttributeDescription(1, 0, vk::Format::eR32G32Sfloat, offsetof(StaticVertex, TexCoord)),
-				vk::VertexInputAttributeDescription(2, 0, vk::Format::eR32G32B32Sfloat, offsetof(StaticVertex, Normal)),
-				vk::VertexInputAttributeDescription(3, 0, vk::Format::eR32G32B32Sfloat, offsetof(StaticVertex, Tangent)),
-			},
-			.VertexBindings = {
-				vk::VertexInputBindingDescription(0, sizeof(StaticVertex), vk::VertexInputRate::eVertex),
-			},
-			.Topology =  vk::PrimitiveTopology::eTriangleList,
-			.ColorTargetFormats = { positionImageInfo.Format, normalImageInfo.Format, albedoImageInfo.Format },
-			.DepthTargetFormat = depthImageInfo.Format,
-			.Layout = m_gBufferPipelineLayout,
-		};
+            .vs = { vertexSpirvOpt.value().data(), uint32_t(vertexSpirvOpt.value().size()) },
+            .fs = { fragmentSpirvOpt.value().data(), uint32_t(fragmentSpirvOpt.value().size()) },
+            .vertexAttributes = {
+                    vk::VertexInputAttributeDescription(0, 0, vk::Format::eR32G32B32Sfloat, offsetof(StaticVertex, Position)),
+                    vk::VertexInputAttributeDescription(1, 0, vk::Format::eR32G32Sfloat, offsetof(StaticVertex, TexCoord)),
+                    vk::VertexInputAttributeDescription(2, 0, vk::Format::eR32G32B32Sfloat, offsetof(StaticVertex, Normal)),
+                    vk::VertexInputAttributeDescription(3, 0, vk::Format::eR32G32B32Sfloat, offsetof(StaticVertex, Tangent)),
+            },
+            .vertexBindings = {
+                    vk::VertexInputBindingDescription(0, sizeof(StaticVertex), vk::VertexInputRate::eVertex),
+            },
+            .primitiveTopology =  vk::PrimitiveTopology::eTriangleList,
+            .colorTargetCount = 3,
+            .colorFormats = { positionImageInfo.format, normalImageInfo.format, albedoImageInfo.format },
+            .depthStencilFormat = depthImageInfo.format,
+            .pPipelineLayout = m_gBufferPipelineLayout,
+        };
         m_gBufferStaticPipeline = m_ctx->CreateGraphicsPipeline(pipelineInfo);
 
         const auto cameraUniformBufferInfo = BufferCreateInfo::Uniform(sizeof(m_cameraUniformData) * 2);
@@ -195,10 +196,10 @@ namespace VkMana::SamplesApp
         m_compositionPipelineLayout = m_ctx->CreatePipelineLayout(layoutInfo);
 
         ShaderCompileInfo compileInfo{
-            .SrcLanguage = SourceLanguage::GLSL,
-            .SrcFilename = "assets/shaders/deferred_composition.vert",
-            .Stage = vk::ShaderStageFlagBits::eVertex,
-            .Debug = true,
+            .srcLanguage = SourceLanguage::GLSL,
+            .srcFilename = "assets/shaders/deferred_composition.vert",
+            .stage = vk::ShaderStageFlagBits::eVertex,
+            .debug = true,
         };
         auto vertexSpirvOpt = CompileShader(compileInfo);
         if(!vertexSpirvOpt)
@@ -207,8 +208,8 @@ namespace VkMana::SamplesApp
             return;
         }
 
-        compileInfo.Stage = vk::ShaderStageFlagBits::eFragment;
-        compileInfo.SrcFilename = "assets/shaders/deferred_composition.frag";
+        compileInfo.stage = vk::ShaderStageFlagBits::eFragment;
+        compileInfo.srcFilename = "assets/shaders/deferred_composition.frag";
         auto fragmentSpirvOpt = CompileShader(compileInfo);
         if(!fragmentSpirvOpt)
         {
@@ -217,11 +218,12 @@ namespace VkMana::SamplesApp
         }
 
         const GraphicsPipelineCreateInfo pipelineInfo{
-            .Vertex = vertexSpirvOpt.value(),
-            .Fragment = fragmentSpirvOpt.value(),
-            .Topology = vk::PrimitiveTopology::eTriangleList,
-            .ColorTargetFormats = { compositionImageInfo.Format },
-            .Layout = m_compositionPipelineLayout,
+            .vs = { vertexSpirvOpt.value().data(), uint32_t(vertexSpirvOpt.value().size()) },
+            .fs = { fragmentSpirvOpt.value().data(), uint32_t(fragmentSpirvOpt.value().size()) },
+            .primitiveTopology = vk::PrimitiveTopology::eTriangleList,
+            .colorTargetCount = 1,
+            .colorFormats = { compositionImageInfo.format },
+            .pPipelineLayout = m_compositionPipelineLayout,
         };
         m_compositionPipeline = m_ctx->CreateGraphicsPipeline(pipelineInfo);
     }
@@ -238,10 +240,10 @@ namespace VkMana::SamplesApp
         m_screenPipelineLayout = m_ctx->CreatePipelineLayout(layoutInfo);
 
         ShaderCompileInfo compileInfo{
-            .SrcLanguage = SourceLanguage::GLSL,
-            .SrcFilename = "assets/shaders/fullscreen_quad.vert",
-            .Stage = vk::ShaderStageFlagBits::eVertex,
-            .Debug = true,
+            .srcLanguage = SourceLanguage::GLSL,
+            .srcFilename = "assets/shaders/fullscreen_quad.vert",
+            .stage = vk::ShaderStageFlagBits::eVertex,
+            .debug = true,
         };
         auto vertexSpirvOpt = CompileShader(compileInfo);
         if(!vertexSpirvOpt)
@@ -250,8 +252,8 @@ namespace VkMana::SamplesApp
             return;
         }
 
-        compileInfo.Stage = vk::ShaderStageFlagBits::eFragment;
-        compileInfo.SrcFilename = "assets/shaders/fullscreen_quad.frag";
+        compileInfo.stage = vk::ShaderStageFlagBits::eFragment;
+        compileInfo.srcFilename = "assets/shaders/fullscreen_quad.frag";
         auto fragmentSpirvOpt = CompileShader(compileInfo);
         if(!fragmentSpirvOpt)
         {
@@ -260,11 +262,12 @@ namespace VkMana::SamplesApp
         }
 
         const GraphicsPipelineCreateInfo pipelineInfo{
-            .Vertex = vertexSpirvOpt.value(),
-            .Fragment = fragmentSpirvOpt.value(),
-            .Topology = vk::PrimitiveTopology::eTriangleList,
-            .ColorTargetFormats = { vk::Format::eB8G8R8A8Srgb },
-            .Layout = m_screenPipelineLayout,
+            .vs = { vertexSpirvOpt.value().data(), uint32_t(vertexSpirvOpt.value().size()) },
+            .fs = { fragmentSpirvOpt.value().data(), uint32_t(fragmentSpirvOpt.value().size()) },
+            .primitiveTopology = vk::PrimitiveTopology::eTriangleList,
+            .colorTargetCount = 1,
+            .colorFormats = { vk::Format::eB8G8R8A8Srgb },
+            .pPipelineLayout = m_screenPipelineLayout,
         };
         m_screenPipeline = m_ctx->CreateGraphicsPipeline(pipelineInfo);
     }

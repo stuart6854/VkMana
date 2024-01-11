@@ -9,7 +9,7 @@
 
 namespace VkMana
 {
-    enum class SourceLanguage
+    enum class SourceLanguage : uint8_t
     {
         GLSL,
         HLSL,
@@ -17,16 +17,16 @@ namespace VkMana
 
     struct ShaderCompileInfo
     {
-        SourceLanguage SrcLanguage;
-        std::filesystem::path SrcFilename;
-        std::string SrcString;
-        vk::ShaderStageFlagBits Stage;
-        std::string EntryPoint = "main"; // Must be "main" for GLSL.
-        bool Debug = false;
+        SourceLanguage srcLanguage;
+        const char* srcFilename;
+        const char* srcString;
+        vk::ShaderStageFlagBits stage;
+        const char* entryPoint = "main"; // Ignored for GLSL
+        bool debug = false;
     };
 
-    bool CompileShader(ShaderBinary& outSpirv, const std::string& glslSource, vk::ShaderStageFlagBits shaderStage, bool debug, const std::string& filename);
+    bool CompileShader(ShaderByteCode& outSpirv, const std::string& glslSource, vk::ShaderStageFlagBits shaderStage, bool debug, const std::string& filename);
 
-    auto CompileShader(ShaderCompileInfo info) -> std::optional<ShaderBinary>;
+    auto CompileShader(const ShaderCompileInfo& info) -> std::optional<ShaderByteCode>;
 
 } // namespace VkMana

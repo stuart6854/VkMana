@@ -341,6 +341,7 @@ namespace VkMana
 
 	auto Context::CreatePipelineLayout(const PipelineLayoutCreateInfo& info) -> PipelineLayoutHandle
 	{
+#if 0
 		size_t hash = 0;
 		HashCombine(hash, info.PushConstantRange);
 
@@ -365,119 +366,20 @@ namespace VkMana
 		layoutInfo.setSetLayouts(setLayouts);
 		auto layout = m_device.createPipelineLayout(layoutInfo);
 
-		return IntrusivePtr(new PipelineLayout(this, layout, hash, info));
+		return IntrusivePtr(new PipelineLayout(this, layout, hash));
+#endif
+
+		return PipelineLayout::New(this, info);
 	}
 
 	auto Context::CreateGraphicsPipeline(const GraphicsPipelineCreateInfo& info) -> PipelineHandle
 	{
-		std::vector<vk::UniqueShaderModule> shaderModules;
-		std::vector<vk::PipelineShaderStageCreateInfo> shaderStages;
-
-		auto CreateShaderModule = [&](const auto& shaderInfo, auto shaderStage) {
-			if (!shaderInfo.SPIRVBinary.empty())
-			{
-				vk::ShaderModuleCreateInfo moduleInfo{};
-				moduleInfo.setCode(shaderInfo.SPIRVBinary);
-				shaderModules.push_back(m_device.createShaderModuleUnique(moduleInfo));
-
-				auto& stageInfo = shaderStages.emplace_back();
-				stageInfo.setStage(shaderStage);
-				stageInfo.setModule(shaderModules.back().get());
-				stageInfo.setPName(shaderInfo.EntryPoint.c_str());
-			}
-		};
-
-		CreateShaderModule(info.Vertex, vk::ShaderStageFlagBits::eVertex);
-		CreateShaderModule(info.Fragment, vk::ShaderStageFlagBits::eFragment);
-
-		vk::PipelineVertexInputStateCreateInfo vertexInputState{};
-		vertexInputState.setVertexAttributeDescriptions(info.VertexAttributes);
-		vertexInputState.setVertexBindingDescriptions(info.VertexBindings);
-
-		vk::PipelineInputAssemblyStateCreateInfo inputAssemblyState{};
-		inputAssemblyState.setTopology(info.Topology);
-
-		vk::PipelineTessellationStateCreateInfo tessellationState{};
-
-		vk::PipelineViewportStateCreateInfo viewportState{};
-		viewportState.setViewportCount(1); // Dynamic State
-		viewportState.setScissorCount(1);  // Dynamic State
-
-		vk::PipelineRasterizationStateCreateInfo rasterizationState{};
-		rasterizationState.setFrontFace(vk::FrontFace::eClockwise);	 // #TODO: Make dynamic state.
-		rasterizationState.setPolygonMode(vk::PolygonMode::eFill);	 // #TODO: Make dynamic state.
-		rasterizationState.setCullMode(vk::CullModeFlagBits::eNone); // #TODO: Make dynamic state.
-		rasterizationState.setLineWidth(1.0f);						 // #TODO: Make dynamic state.
-
-		vk::PipelineMultisampleStateCreateInfo multisampleState{};
-
-		vk::PipelineDepthStencilStateCreateInfo depthStencilState{};
-		depthStencilState.setDepthTestEnable(VK_TRUE);			   // #TODO: Make dynamic state.
-		depthStencilState.setDepthWriteEnable(VK_TRUE);			   // #TODO: Make dynamic state.
-		depthStencilState.setDepthCompareOp(vk::CompareOp::eLess); // #TODO: Make dynamic state.
-
-		vk::PipelineColorBlendAttachmentState defaultBlendAttachment{};
-		defaultBlendAttachment.setColorWriteMask(vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG
-			| vk::ColorComponentFlagBits::eB | vk::ColorComponentFlagBits::eA);
-		// #TODO: Enable alpha blending (should just be below).
-		defaultBlendAttachment.setBlendEnable(VK_TRUE);
-		defaultBlendAttachment.setSrcColorBlendFactor(vk::BlendFactor::eSrcAlpha);
-		defaultBlendAttachment.setDstColorBlendFactor(vk::BlendFactor::eOneMinusSrcAlpha);
-		defaultBlendAttachment.setColorBlendOp(vk::BlendOp::eAdd);
-		defaultBlendAttachment.setSrcAlphaBlendFactor(vk::BlendFactor::eOne);
-		defaultBlendAttachment.setDstAlphaBlendFactor(vk::BlendFactor::eOneMinusSrcAlpha);
-		defaultBlendAttachment.setAlphaBlendOp(vk::BlendOp::eAdd);
-		std::vector<vk::PipelineColorBlendAttachmentState> blendAttachments(info.ColorTargetFormats.size(), defaultBlendAttachment);
-		vk::PipelineColorBlendStateCreateInfo colorBlendState{};
-		colorBlendState.setAttachments(blendAttachments);
-
-		std::vector<vk::DynamicState> dynStates{ vk::DynamicState::eViewport, vk::DynamicState::eScissor };
-		vk::PipelineDynamicStateCreateInfo dynamicState{};
-		dynamicState.setDynamicStates(dynStates);
-
-		vk::PipelineRenderingCreateInfo renderingInfo{};
-		renderingInfo.setColorAttachmentFormats(info.ColorTargetFormats);
-		renderingInfo.setDepthAttachmentFormat(info.DepthTargetFormat);
-
-		vk::GraphicsPipelineCreateInfo pipelineInfo{};
-		pipelineInfo.setStages(shaderStages);
-		pipelineInfo.setPVertexInputState(&vertexInputState);
-		pipelineInfo.setPInputAssemblyState(&inputAssemblyState);
-		pipelineInfo.setPTessellationState(&tessellationState);
-		pipelineInfo.setPViewportState(&viewportState);
-		pipelineInfo.setPRasterizationState(&rasterizationState);
-		pipelineInfo.setPMultisampleState(&multisampleState);
-		pipelineInfo.setPDepthStencilState(&depthStencilState);
-		pipelineInfo.setPColorBlendState(&colorBlendState);
-		pipelineInfo.setPDynamicState(&dynamicState);
-		pipelineInfo.setLayout(info.Layout->GetLayout());
-		pipelineInfo.setPNext(&renderingInfo);
-		auto pipeline = m_device.createGraphicsPipeline({}, pipelineInfo).value; // #TODO: Pipeline Cache
-
-		return IntrusivePtr(new Pipeline(this, info.Layout, pipeline, vk::PipelineBindPoint::eGraphics));
+		return Pipeline::NewGraphics(this, info);
 	}
 
 	auto Context::CreateComputePipeline(const ComputePipelineCreateInfo& info) -> PipelineHandle
 	{
-		vk::UniqueShaderModule shaderModule{};
-		vk::PipelineShaderStageCreateInfo stageInfo{};
-		if (!info.compute.SPIRVBinary.empty())
-		{
-			vk::ShaderModuleCreateInfo moduleInfo{};
-			moduleInfo.setCode(info.compute.SPIRVBinary);
-			shaderModule = m_device.createShaderModuleUnique(moduleInfo);
-
-			stageInfo.setStage(vk::ShaderStageFlagBits::eCompute);
-			stageInfo.setModule(shaderModule.get());
-			stageInfo.setPName(info.compute.EntryPoint.c_str());
-		}
-
-		vk::ComputePipelineCreateInfo pipelineInfo{};
-		pipelineInfo.setStage(stageInfo);
-		pipelineInfo.setLayout(info.layout->GetLayout());
-		auto pipeline = m_device.createComputePipeline({}, pipelineInfo).value; // #TODO: Pipeline cache
-
-		return IntrusivePtr(new Pipeline(this, info.layout, pipeline, vk::PipelineBindPoint::eCompute));
+		return Pipeline::NewCompute(this, info);
 	}
 
 	auto Context::CreateImage(ImageCreateInfo info, const ImageDataSource* initialData) -> ImageHandle

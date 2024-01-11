@@ -56,27 +56,29 @@ namespace VkMana
 	class PipelineLayout : public IntrusivePtrEnabled<PipelineLayout>
 	{
 	public:
+		static auto New(Context* pContext, const PipelineLayoutCreateInfo& info) -> IntrusivePtr<PipelineLayout>;
+
 		~PipelineLayout();
 
 		auto GetLayout() const -> auto { return m_layout; }
 		auto GetHash() const -> auto { return m_hash; }
 
 	private:
-		friend class Context;
-
-		PipelineLayout(Context* context, vk::PipelineLayout layout, size_t hash, const PipelineLayoutCreateInfo& info);
+		PipelineLayout(Context* context, vk::PipelineLayout layout, size_t hash);
 
 	private:
 		Context* m_ctx;
 		vk::PipelineLayout m_layout;
 		size_t m_hash;
-		PipelineLayoutCreateInfo m_info;
 	};
 	using PipelineLayoutHandle = IntrusivePtr<PipelineLayout>;
 
 	class Pipeline : public IntrusivePtrEnabled<Pipeline>
 	{
 	public:
+		static auto NewGraphics(Context* pContext, const GraphicsPipelineCreateInfo& info) -> IntrusivePtr<Pipeline>;
+		static auto NewCompute(Context* pContext, const ComputePipelineCreateInfo& info) -> IntrusivePtr<Pipeline>;
+
 		~Pipeline();
 
 		auto GetLayout() const -> auto { return m_layout; }
@@ -84,9 +86,7 @@ namespace VkMana
 		auto GetBindPoint() const -> auto { return m_bindPoint; }
 
 	private:
-		friend class Context;
-
-		Pipeline(Context* context, const IntrusivePtr<PipelineLayout>& layout, vk::Pipeline pipeline, vk::PipelineBindPoint bindPoint);
+		Pipeline(Context* pContext, const IntrusivePtr<PipelineLayout>& layout, vk::Pipeline pipeline, vk::PipelineBindPoint bindPoint);
 
 	private:
 		Context* m_ctx;

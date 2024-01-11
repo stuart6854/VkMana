@@ -74,8 +74,8 @@ namespace VkMana::SamplesApp
 
         ShaderCompileInfo compileInfo{
             .srcLanguage = SourceLanguage::GLSL,
-            .srcFilename = "",
-            .srcString = VertexShaderSrc.c_str(),
+            .pSrcFilenameStr = "",
+            .pSrcStringStr = VertexShaderSrc.c_str(),
             .stage = vk::ShaderStageFlagBits::eVertex,
             .debug = true,
         };
@@ -86,7 +86,7 @@ namespace VkMana::SamplesApp
             return false;
         }
 
-        compileInfo.srcString = FragmentShaderSrc.c_str();
+        compileInfo.pSrcStringStr = FragmentShaderSrc.c_str();
         compileInfo.stage = vk::ShaderStageFlagBits::eFragment;
         const auto fragSpirvOpt = CompileShader(compileInfo);
         if(!fragSpirvOpt)

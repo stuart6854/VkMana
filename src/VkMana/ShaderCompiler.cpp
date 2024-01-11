@@ -224,21 +224,21 @@ namespace VkMana
     auto CompileShader(const ShaderCompileInfo& info) -> std::optional<ShaderByteCode>
     {
         std::string srcStr;
-        if(info.srcString != nullptr)
+        if(info.pSrcStringStr != nullptr)
         {
-            srcStr = info.srcString;
+            srcStr = info.pSrcStringStr;
         }
 
-        if(info.srcString == nullptr && info.srcFilename != nullptr)
+        if(info.pSrcStringStr == nullptr && info.pSrcFilenameStr != nullptr)
         {
-            auto opt = ReadFileStr(info.srcFilename);
+            auto opt = ReadFileStr(info.pSrcFilenameStr);
             if(opt)
             {
                 srcStr = opt.value();
             }
             else
             {
-                VM_ERR("Failed to read Shader source from file: {}", info.srcFilename);
+                VM_ERR("Failed to read Shader source from file: {}", info.pSrcFilenameStr);
             }
         }
         if(srcStr.empty())
@@ -250,9 +250,9 @@ namespace VkMana
         switch(info.srcLanguage)
         {
         case SourceLanguage::GLSL:
-            return CompileGLSL(srcStr.c_str(), info.srcFilename, info.stage, info.debug);
+            return CompileGLSL(srcStr.c_str(), info.pSrcFilenameStr, info.stage, info.debug);
         case SourceLanguage::HLSL:
-            return CompileHLSL(srcStr.c_str(), info.srcFilename, info.stage, info.entryPoint, info.debug);
+            return CompileHLSL(srcStr.c_str(), info.pSrcFilenameStr, info.stage, info.pEntryPointStr, info.debug);
         }
         VM_ERR("Unknown Shader SourceLanguage.");
         assert(false);

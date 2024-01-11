@@ -48,8 +48,8 @@ namespace VkMana::SamplesApp
 
         ShaderCompileInfo compileInfo{
             .srcLanguage = SourceLanguage::GLSL,
-            .srcFilename = "",
-            .srcString = TriangleVertexShaderSrc.c_str(),
+            .pSrcFilenameStr = "",
+            .pSrcStringStr = TriangleVertexShaderSrc.c_str(),
             .stage = vk::ShaderStageFlagBits::eVertex,
             .debug = true,
         };
@@ -60,7 +60,7 @@ namespace VkMana::SamplesApp
             return false;
         }
 
-        compileInfo.srcString = TriangleFragmentShaderSrc.c_str();
+        compileInfo.pSrcStringStr = TriangleFragmentShaderSrc.c_str();
         compileInfo.stage = vk::ShaderStageFlagBits::eFragment;
         const auto fragSpirvOpt = CompileShader(compileInfo);
         if(!fragSpirvOpt)

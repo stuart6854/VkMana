@@ -130,7 +130,7 @@ namespace VkMana::SamplesApp
 
         ShaderCompileInfo compileInfo{
             .srcLanguage = SourceLanguage::GLSL,
-            .srcFilename = "assets/shaders/deferred_gbuffer.vert",
+            .pSrcFilenameStr = "assets/shaders/deferred_gbuffer.vert",
             .stage = vk::ShaderStageFlagBits::eVertex,
             .debug = true,
         };
@@ -142,7 +142,7 @@ namespace VkMana::SamplesApp
         }
 
         compileInfo.stage = vk::ShaderStageFlagBits::eFragment;
-        compileInfo.srcFilename = "assets/shaders/deferred_gbuffer.frag";
+        compileInfo.pSrcFilenameStr = "assets/shaders/deferred_gbuffer.frag";
         auto fragmentSpirvOpt = CompileShader(compileInfo);
         if(!fragmentSpirvOpt)
         {
@@ -197,7 +197,7 @@ namespace VkMana::SamplesApp
 
         ShaderCompileInfo compileInfo{
             .srcLanguage = SourceLanguage::GLSL,
-            .srcFilename = "assets/shaders/deferred_composition.vert",
+            .pSrcFilenameStr = "assets/shaders/deferred_composition.vert",
             .stage = vk::ShaderStageFlagBits::eVertex,
             .debug = true,
         };
@@ -209,7 +209,7 @@ namespace VkMana::SamplesApp
         }
 
         compileInfo.stage = vk::ShaderStageFlagBits::eFragment;
-        compileInfo.srcFilename = "assets/shaders/deferred_composition.frag";
+        compileInfo.pSrcFilenameStr = "assets/shaders/deferred_composition.frag";
         auto fragmentSpirvOpt = CompileShader(compileInfo);
         if(!fragmentSpirvOpt)
         {
@@ -241,7 +241,7 @@ namespace VkMana::SamplesApp
 
         ShaderCompileInfo compileInfo{
             .srcLanguage = SourceLanguage::GLSL,
-            .srcFilename = "assets/shaders/fullscreen_quad.vert",
+            .pSrcFilenameStr = "assets/shaders/fullscreen_quad.vert",
             .stage = vk::ShaderStageFlagBits::eVertex,
             .debug = true,
         };
@@ -253,7 +253,7 @@ namespace VkMana::SamplesApp
         }
 
         compileInfo.stage = vk::ShaderStageFlagBits::eFragment;
-        compileInfo.srcFilename = "assets/shaders/fullscreen_quad.frag";
+        compileInfo.pSrcFilenameStr = "assets/shaders/fullscreen_quad.frag";
         auto fragmentSpirvOpt = CompileShader(compileInfo);
         if(!fragmentSpirvOpt)
         {

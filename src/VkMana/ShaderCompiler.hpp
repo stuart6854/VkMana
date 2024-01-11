@@ -18,10 +18,10 @@ namespace VkMana
     struct ShaderCompileInfo
     {
         SourceLanguage srcLanguage;
-        const char* srcFilename;
-        const char* srcString;
+        const char* pSrcFilenameStr;
+        const char* pSrcStringStr;
         vk::ShaderStageFlagBits stage;
-        const char* entryPoint = "main"; // Ignored for GLSL
+        const char* pEntryPointStr = "main"; // Ignored for GLSL
         bool debug = false;
     };
 

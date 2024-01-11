@@ -9,6 +9,11 @@ VULKAN_HPP_DEFAULT_DISPATCH_LOADER_DYNAMIC_STORAGE
 
 namespace VkMana
 {
+	auto Context::New() -> IntrusivePtr<Context>
+	{
+		return IntrusivePtr(new Context);
+	}
+
 	Context::~Context()
 	{
 		if (m_device)

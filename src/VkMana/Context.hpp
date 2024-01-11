@@ -19,6 +19,8 @@ namespace VkMana
 	class Context : public IntrusivePtrEnabled<Context>
 	{
 	public:
+		static auto New() -> IntrusivePtr<Context>;
+
 		Context() = default;
 		~Context();
 

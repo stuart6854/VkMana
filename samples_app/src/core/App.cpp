@@ -86,7 +86,7 @@ namespace VkMana::SamplesApp
 
 		m_window = std::make_unique<Window>(glfwWindow);
 
-		m_ctx = IntrusivePtr(new Context);
+		m_ctx = Context::New();
 		if (!m_ctx->Init(m_window.get()))
 		{
 			VM_ERR("Failed to initialise VkMana context.");

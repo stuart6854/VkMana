@@ -31,54 +31,54 @@ namespace VkMana
 
     struct ImageTransitionInfo
     {
-        const Image* TargetImage = nullptr;
-        vk::ImageLayout OldLayout = vk::ImageLayout::eUndefined;
-        vk::ImageLayout NewLayout = vk::ImageLayout::eUndefined;
-        uint32_t BaseMipLevel = 0;
-        uint32_t MipLevelCount = 1;
-        uint32_t BaseArrayLayer = 0;
-        uint32_t ArrayLayerCount = 1;
+        const Image* pImage = nullptr;
+        vk::ImageLayout oldLayout = vk::ImageLayout::eUndefined;
+        vk::ImageLayout newLayout = vk::ImageLayout::eUndefined;
+        uint32_t baseMipLevel = 0;
+        uint32_t mipLevelCount = 1;
+        uint32_t baseArrayLayer = 0;
+        uint32_t arrayLayerCount = 1;
     };
     struct ImageBlitInfo
     {
-        const Image* SrcImage = nullptr;
-        vk::ImageLayout SrcLayout = vk::ImageLayout::eTransferSrcOptimal;
-        vk::Offset3D SrcRectStart = { 0, 0, 0 };
-        vk::Offset3D SrcRectEnd = { 0, 0, 0 };
-        uint32_t SrcMipLevel = 0;
-        uint32_t SrcBaseArrayLayer = 0;
-        uint32_t SrcArrayLayerCount = 1;
+        const Image* pSrcImage = nullptr;
+        vk::ImageLayout srcLayout = vk::ImageLayout::eTransferSrcOptimal;
+        vk::Offset3D srcRectStart = { 0, 0, 0 };
+        vk::Offset3D srcRectEnd = { 0, 0, 0 };
+        uint32_t srcMipLevel = 0;
+        uint32_t srcBaseArrayLayer = 0;
+        uint32_t srcArrayLayerCount = 1;
 
-        const Image* DstImage = nullptr;
-        vk::ImageLayout DstLayout = vk::ImageLayout::eTransferDstOptimal;
-        vk::Offset3D DstRectStart = { 0, 0, 0 };
-        vk::Offset3D DstRectEnd = { 0, 0, 0 };
-        uint32_t DstMipLevel = 0;
-        uint32_t DstBaseArrayLayer = 0;
-        uint32_t DstArrayLayerCount = 1;
+        const Image* pDstImage = nullptr;
+        vk::ImageLayout dstLayout = vk::ImageLayout::eTransferDstOptimal;
+        vk::Offset3D dstRectStart = { 0, 0, 0 };
+        vk::Offset3D dstRectEnd = { 0, 0, 0 };
+        uint32_t dstMipLevel = 0;
+        uint32_t dstBaseArrayLayer = 0;
+        uint32_t dstArrayLayerCount = 1;
 
-        vk::Filter Filter = vk::Filter::eLinear;
+        vk::Filter filter = vk::Filter::eLinear;
     };
 
     struct BufferCopyInfo
     {
-        const Buffer* SrcBuffer = nullptr;
-        const Buffer* DstBuffer = nullptr;
-        uint64_t Size = 0;
-        uint64_t SrcOffset = 0;
-        uint64_t DstOffset = 0;
+        const Buffer* pSrcBuffer = nullptr;
+        const Buffer* pDstBuffer = nullptr;
+        uint64_t size = 0;
+        uint64_t srcOffset = 0;
+        uint64_t dstOffset = 0;
     };
     struct BufferToImageCopyInfo
     {
-        const Buffer* SrcBuffer = nullptr;
-        const Image* DstImage = nullptr;
+        const Buffer* pSrcBuffer = nullptr;
+        const Image* pDstImage = nullptr;
     };
     struct QueryCopyInfo
     {
-        const QueryPool* queryPool;
+        const QueryPool* pQueryPool;
         uint32_t firstQuery;
         uint32_t queryCount;
-        const Buffer* dstBuffer;
+        const Buffer* pDstBuffer;
         uint64_t dstOffset;
         uint64_t stride;
         vk::QueryResultFlags flags;
@@ -94,20 +94,20 @@ namespace VkMana
         void BeginRenderPass(const RenderPassInfo& info);
         void EndRenderPass();
 
-        void BindPipeline(Pipeline* pipeline);
+        void BindPipeline(Pipeline* pPipeline);
         void SetViewport(float x, float y, float width, float height, float minDepth = 0.0f, float maxDepth = 1.0f);
         void SetScissor(int32_t x, int32_t y, uint32_t width, uint32_t height);
         void SetPushConstants(vk::ShaderStageFlags shaderStages, uint32_t offset, uint32_t size, const void* data);
 
         void BindDescriptorSets(uint32_t firstSet, const std::vector<DescriptorSet*>& sets, const std::vector<uint32_t>& dynamicOffsets);
 
-        void BindIndexBuffer(const Buffer* buffer, uint64_t offsetBytes = 0, vk::IndexType indexType = vk::IndexType::eUint16);
+        void BindIndexBuffer(const Buffer* pBuffer, uint64_t offsetBytes = 0, vk::IndexType indexType = vk::IndexType::eUint16);
         void BindVertexBuffers(uint32_t firstBinding, const std::vector<const Buffer*>& buffers, const std::vector<uint64_t>& offsets);
 
         void Draw(uint32_t vertexCount, uint32_t firstVertex);
         void DrawIndexed(uint32_t indexCount, uint32_t firstIndex, uint32_t vertexOffset);
-        void DrawIndirect(const Buffer* buffer, uint64_t offset, uint32_t drawCount, uint32_t stride);
-        void DrawIndexedIndirect(const Buffer* buffer, uint64_t offset, uint32_t drawCount, uint32_t stride);
+        void DrawIndirect(const Buffer* pBuffer, uint64_t offset, uint32_t drawCount, uint32_t stride);
+        void DrawIndexedIndirect(const Buffer* pBuffer, uint64_t offset, uint32_t drawCount, uint32_t stride);
 
         void Dispatch(uint32_t groupCountX, uint32_t groupCountY, uint32_t groupCountZ);
 
@@ -117,9 +117,9 @@ namespace VkMana
         void CopyBuffer(const BufferCopyInfo& info);
         void CopyBufferToImage(const BufferToImageCopyInfo& info);
 
-        void ResetQueryPool(const QueryPool* queryPool, uint32_t firstQuery, uint32_t queryCount);
-        void BeginQuery(const QueryPool* queryPool, uint32_t queryIndex, vk::QueryControlFlags flags = {});
-        void EndQuery(const QueryPool* queryPool, uint32_t queryIndex);
+        void ResetQueryPool(const QueryPool* pQueryPool, uint32_t firstQuery, uint32_t queryCount);
+        void BeginQuery(const QueryPool* pQueryPool, uint32_t queryIndex, vk::QueryControlFlags flags = {});
+        void EndQuery(const QueryPool* pQueryPool, uint32_t queryIndex);
         void CopyQueryResultsToBuffer(const QueryCopyInfo& info);
 
         /* Getters */

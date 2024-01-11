@@ -258,16 +258,16 @@ namespace VkMana
 
             // Transition all mip levels to TransferDst.
             ImageTransitionInfo preTransitionInfo{
-                .TargetImage = pImage.Get(),
-                .OldLayout = vk::ImageLayout::eUndefined,
-                .NewLayout = vk::ImageLayout::eTransferDstOptimal,
-                .MipLevelCount = pImage->GetMipLevels(),
+                .pImage = pImage.Get(),
+                .oldLayout = vk::ImageLayout::eUndefined,
+                .newLayout = vk::ImageLayout::eTransferDstOptimal,
+                .mipLevelCount = pImage->GetMipLevels(),
             };
             cmd->TransitionImage(preTransitionInfo); // #TODO: Transition all mip levels to TransferDst
 
             BufferToImageCopyInfo copyInfo{
-                .SrcBuffer = pStagingBuffer.Get(),
-                .DstImage = pImage.Get(),
+                .pSrcBuffer = pStagingBuffer.Get(),
+                .pDstImage = pImage.Get(),
             };
             cmd->CopyBufferToImage(copyInfo);
 
@@ -281,34 +281,34 @@ namespace VkMana
                 {
                     // Transition src mip to TransferSrc
                     ImageTransitionInfo srcTransition{
-                        .TargetImage = pImage.Get(),
-                        .OldLayout = vk::ImageLayout::eTransferDstOptimal,
-                        .NewLayout = vk::ImageLayout::eTransferSrcOptimal,
-                        .BaseMipLevel = i - 1,
-                        .MipLevelCount = 1,
+                        .pImage = pImage.Get(),
+                        .oldLayout = vk::ImageLayout::eTransferDstOptimal,
+                        .newLayout = vk::ImageLayout::eTransferSrcOptimal,
+                        .baseMipLevel = i - 1,
+                        .mipLevelCount = 1,
                     };
                     cmd->TransitionImage(srcTransition);
 
                     // Blit src mip to dst mip
 
                     ImageBlitInfo blitInfo{
-                        .SrcImage = pImage.Get(),
-                        .SrcRectEnd = {mipWidth, mipHeight, 1, },
-                        .SrcMipLevel = i - 1,
-                        .DstImage = pImage.Get(),
-                        .DstRectEnd = { mipWidth > 1 ? mipWidth / 2 : 1, mipHeight > 1 ? mipHeight / 2 : 1, 1, },
-                        .DstMipLevel = i,
-                        .Filter = vk::Filter::eLinear,
+                        .pSrcImage = pImage.Get(),
+                        .srcRectEnd = {mipWidth, mipHeight, 1, },
+                        .srcMipLevel = i - 1,
+                        .pDstImage = pImage.Get(),
+                        .dstRectEnd = { mipWidth > 1 ? mipWidth / 2 : 1, mipHeight > 1 ? mipHeight / 2 : 1, 1, },
+                        .dstMipLevel = i,
+                        .filter = vk::Filter::eLinear,
                     };
                     cmd->BlitImage(blitInfo);
 
                     // Transition src mip to ShaderReadOnly
                     ImageTransitionInfo shaderReadTransition{
-                        .TargetImage = pImage.Get(),
-                        .OldLayout = vk::ImageLayout::eTransferSrcOptimal,
-                        .NewLayout = vk::ImageLayout::eShaderReadOnlyOptimal,
-                        .BaseMipLevel = i - 1,
-                        .MipLevelCount = 1,
+                        .pImage = pImage.Get(),
+                        .oldLayout = vk::ImageLayout::eTransferSrcOptimal,
+                        .newLayout = vk::ImageLayout::eShaderReadOnlyOptimal,
+                        .baseMipLevel = i - 1,
+                        .mipLevelCount = 1,
                     };
                     cmd->TransitionImage(shaderReadTransition);
 
@@ -320,11 +320,11 @@ namespace VkMana
 
                 // Transition last mip level to ShaderReadOnly
                 ImageTransitionInfo postTransitionInfo{
-                    .TargetImage = pImage.Get(),
-                    .OldLayout = vk::ImageLayout::eTransferDstOptimal,
-                    .NewLayout = vk::ImageLayout::eShaderReadOnlyOptimal,
-                    .BaseMipLevel = pImage->GetMipLevels() - 1,
-                    .MipLevelCount = 1,
+                    .pImage = pImage.Get(),
+                    .oldLayout = vk::ImageLayout::eTransferDstOptimal,
+                    .newLayout = vk::ImageLayout::eShaderReadOnlyOptimal,
+                    .baseMipLevel = pImage->GetMipLevels() - 1,
+                    .mipLevelCount = 1,
                 };
                 cmd->TransitionImage(postTransitionInfo);
             }
@@ -332,10 +332,10 @@ namespace VkMana
             {
                 // Transition all mip levels to ShaderReadOnly
                 ImageTransitionInfo postTransitionInfo{
-                    .TargetImage = pImage.Get(),
-                    .OldLayout = vk::ImageLayout::eTransferDstOptimal,
-                    .NewLayout = vk::ImageLayout::eShaderReadOnlyOptimal,
-                    .MipLevelCount = pImage->GetMipLevels(),
+                    .pImage = pImage.Get(),
+                    .oldLayout = vk::ImageLayout::eTransferDstOptimal,
+                    .newLayout = vk::ImageLayout::eShaderReadOnlyOptimal,
+                    .mipLevelCount = pImage->GetMipLevels(),
                 };
                 cmd->TransitionImage(postTransitionInfo);
             }
@@ -397,9 +397,9 @@ namespace VkMana
                 auto cmd = RequestCmd();
 
                 BufferCopyInfo copyInfo{
-                    .SrcBuffer = pStagingBuffer.Get(),
-                    .DstBuffer = pBuffer.Get(),
-                    .Size = info.size,
+                    .pSrcBuffer = pStagingBuffer.Get(),
+                    .pDstBuffer = pBuffer.Get(),
+                    .size = info.size,
                 };
                 cmd->CopyBuffer(copyInfo);
                 SubmitStaging(cmd);

@@ -10,11 +10,11 @@ namespace VkMana
 
     struct SetLayoutBinding
     {
-        uint32_t Binding = 0;
-        vk::DescriptorType Type;
-        uint32_t Count = 1;
-        vk::ShaderStageFlags StageFlags;
-        vk::DescriptorBindingFlags BindingFlags;
+        uint32_t binding = 0;
+        vk::DescriptorType type;
+        uint32_t count = 1;
+        vk::ShaderStageFlags stageFlags;
+        vk::DescriptorBindingFlags bindingFlags;
     };
 
     class SetLayout : public IntrusivePtrEnabled<SetLayout>
@@ -42,8 +42,8 @@ namespace VkMana
     public:
         ~DescriptorSet() = default;
 
-        void Write(const ImageView* image, const Sampler* sampler, uint32_t binding);
-        void Write(const Buffer* buffer, uint32_t binding, vk::DescriptorType descriptorType, uint64_t offset, uint64_t range);
+        void Write(const ImageView* pImage, const Sampler* pSampler, uint32_t binding);
+        void Write(uint32_t binding, const Buffer* pBuffer, uint64_t offset, uint64_t range, vk::DescriptorType descriptorType);
 
         void WriteArray(uint32_t binding, uint32_t arrayOffset, const std::vector<const ImageView*>& images, const Sampler* sampler);
 

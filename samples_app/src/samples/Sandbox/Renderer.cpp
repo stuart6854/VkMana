@@ -278,11 +278,11 @@ namespace VkMana::SamplesApp
 
         auto cameraSet = m_ctx->RequestDescriptorSet(m_cameraSetLayout.Get());
         cameraSet->Write(
-            m_cameraUniformBuffer.Get(),
             0,
-            vk::DescriptorType::eUniformBuffer,
+            m_cameraUniformBuffer.Get(),
             sizeof(CameraUniformData) * m_ctx->GetFrameIndex(),
-            sizeof(CameraUniformData)
+            sizeof(CameraUniformData),
+            vk::DescriptorType::eUniformBuffer
         );
 
         cmd->BeginRenderPass(m_gBufferPass);

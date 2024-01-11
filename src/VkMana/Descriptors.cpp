@@ -17,12 +17,12 @@ namespace VkMana
     {
     }
 
-    void DescriptorSet::Write(const ImageView* image, const Sampler* sampler, uint32_t binding)
+    void DescriptorSet::Write(const ImageView* pImage, const Sampler* pSampler, uint32_t binding)
     {
         vk::DescriptorImageInfo imageInfo{};
-        imageInfo.setImageView(image->GetView());
+        imageInfo.setImageView(pImage->GetView());
         imageInfo.setImageLayout(vk::ImageLayout::eShaderReadOnlyOptimal);
-        imageInfo.setSampler(sampler->GetSampler());
+        imageInfo.setSampler(pSampler->GetSampler());
 
         vk::WriteDescriptorSet write{};
         write.setDescriptorType(vk::DescriptorType::eCombinedImageSampler);
@@ -33,10 +33,10 @@ namespace VkMana
         m_ctx->GetDevice().updateDescriptorSets(write, {});
     }
 
-    void DescriptorSet::Write(const Buffer* buffer, uint32_t binding, vk::DescriptorType descriptorType, uint64_t offset, uint64_t range)
+    void DescriptorSet::Write(uint32_t binding, const Buffer* pBuffer, uint64_t offset, uint64_t range, vk::DescriptorType descriptorType)
     {
         vk::DescriptorBufferInfo bufferInfo{};
-        bufferInfo.setBuffer(buffer->GetBuffer());
+        bufferInfo.setBuffer(pBuffer->GetBuffer());
         bufferInfo.setOffset(offset);
         bufferInfo.setRange(range);
 

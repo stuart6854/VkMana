@@ -171,15 +171,15 @@ namespace VkMana
 
     auto Context::CreateSetLayout(std::vector<SetLayoutBinding> bindings) -> SetLayoutHandle
     {
-        std::sort(bindings.begin(), bindings.end(), [](const auto& a, const auto& b) { return a.Binding < b.Binding; });
+        std::sort(bindings.begin(), bindings.end(), [](const auto& a, const auto& b) { return a.binding < b.binding; });
 
         std::vector<vk::DescriptorSetLayoutBinding> layoutBindings(bindings.size());
         std::vector<vk::DescriptorBindingFlags> bindingFlags(bindings.size());
         for(auto i = 0u; i < bindings.size(); ++i)
         {
             const auto& binding = bindings[i];
-            layoutBindings[i] = { binding.Binding, binding.Type, binding.Count, binding.StageFlags };
-            bindingFlags[i] = binding.BindingFlags;
+            layoutBindings[i] = { binding.binding, binding.type, binding.count, binding.stageFlags };
+            bindingFlags[i] = binding.bindingFlags;
         }
 
         size_t hash = 0;

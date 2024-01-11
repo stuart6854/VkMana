@@ -4,67 +4,70 @@
 
 namespace VkMana
 {
-	QueryPool::~QueryPool()
-	{
-		m_ctx->GetDevice().destroy(m_pool);
-	}
+    auto QueryPool::New(Context* pContext, const QueryPoolCreateInfo& info) -> QueryPoolHandle
+    {
+        vk::QueryPoolCreateInfo poolInfo{};
+        poolInfo.setQueryType(info.queryType);
+        poolInfo.setQueryCount(info.queryCount);
+        poolInfo.setPipelineStatistics(info.pipelineStatistics);
+        auto pool = pContext->GetDevice().createQueryPool(poolInfo);
 
-	void QueryPool::ResetQueries(uint32_t firstQuery, uint32_t queryCount) const
-	{
-		m_ctx->GetDevice().resetQueryPool(m_pool, firstQuery, queryCount);
-	}
+        return IntrusivePtr(new QueryPool(pContext, pool, info.queryCount));
+    }
 
-	bool QueryPool::GetResults32(
-		std::vector<uint32_t>& outResults, uint32_t firstQuery, uint32_t queryCount, vk::QueryResultFlags resultFlags) const
-	{
-		assert(!(resultFlags & vk::QueryResultFlagBits::e64));
+    QueryPool::~QueryPool() { m_ctx->GetDevice().destroy(m_pool); }
 
-		auto bufferSize = queryCount;
-		auto stride = sizeof(uint32_t);
-		if (resultFlags & vk::QueryResultFlagBits::eWithAvailability)
-		{
-			bufferSize += queryCount;
-			stride += sizeof(uint32_t);
-		}
-		if (resultFlags & vk::QueryResultFlagBits::eWithStatusKHR)
-		{
-			bufferSize += 1;
-		}
-		outResults.resize(bufferSize);
+    void QueryPool::ResetQueries(uint32_t firstQuery, uint32_t queryCount) const { m_ctx->GetDevice().resetQueryPool(m_pool, firstQuery, queryCount); }
 
-		const auto result = m_ctx->GetDevice().getQueryPoolResults(
-			m_pool, firstQuery, queryCount, bufferSize * sizeof(uint32_t), outResults.data(), stride, resultFlags);
-		return result == vk::Result::eSuccess;
-	}
+    bool QueryPool::GetResults32(std::vector<uint32_t>& outResults, uint32_t firstQuery, uint32_t queryCount, vk::QueryResultFlags resultFlags) const
+    {
+        assert(!(resultFlags & vk::QueryResultFlagBits::e64));
 
-	bool QueryPool::GetResults64(
-		std::vector<uint64_t>& outResults, uint32_t firstQuery, uint32_t queryCount, vk::QueryResultFlags resultFlags) const
-	{
-		resultFlags |= vk::QueryResultFlagBits::e64;
+        auto bufferSize = queryCount;
+        auto stride = sizeof(uint32_t);
+        if(resultFlags & vk::QueryResultFlagBits::eWithAvailability)
+        {
+            bufferSize += queryCount;
+            stride += sizeof(uint32_t);
+        }
+        if(resultFlags & vk::QueryResultFlagBits::eWithStatusKHR)
+        {
+            bufferSize += 1;
+        }
+        outResults.resize(bufferSize);
 
-		auto bufferSize = queryCount;
-		auto stride = sizeof(uint64_t);
-		if (resultFlags & vk::QueryResultFlagBits::eWithAvailability)
-		{
-			bufferSize += queryCount;
-			stride += sizeof(uint64_t);
-		}
-		if (resultFlags & vk::QueryResultFlagBits::eWithStatusKHR)
-		{
-			bufferSize += 1;
-		}
-		outResults.resize(bufferSize);
+        const auto result
+            = m_ctx->GetDevice().getQueryPoolResults(m_pool, firstQuery, queryCount, bufferSize * sizeof(uint32_t), outResults.data(), stride, resultFlags);
+        return result == vk::Result::eSuccess;
+    }
 
-		const auto result = m_ctx->GetDevice().getQueryPoolResults(
-			m_pool, firstQuery, queryCount, bufferSize * sizeof(uint64_t), outResults.data(), stride, resultFlags);
-		return result == vk::Result::eSuccess;
-	}
+    bool QueryPool::GetResults64(std::vector<uint64_t>& outResults, uint32_t firstQuery, uint32_t queryCount, vk::QueryResultFlags resultFlags) const
+    {
+        resultFlags |= vk::QueryResultFlagBits::e64;
 
-	QueryPool::QueryPool(Context* context, vk::QueryPool pool, uint32_t queryCount)
-		: m_ctx(context)
-		, m_pool(pool)
-		, m_queryCount(queryCount)
-	{
-	}
+        auto bufferSize = queryCount;
+        auto stride = sizeof(uint64_t);
+        if(resultFlags & vk::QueryResultFlagBits::eWithAvailability)
+        {
+            bufferSize += queryCount;
+            stride += sizeof(uint64_t);
+        }
+        if(resultFlags & vk::QueryResultFlagBits::eWithStatusKHR)
+        {
+            bufferSize += 1;
+        }
+        outResults.resize(bufferSize);
+
+        const auto result
+            = m_ctx->GetDevice().getQueryPoolResults(m_pool, firstQuery, queryCount, bufferSize * sizeof(uint64_t), outResults.data(), stride, resultFlags);
+        return result == vk::Result::eSuccess;
+    }
+
+    QueryPool::QueryPool(Context* pContext, vk::QueryPool pool, uint32_t queryCount)
+        : m_ctx(pContext)
+        , m_pool(pool)
+        , m_queryCount(queryCount)
+    {
+    }
 
 } // namespace VkMana

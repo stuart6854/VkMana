@@ -41,68 +41,71 @@ void main()
 
 namespace VkMana::SamplesApp
 {
-	bool SampleHelloTriangle::Onload(SamplesApp& app, Context& ctx)
-	{
-		const PipelineLayoutCreateInfo pipelineLayoutInfo{};
-		auto pipelineLayout = ctx.CreatePipelineLayout(pipelineLayoutInfo);
+    bool SampleHelloTriangle::OnLoad(SamplesApp& app, Context& ctx)
+    {
+        const PipelineLayoutCreateInfo pipelineLayoutInfo{};
+        auto pipelineLayout = ctx.CreatePipelineLayout(pipelineLayoutInfo);
+        // #TODO: pipelineLayout->SetName("Triangle");
 
-		ShaderCompileInfo compileInfo{
-			.SrcLanguage = SourceLanguage::GLSL,
-			.SrcFilename = "",
-			.SrcString = TriangleVertexShaderSrc,
-			.Stage = vk::ShaderStageFlagBits::eVertex,
-			.Debug = true,
-		};
-		const auto vertSpirvOpt = CompileShader(compileInfo);
-		if (!vertSpirvOpt)
-		{
-			VM_ERR("Failed to compiler VERTEX shader.");
-			return false;
-		}
+        ShaderCompileInfo compileInfo{
+            .srcLanguage = SourceLanguage::GLSL,
+            .pSrcFilenameStr = "",
+            .pSrcStringStr = TriangleVertexShaderSrc.c_str(),
+            .stage = vk::ShaderStageFlagBits::eVertex,
+            .debug = true,
+        };
+        const auto vertSpirvOpt = CompileShader(compileInfo);
+        if(!vertSpirvOpt)
+        {
+            VM_ERR("Failed to compiler VERTEX shader.");
+            return false;
+        }
 
-		compileInfo.SrcString = TriangleFragmentShaderSrc;
-		compileInfo.Stage = vk::ShaderStageFlagBits::eFragment;
-		const auto fragSpirvOpt = CompileShader(compileInfo);
-		if (!fragSpirvOpt)
-		{
-			VM_ERR("Failed to compiler FRAGMENT shader.");
-			return false;
-		}
+        compileInfo.pSrcStringStr = TriangleFragmentShaderSrc.c_str();
+        compileInfo.stage = vk::ShaderStageFlagBits::eFragment;
+        const auto fragSpirvOpt = CompileShader(compileInfo);
+        if(!fragSpirvOpt)
+        {
+            VM_ERR("Failed to compiler FRAGMENT shader.");
+            return false;
+        }
 
-		const GraphicsPipelineCreateInfo pipelineInfo{
-			.Vertex = vertSpirvOpt.value(),
-			.Fragment = fragSpirvOpt.value(),
-			.Topology = vk::PrimitiveTopology::eTriangleList,
-			.ColorTargetFormats = { vk::Format::eB8G8R8A8Srgb },
-			.Layout = pipelineLayout,
-		};
-		m_pipeline = ctx.CreateGraphicsPipeline(pipelineInfo);
+        const auto& vsByteCode = vertSpirvOpt.value();
+        const auto& fsByteCode = fragSpirvOpt.value();
 
-		return m_pipeline != nullptr;
-	}
+        const GraphicsPipelineCreateInfo pipelineInfo{
+            .vs = { vsByteCode.data(), uint32_t(vsByteCode.size()) },
+            .fs = { fsByteCode.data(), uint32_t(fsByteCode.size()) },
+            .primitiveTopology = vk::PrimitiveTopology::eTriangleList,
+            .colorTargetCount = 1,
+            .colorFormats = { vk::Format::eB8G8R8A8Srgb },
+            .pPipelineLayout = pipelineLayout,
+        };
+        m_pipeline = ctx.CreateGraphicsPipeline(pipelineInfo);
+        m_pipeline->SetDebugName("Triangle");
 
-	void SampleHelloTriangle::OnUnload(SamplesApp& app, Context& ctx)
-	{
-		m_pipeline = nullptr;
-	}
+        return m_pipeline != nullptr;
+    }
 
-	void SampleHelloTriangle::Tick(float deltaTime, SamplesApp& app, Context& ctx)
-	{
-		auto& window = app.GetWindow();
-		const auto windowWidth = window.GetSurfaceWidth();
-		const auto windowHeight = window.GetSurfaceHeight();
+    void SampleHelloTriangle::OnUnload(SamplesApp& app, Context& ctx) { m_pipeline = nullptr; }
 
-		auto cmd = ctx.RequestCmd();
+    void SampleHelloTriangle::Tick(float deltaTime, SamplesApp& app, Context& ctx)
+    {
+        auto& window = app.GetWindow();
+        const auto windowWidth = window.GetSurfaceWidth();
+        const auto windowHeight = window.GetSurfaceHeight();
 
-		const auto rpInfo = ctx.GetSurfaceRenderPass(&app.GetWindow());
-		cmd->BeginRenderPass(rpInfo);
-		cmd->BindPipeline(m_pipeline.Get());
-		cmd->SetViewport(0, 0, float(windowWidth), float(windowHeight));
-		cmd->SetScissor(0, 0, windowWidth, windowHeight);
-		cmd->Draw(3, 0);
-		cmd->EndRenderPass();
+        auto cmd = ctx.RequestCmd();
+        // #TODO: cmd->SetName("Main");
 
-		ctx.Submit(cmd);
-	}
+        cmd->BeginRenderPass(app.GetSwapChain()->GetRenderPass());
+        cmd->BindPipeline(m_pipeline.Get());
+        cmd->SetViewport(0, 0, float(windowWidth), float(windowHeight));
+        cmd->SetScissor(0, 0, windowWidth, windowHeight);
+        cmd->Draw(3, 0);
+        cmd->EndRenderPass();
+
+        ctx.Submit(cmd);
+    }
 
 } // namespace VkMana::SamplesApp

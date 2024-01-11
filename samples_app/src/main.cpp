@@ -5,18 +5,18 @@
 
 int main()
 {
-	using namespace VkMana::SamplesApp;
+    using namespace VkMana::SamplesApp;
 
-	SamplesApp app{};
+    SamplesApp app{};
 
-	/* Add Samples */
-	app.AddSample<SampleHelloTriangle>();
-	app.AddSample<SampleModelLoading>();
+    /* Add Samples */
+    app.AddSample<SampleHelloTriangle>();
+    app.AddSample<SampleModelLoading>();
 
-	app.AddSample<SampleSandbox>();
+    app.AddSample<SampleSandbox>();
 
-	/* Run App */
-	app.Run();
+    /* Run App */
+    app.Run();
 
-	return 0;
+    return 0;
 }

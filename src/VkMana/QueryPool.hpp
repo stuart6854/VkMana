@@ -1,43 +1,43 @@
 #pragma once
 
-#include "Vulkan_Common.hpp"
+#include "VulkanCommon.hpp"
 
 namespace VkMana
 {
-	class Context;
+    class Context;
 
-	struct QueryPoolCreateInfo
-	{
-		vk::QueryType queryType;
-		uint32_t queryCount;
-		vk::QueryPipelineStatisticFlags pipelineStatistics;
-	};
+    struct QueryPoolCreateInfo
+    {
+        vk::QueryType queryType;
+        uint32_t queryCount;
+        vk::QueryPipelineStatisticFlags pipelineStatistics;
+    };
 
-	class QueryPool : public IntrusivePtrEnabled<QueryPool>
-	{
-	public:
-		~QueryPool();
+    class QueryPool;
+    using QueryPoolHandle = IntrusivePtr<QueryPool>;
 
-		void ResetQueries(uint32_t firstQuery, uint32_t queryCount) const;
+    class QueryPool : public IntrusivePtrEnabled<QueryPool>
+    {
+    public:
+        static auto New(Context* pContext, const QueryPoolCreateInfo& info) -> QueryPoolHandle;
 
-		bool GetResults32(
-			std::vector<uint32_t>& outResults, uint32_t firstQuery, uint32_t queryCount, vk::QueryResultFlags resultFlags = {}) const;
-		bool GetResults64(
-			std::vector<uint64_t>& outResults, uint32_t firstQuery, uint32_t queryCount, vk::QueryResultFlags resultFlags = {}) const;
+        ~QueryPool();
 
-		auto GetPool() const -> auto { return m_pool; }
-		auto GetQueryCount() const -> auto { return m_queryCount; }
+        void ResetQueries(uint32_t firstQuery, uint32_t queryCount) const;
 
-	private:
-		friend class Context;
+        bool GetResults32(std::vector<uint32_t>& outResults, uint32_t firstQuery, uint32_t queryCount, vk::QueryResultFlags resultFlags = {}) const;
+        bool GetResults64(std::vector<uint64_t>& outResults, uint32_t firstQuery, uint32_t queryCount, vk::QueryResultFlags resultFlags = {}) const;
 
-		QueryPool(Context* context, vk::QueryPool pool, uint32_t queryCount);
+        auto GetPool() const -> auto { return m_pool; }
+        auto GetQueryCount() const -> auto { return m_queryCount; }
 
-	private:
-		Context* m_ctx;
-		vk::QueryPool m_pool;
-		uint32_t m_queryCount;
-	};
-	using QueryPoolHandle = IntrusivePtr<QueryPool>;
+    private:
+        QueryPool(Context* pContext, vk::QueryPool pool, uint32_t queryCount);
+
+    private:
+        Context* m_ctx;
+        vk::QueryPool m_pool;
+        uint32_t m_queryCount;
+    };
 
 } // namespace VkMana

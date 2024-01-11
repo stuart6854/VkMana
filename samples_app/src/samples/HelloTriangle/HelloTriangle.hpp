@@ -6,22 +6,22 @@
 
 namespace VkMana::SamplesApp
 {
-	class SampleHelloTriangle final : public SampleBase
-	{
-	public:
-		explicit SampleHelloTriangle()
-			: SampleBase("Hello Triangle")
-		{
-		}
-		~SampleHelloTriangle() override = default;
+    class SampleHelloTriangle final : public SampleBase
+    {
+    public:
+        explicit SampleHelloTriangle()
+            : SampleBase("Hello Triangle")
+        {
+        }
+        ~SampleHelloTriangle() override = default;
 
-		bool Onload(SamplesApp& app, Context& ctx) override;
-		void OnUnload(SamplesApp& app, Context& ctx) override;
+        bool OnLoad(SamplesApp& app, Context& ctx) override;
+        void OnUnload(SamplesApp& app, Context& ctx) override;
 
-		void Tick(float deltaTime, SamplesApp& app, Context& ctx) override;
+        void Tick(float deltaTime, SamplesApp& app, Context& ctx) override;
 
-	private:
-		PipelineHandle m_pipeline = nullptr;
-	};
+    private:
+        PipelineHandle m_pipeline = nullptr;
+    };
 
 } // namespace VkMana::SamplesApp

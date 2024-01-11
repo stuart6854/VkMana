@@ -52,220 +52,229 @@ void main()
 
 namespace VkMana::SamplesApp
 {
-	bool SampleModelLoading::Onload(SamplesApp& app, Context& ctx)
-	{
-		auto& window = app.GetWindow();
+    bool SampleModelLoading::OnLoad(SamplesApp& app, Context& ctx)
+    {
+        auto& window = app.GetWindow();
 
-		auto depthImageInfo = VkMana::ImageCreateInfo::DepthStencilTarget(window.GetSurfaceWidth(), window.GetSurfaceHeight(), false);
-		m_depthTarget = ctx.CreateImage(depthImageInfo, nullptr);
+        auto depthImageInfo = VkMana::ImageCreateInfo::DepthStencilTarget(window.GetSurfaceWidth(), window.GetSurfaceHeight(), false);
+        m_depthTarget = ctx.CreateImage(depthImageInfo, nullptr);
 
-		std::vector<VkMana::SetLayoutBinding> setBindings{
-			{ 0, vk::DescriptorType::eCombinedImageSampler, 1, vk::ShaderStageFlagBits::eFragment },
-		};
-		m_setLayout = ctx.CreateSetLayout(setBindings);
+        std::vector<VkMana::SetLayoutBinding> setBindings{
+            { 0, vk::DescriptorType::eCombinedImageSampler, 1, vk::ShaderStageFlagBits::eFragment },
+        };
+        m_setLayout = ctx.CreateSetLayout(setBindings);
+        // #TODO: m_setLayout->SetDebugName("ModelLoading")
 
-		VkMana::PipelineLayoutCreateInfo pipelineLayoutInfo{
+        VkMana::PipelineLayoutCreateInfo pipelineLayoutInfo{
 			.PushConstantRange = { vk::ShaderStageFlagBits::eVertex, 0, 192 },
 			.SetLayouts = {
 				m_setLayout.Get(),
 		   },
 	   };
-		m_pipelineLayout = ctx.CreatePipelineLayout(pipelineLayoutInfo);
+        m_pipelineLayout = ctx.CreatePipelineLayout(pipelineLayoutInfo);
+        // #TODO: m_pipelineLayout->SetDebugName("ModelLoading")
 
-		ShaderCompileInfo compileInfo{
-			.SrcLanguage = SourceLanguage::GLSL,
-			.SrcFilename = "",
-			.SrcString = VertexShaderSrc,
-			.Stage = vk::ShaderStageFlagBits::eVertex,
-			.Debug = true,
-		};
-		const auto vertSpirvOpt = CompileShader(compileInfo);
-		if (!vertSpirvOpt)
-		{
-			VM_ERR("Failed to compiler VERTEX shader.");
-			return false;
-		}
+        ShaderCompileInfo compileInfo{
+            .srcLanguage = SourceLanguage::GLSL,
+            .pSrcFilenameStr = "",
+            .pSrcStringStr = VertexShaderSrc.c_str(),
+            .stage = vk::ShaderStageFlagBits::eVertex,
+            .debug = true,
+        };
+        const auto vertSpirvOpt = CompileShader(compileInfo);
+        if(!vertSpirvOpt)
+        {
+            VM_ERR("Failed to compiler VERTEX shader.");
+            return false;
+        }
 
-		compileInfo.SrcString = FragmentShaderSrc;
-		compileInfo.Stage = vk::ShaderStageFlagBits::eFragment;
-		const auto fragSpirvOpt = CompileShader(compileInfo);
-		if (!fragSpirvOpt)
-		{
-			VM_ERR("Failed to compiler FRAGMENT shader.");
-			return false;
-		}
+        compileInfo.pSrcStringStr = FragmentShaderSrc.c_str();
+        compileInfo.stage = vk::ShaderStageFlagBits::eFragment;
+        const auto fragSpirvOpt = CompileShader(compileInfo);
+        if(!fragSpirvOpt)
+        {
+            VM_ERR("Failed to compiler FRAGMENT shader.");
+            return false;
+        }
 
-		const VkMana::GraphicsPipelineCreateInfo pipelineInfo{
-			.Vertex = vertSpirvOpt.value(),
-			.Fragment = fragSpirvOpt.value(),
-			.VertexAttributes = {
-				vk::VertexInputAttributeDescription(0, 0, vk::Format::eR32G32B32Sfloat, offsetof(Vertex, Position)),
-				vk::VertexInputAttributeDescription(1, 0, vk::Format::eR32G32B32Sfloat, offsetof(Vertex, Normal)),
-				vk::VertexInputAttributeDescription(2, 0, vk::Format::eR32G32Sfloat, offsetof(Vertex, TexCoord)),
-			},
-			.VertexBindings = {
-				vk::VertexInputBindingDescription(0, sizeof(Vertex), vk::VertexInputRate::eVertex),
-			},
-			.Topology = vk::PrimitiveTopology::eTriangleList,
-			.ColorTargetFormats = { vk::Format::eB8G8R8A8Srgb },
-			.DepthTargetFormat = vk::Format::eD24UnormS8Uint,
-			.Layout = m_pipelineLayout,
-		};
-		m_pipeline = ctx.CreateGraphicsPipeline(pipelineInfo);
-		if (m_pipeline == nullptr)
-			return false;
+        const VkMana::GraphicsPipelineCreateInfo pipelineInfo{
+            .vs = { vertSpirvOpt.value().data(), uint32_t(vertSpirvOpt.value().size()) },
+            .fs = { fragSpirvOpt.value().data(), uint32_t(fragSpirvOpt.value().size()) },
+            .vertexAttributes = {
+                    vk::VertexInputAttributeDescription(0, 0, vk::Format::eR32G32B32Sfloat, offsetof(Vertex, Position)),
+                    vk::VertexInputAttributeDescription(1, 0, vk::Format::eR32G32B32Sfloat, offsetof(Vertex, Normal)),
+                    vk::VertexInputAttributeDescription(2, 0, vk::Format::eR32G32Sfloat, offsetof(Vertex, TexCoord)),
+            },
+            .vertexBindings = {
+                    vk::VertexInputBindingDescription(0, sizeof(Vertex), vk::VertexInputRate::eVertex),
+            },
+            .primitiveTopology = vk::PrimitiveTopology::eTriangleList,
+            .colorTargetCount = 1,
+            .colorFormats = { vk::Format::eB8G8R8A8Srgb },
+            .depthStencilFormat = vk::Format::eD24UnormS8Uint,
+            .pPipelineLayout = m_pipelineLayout,
+        };
+        m_pipeline = ctx.CreateGraphicsPipeline(pipelineInfo);
+        if(m_pipeline == nullptr)
+            return false;
 
-		if (!LoadObjMesh(m_mesh, ctx, "assets/models/viking_room.obj"))
-		{
-			VM_ERR("Failed to load mesh.");
-			return false;
-		}
+        m_pipeline->SetDebugName("ModelLoading");
 
-		if (!LoadTexture(m_texture, ctx, "assets/models/viking_room.png"))
-		{
-			VM_ERR("Failed to load texture.");
-			return false;
-		}
+        if(!LoadObjMesh(m_mesh, ctx, "assets/models/viking_room.obj"))
+        {
+            VM_ERR("Failed to load mesh.");
+            return false;
+        }
+        m_mesh.IndexBuffer->SetDebugName("VikingRoom_Index");
+        m_mesh.VertexBuffer->SetDebugName("VikingRoom_Vertex");
 
-		m_pushConsts.viewMatrix = glm::lookAtLH(glm::vec3(-1, 0.5f, -1), glm::vec3(0, -0.2f, 0), glm::vec3(0, 1, 0));
-		m_pushConsts.modelMatrix = glm::mat4(1.0f);
+        if(!LoadTexture(m_texture, ctx, "assets/models/viking_room.png"))
+        {
+            VM_ERR("Failed to load texture.");
+            return false;
+        }
+        m_texture->SetDebugName("VikingRoom");
 
-		return true;
-	}
+        m_pushConsts.viewMatrix = glm::lookAtLH(glm::vec3(-1, 0.5f, -1), glm::vec3(0, -0.2f, 0), glm::vec3(0, 1, 0));
+        m_pushConsts.modelMatrix = glm::mat4(1.0f);
 
-	void SampleModelLoading::OnUnload(SamplesApp& app, Context& ctx)
-	{
-		m_mesh = {};
-		m_texture = nullptr;
-		m_pipeline = nullptr;
-		m_pipelineLayout = nullptr;
-		m_setLayout = nullptr;
-		m_depthTarget = nullptr;
-	}
+        return true;
+    }
 
-	void SampleModelLoading::Tick(float deltaTime, SamplesApp& app, Context& ctx)
-	{
-		auto& window = app.GetWindow();
-		const auto windowWidth = window.GetSurfaceWidth();
-		const auto windowHeight = window.GetSurfaceHeight();
-		const auto windowAspect = float(windowWidth) / float(windowHeight);
+    void SampleModelLoading::OnUnload(SamplesApp& app, Context& ctx)
+    {
+        m_mesh = {};
+        m_texture = nullptr;
+        m_pipeline = nullptr;
+        m_pipelineLayout = nullptr;
+        m_setLayout = nullptr;
+        m_depthTarget = nullptr;
+    }
 
-		m_pushConsts.projMatrix = glm::perspectiveLH_ZO(glm::radians(60.0f), windowAspect, 0.1f, 600.0f);
+    void SampleModelLoading::Tick(float deltaTime, SamplesApp& app, Context& ctx)
+    {
+        auto& window = app.GetWindow();
+        const auto windowWidth = window.GetSurfaceWidth();
+        const auto windowHeight = window.GetSurfaceHeight();
+        const auto windowAspect = float(windowWidth) / float(windowHeight);
 
-		auto cmd = ctx.RequestCmd();
+        m_pushConsts.projMatrix = glm::perspectiveLH_ZO(glm::radians(60.0f), windowAspect, 0.1f, 600.0f);
 
-		auto textureSet = ctx.RequestDescriptorSet(m_setLayout.Get());
-		textureSet->Write(m_texture->GetImageView(VkMana::ImageViewType::Texture), ctx.GetLinearSampler(), 0);
-		const auto rpDepthTarget =
-			VkMana::RenderPassTarget::DefaultDepthStencilTarget(m_depthTarget->GetImageView(VkMana::ImageViewType::RenderTarget));
-		auto rpInfo = ctx.GetSurfaceRenderPass(&window);
-		rpInfo.Targets.push_back(rpDepthTarget);
+        auto cmd = ctx.RequestCmd();
+        // #TODO: cmd->SetDebugName("Main")
 
-		cmd->BeginRenderPass(rpInfo);
-		cmd->BindPipeline(m_pipeline.Get());
-		cmd->SetViewport(0, float(windowHeight), float(windowWidth), -float(windowHeight));
-		cmd->SetScissor(0, 0, windowWidth, windowHeight);
-		cmd->BindDescriptorSets(0, { textureSet.Get() }, {});
-		cmd->SetPushConstants(vk::ShaderStageFlagBits::eVertex, 0, sizeof(PushConstants), &m_pushConsts);
-		cmd->BindIndexBuffer(m_mesh.IndexBuffer.Get());
-		cmd->BindVertexBuffers(0, { m_mesh.VertexBuffer.Get() }, { 0 });
-		cmd->DrawIndexed(m_mesh.IndexCount, 0, 0);
-		cmd->EndRenderPass();
+        auto textureSet = ctx.RequestDescriptorSet(m_setLayout.Get());
+        // #TODO: textureSet->SetDebugName("ModelLoading_Texture")
+        textureSet->Write(m_texture->GetImageView(VkMana::ImageViewType::Texture), ctx.GetLinearSampler(), 0);
+        const auto rpDepthTarget = VkMana::RenderPassTarget::DefaultDepthStencilTarget(m_depthTarget->GetImageView(VkMana::ImageViewType::RenderTarget));
+        auto rpInfo = app.GetSwapChain()->GetRenderPass();
+        rpInfo.targets.push_back(rpDepthTarget);
 
-		ctx.Submit(cmd);
-	}
+        cmd->BeginRenderPass(rpInfo);
+        cmd->BindPipeline(m_pipeline.Get());
+        cmd->SetViewport(0, float(windowHeight), float(windowWidth), -float(windowHeight));
+        cmd->SetScissor(0, 0, windowWidth, windowHeight);
+        cmd->BindDescriptorSets(0, { textureSet.Get() }, {});
+        cmd->SetPushConstants(vk::ShaderStageFlagBits::eVertex, 0, sizeof(PushConstants), &m_pushConsts);
+        cmd->BindIndexBuffer(m_mesh.IndexBuffer.Get());
+        cmd->BindVertexBuffers(0, { m_mesh.VertexBuffer.Get() }, { 0 });
+        cmd->DrawIndexed(m_mesh.IndexCount, 0, 0);
+        cmd->EndRenderPass();
 
-	bool SampleModelLoading::LoadObjMesh(Mesh& outMesh, VkMana::Context& ctx, const std::string& filename)
-	{
-		std::vector<Vertex> vertices;
-		std::vector<uint16_t> indices;
+        ctx.Submit(cmd);
+    }
 
-		tinyobj::attrib_t attrib;
-		std::vector<tinyobj::shape_t> shapes;
-		std::vector<tinyobj::material_t> materials;
-		std::string warn;
-		std::string err;
+    bool SampleModelLoading::LoadObjMesh(Mesh& outMesh, VkMana::Context& ctx, const std::string& filename)
+    {
+        std::vector<Vertex> vertices;
+        std::vector<uint16_t> indices;
 
-		if (!tinyobj::LoadObj(&attrib, &shapes, &materials, &warn, &err, filename.c_str()))
-		{
-			VM_ERR("{}", err);
-			if (!warn.empty())
-				VM_WARN("{}", warn);
-			return false;
-		}
+        tinyobj::attrib_t attrib;
+        std::vector<tinyobj::shape_t> shapes;
+        std::vector<tinyobj::material_t> materials;
+        std::string warn;
+        std::string err;
 
-		std::unordered_map<Vertex, uint16_t> uniqueVertices{};
+        if(!tinyobj::LoadObj(&attrib, &shapes, &materials, &warn, &err, filename.c_str()))
+        {
+            VM_ERR("{}", err);
+            if(!warn.empty())
+                VM_WARN("{}", warn);
+            return false;
+        }
 
-		for (const auto& shape : shapes)
-		{
-			for (const auto& index : shape.mesh.indices)
-			{
-				Vertex vertex{};
-				vertex.Position = {
-					attrib.vertices[3 * index.vertex_index + 0],
-					attrib.vertices[3 * index.vertex_index + 1],
-					attrib.vertices[3 * index.vertex_index + 2],
-				};
-				vertex.Normal = {
-					attrib.normals[3 * index.normal_index + 0],
-					attrib.normals[3 * index.normal_index + 1],
-					attrib.normals[3 * index.normal_index + 2],
-				};
-				vertex.TexCoord = {
-					attrib.texcoords[2 * index.texcoord_index + 0],
-					attrib.texcoords[2 * index.texcoord_index + 1],
-				};
-				if (!uniqueVertices.contains(vertex))
-				{
-					uniqueVertices[vertex] = uint16_t(vertices.size());
-					vertices.push_back(vertex);
-				}
+        std::unordered_map<Vertex, uint16_t> uniqueVertices{};
 
-				indices.push_back(uniqueVertices[vertex]);
-			}
-		}
+        for(const auto& shape : shapes)
+        {
+            for(const auto& index : shape.mesh.indices)
+            {
+                Vertex vertex{};
+                vertex.Position = {
+                    attrib.vertices[3 * index.vertex_index + 0],
+                    attrib.vertices[3 * index.vertex_index + 1],
+                    attrib.vertices[3 * index.vertex_index + 2],
+                };
+                vertex.Normal = {
+                    attrib.normals[3 * index.normal_index + 0],
+                    attrib.normals[3 * index.normal_index + 1],
+                    attrib.normals[3 * index.normal_index + 2],
+                };
+                vertex.TexCoord = {
+                    attrib.texcoords[2 * index.texcoord_index + 0],
+                    attrib.texcoords[2 * index.texcoord_index + 1],
+                };
+                if(!uniqueVertices.contains(vertex))
+                {
+                    uniqueVertices[vertex] = uint16_t(vertices.size());
+                    vertices.push_back(vertex);
+                }
 
-		VkMana::BufferDataSource vtxDataSrc{
-			.Size = sizeof(Vertex) * vertices.size(),
-			.Data = vertices.data(),
-		};
-		auto vtxBufferInfo = VkMana::BufferCreateInfo::Vertex(vtxDataSrc.Size);
-		outMesh.VertexBuffer = ctx.CreateBuffer(vtxBufferInfo, &vtxDataSrc);
+                indices.push_back(uniqueVertices[vertex]);
+            }
+        }
 
-		VkMana::BufferDataSource idxDataSrc{
-			.Size = sizeof(uint16_t) * indices.size(),
-			.Data = indices.data(),
-		};
-		auto idxBufferInfo = VkMana::BufferCreateInfo::Index(idxDataSrc.Size);
-		outMesh.IndexBuffer = ctx.CreateBuffer(idxBufferInfo, &idxDataSrc);
+        VkMana::BufferDataSource vtxDataSrc{
+            .size = sizeof(Vertex) * vertices.size(),
+            .pData = vertices.data(),
+        };
+        auto vtxBufferInfo = VkMana::BufferCreateInfo::Vertex(vtxDataSrc.size);
+        outMesh.VertexBuffer = ctx.CreateBuffer(vtxBufferInfo, &vtxDataSrc);
 
-		outMesh.IndexCount = indices.size();
+        VkMana::BufferDataSource idxDataSrc{
+            .size = sizeof(uint16_t) * indices.size(),
+            .pData = indices.data(),
+        };
+        auto idxBufferInfo = VkMana::BufferCreateInfo::Index(idxDataSrc.size);
+        outMesh.IndexBuffer = ctx.CreateBuffer(idxBufferInfo, &idxDataSrc);
 
-		return true;
-	}
+        outMesh.IndexCount = indices.size();
 
-	bool SampleModelLoading::LoadTexture(VkMana::ImageHandle& outImage, VkMana::Context& ctx, const std::string& filename)
-	{
-		int32_t width;
-		int32_t height;
-		int32_t comps;
-		stbi_set_flip_vertically_on_load(true);
-		auto* pixels = stbi_load(filename.c_str(), &width, &height, &comps, 4);
-		if (!pixels)
-		{
-			VM_ERR("Failed to load image: {}", filename);
-			return false;
-		}
+        return true;
+    }
 
-		auto imageInfo = VkMana::ImageCreateInfo::Texture(width, height);
-		VkMana::ImageDataSource dataSource{
-			.Size = uint32_t(width * height * 4),
-			.Data = pixels,
-		};
-		outImage = ctx.CreateImage(imageInfo, &dataSource);
+    bool SampleModelLoading::LoadTexture(VkMana::ImageHandle& outImage, VkMana::Context& ctx, const std::string& filename)
+    {
+        int32_t width;
+        int32_t height;
+        int32_t comps;
+        stbi_set_flip_vertically_on_load(true);
+        auto* pixels = stbi_load(filename.c_str(), &width, &height, &comps, 4);
+        if(!pixels)
+        {
+            VM_ERR("Failed to load image: {}", filename);
+            return false;
+        }
 
-		stbi_image_free(pixels);
-		return true;
-	}
+        auto imageInfo = VkMana::ImageCreateInfo::Texture(width, height);
+        VkMana::ImageDataSource dataSource{
+            .size = uint32_t(width * height * 4),
+            .data = pixels,
+        };
+        outImage = ctx.CreateImage(imageInfo, &dataSource);
+
+        stbi_image_free(pixels);
+        return true;
+    }
 
 } // namespace VkMana::SamplesApp

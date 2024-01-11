@@ -5,6 +5,6 @@
 
 namespace VkMana::SamplesApp
 {
-	bool LoadGLTFModel(StaticMesh& mesh, Renderer& renderer, const std::string& filename);
+    bool LoadGLTFModel(StaticMesh& mesh, Renderer& renderer, const std::string& filename);
 
-} // namespace VkMana::Sample
+} // namespace VkMana::SamplesApp

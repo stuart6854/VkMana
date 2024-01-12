@@ -110,6 +110,20 @@ namespace VkMana
         else
             options.SetOptimizationLevel(shaderc_optimization_level_performance);
 
+        // Stage PreProcessor definitions
+        switch(stage)
+        {
+        case vk::ShaderStageFlagBits::eVertex:
+            options.AddMacroDefinition("VERTEX_STAGE");
+            break;
+        case vk::ShaderStageFlagBits::eFragment:
+            options.AddMacroDefinition("FRAGMENT_STAGE");
+            break;
+        default:
+            assert(false);
+            break;
+        }
+
         const char* sourceFile = "_no_file_";
         if(srcFilename)
             sourceFile = srcFilename;

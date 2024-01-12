@@ -40,6 +40,8 @@ namespace VkMana
 
         /* Resources */
 
+        auto CreateSurface(void* windowHandle) -> vk::SurfaceKHR;
+
         auto CreateSwapChain(vk::SurfaceKHR surface, uint32_t width, uint32_t height) -> SwapChainHandle;
 
         auto RequestDescriptorSet(const SetLayout* layout) -> DescriptorSetHandle;

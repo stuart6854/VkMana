@@ -156,6 +156,18 @@ namespace VkMana
         GetFrame().Garbage->Bin(fence);
     }
 
+    auto Context::CreateSurface(void* windowHandle) -> vk::SurfaceKHR
+    {
+#if defined(VK_USE_PLATFORM_WIN32_KHR)
+        vk::Win32SurfaceCreateInfoKHR surfaceInfo{};
+        surfaceInfo.hinstance = GetModuleHandle(nullptr);
+        surfaceInfo.hwnd = static_cast<HWND>(windowHandle);
+        return m_instance.createWin32SurfaceKHR(surfaceInfo);
+#else
+        assert(false);
+#endif
+    }
+
     auto Context::CreateSwapChain(vk::SurfaceKHR surface, uint32_t width, uint32_t height) -> SwapChainHandle
     {
         return SwapChain::New(this, surface, width, height);

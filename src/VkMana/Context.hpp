@@ -14,6 +14,11 @@
 
 #include <unordered_map>
 
+// #TODO: Present wait on last graphics semaphore (may want to submit 1 itself)
+// #TODO: Ability to create static descriptor sets (not reset every frame)
+// #TODO: Other queues (e.g. Transfer queue, compute queue) + Sync between them
+// #TODO: Upload context object (own command buffer + staging buffers) to be used in worker threads (1 per thread)
+
 namespace VkMana
 {
     class Context : public IntrusivePtrEnabled<Context>
@@ -39,6 +44,8 @@ namespace VkMana
         void SubmitStaging(CmdBuffer cmd);
 
         /* Resources */
+
+        auto CreateSurface(void* windowHandle) -> vk::SurfaceKHR;
 
         auto CreateSwapChain(vk::SurfaceKHR surface, uint32_t width, uint32_t height) -> SwapChainHandle;
 

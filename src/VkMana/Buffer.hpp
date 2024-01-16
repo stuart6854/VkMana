@@ -75,7 +75,8 @@ namespace VkMana
 
         void SetDebugName(const std::string& name) override;
 
-        void WriteHostAccessible(uint64_t offset, uint64_t size, const void* pData) const;
+        auto Map() const -> uint8_t*;
+        void Unmap() const;
 
         auto GetBuffer() const -> auto { return m_buffer; }
         auto GetSize() const -> auto { return m_info.size; }

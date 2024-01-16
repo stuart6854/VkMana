@@ -43,6 +43,10 @@ namespace VkMana
         void Submit(CmdBuffer cmd);
         void SubmitStaging(CmdBuffer cmd);
 
+        /* Recording Utility */
+
+        void DrawFullScreenQuad(CmdBuffer& cmd, ImageHandle& image);
+
         /* Resources */
 
         auto CreateSurface(void* windowHandle) -> vk::SurfaceKHR;
@@ -144,6 +148,9 @@ namespace VkMana
         std::vector<vk::Semaphore> m_submitWaitSemaphores;
         std::vector<vk::PipelineStageFlags> m_submitWaitStageMasks;
         std::vector<vk::Semaphore> m_presentWaitSemaphores;
+
+        SetLayoutHandle m_singleImageSetLayout;
+        PipelineHandle m_fullscreenQuadPipeline;
     };
     using ContextHandle = IntrusivePtr<Context>;
 

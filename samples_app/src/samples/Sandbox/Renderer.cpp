@@ -290,7 +290,9 @@ namespace VkMana::SamplesApp
 
     void Renderer::GBufferPass(CmdBuffer& cmd)
     {
-        m_cameraUniformBuffer->WriteHostAccessible(sizeof(CameraUniformData) * m_ctx->GetFrameIndex(), sizeof(CameraUniformData), &m_cameraUniformData);
+        auto* dataPtr = m_cameraUniformBuffer->Map() + (sizeof(CameraUniformData) * m_ctx->GetFrameIndex());
+        std::memcpy(dataPtr, &m_cameraUniformData, sizeof(CameraUniformData));
+        m_cameraUniformBuffer->Unmap();
 
         auto cameraSet = m_ctx->RequestDescriptorSet(m_cameraSetLayout.Get());
         cameraSet->Write(

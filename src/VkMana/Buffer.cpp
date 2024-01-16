@@ -39,17 +39,22 @@ namespace VkMana
         SetObjectDebugName(GetContext()->GetDevice(), m_buffer, debugName.c_str());
     }
 
-    void Buffer::WriteHostAccessible(uint64_t offset, uint64_t size, const void* pData) const
+    auto Buffer::Map() const -> uint8_t*
     {
         if(!IsHostAccessible())
-            return;
+        {
+            return nullptr;
+        }
 
-        assert(offset + size <= GetSize() && "Buffer (host-accessible) write overflow.");
+        return static_cast<uint8_t*>(GetContext()->GetAllocator().mapMemory(m_allocation));
+    }
 
-        auto* mapped = GetContext()->GetAllocator().mapMemory(m_allocation);
-        auto* offsetMapped = static_cast<uint8_t*>(mapped) + offset;
-        std::memcpy(offsetMapped, pData, size);
-        GetContext()->GetAllocator().unmapMemory(m_allocation);
+    void Buffer::Unmap() const
+    {
+        if(IsHostAccessible())
+        {
+            GetContext()->GetAllocator().unmapMemory(m_allocation);
+        }
     }
 
     Buffer::Buffer(Context* context, vk::Buffer buffer, vma::Allocation allocation, const BufferCreateInfo& info)

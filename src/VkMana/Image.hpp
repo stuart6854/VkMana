@@ -105,6 +105,9 @@ namespace VkMana
         auto GetFormat() const -> auto { return m_format; }
         auto GetAspect() const -> vk::ImageAspectFlags;
 
+        /* Returns float(GetWidth()) / float(GetHeight()) */
+        auto GetAspectRatio() const -> float { return float(GetWidth()) / float(GetHeight()); }
+
     private:
         friend class SwapChain;
 

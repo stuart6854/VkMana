@@ -28,6 +28,9 @@ namespace VkMana
 
         auto GetRenderPass() -> RenderPassInfo;
 
+        /* Returns float(GetBackBufferWidth()) / float(GetBackBufferHeight()) */
+        auto GetAspectRatio() const -> auto { return float(GetBackBufferWidth()) / float(GetBackBufferHeight()); }
+
 #pragma endregion
 
     private:

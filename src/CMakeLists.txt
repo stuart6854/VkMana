@@ -1,4 +1,4 @@
-add_library(VkMana
+set(VKMANA_SOURCES
     VkMana/Context.cpp
     VkMana/Garbage.cpp
     VkMana/CommandPool.cpp
@@ -12,6 +12,12 @@ add_library(VkMana
     VkMana/Buffer.cpp
     VkMana/QueryPool.cpp
 )
+
+if (VKMANA_BUILD_SHARED OR BUILD_SHARED_LIBS)
+    add_library(VkMana SHARED ${VKMANA_SOURCES})
+else ()
+    add_library(VkMana STATIC ${VKMANA_SOURCES})
+endif ()
 
 target_include_directories(VkMana PRIVATE "./")
 target_include_directories(VkMana SYSTEM INTERFACE "./")

@@ -19,6 +19,8 @@ namespace VkMana
 
 #pragma region Getters
 
+        bool IsValid() const { return m_pContext != nullptr && m_swapChain != nullptr && m_width > 0 && m_height > 0; }
+
         auto GetSurface() const -> auto { return m_surface; }
         auto GetSwapChain() const -> auto { return m_swapChain; }
         auto GetBackBufferIndex() const -> auto { return m_backBufferIndex; }

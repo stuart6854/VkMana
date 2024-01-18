@@ -7,7 +7,7 @@ namespace VkMana
     auto SwapChain::New(Context* pContext, vk::SurfaceKHR surface, uint32_t width, uint32_t height) -> IntrusivePtr<SwapChain>
     {
         auto pNewSwapChain = IntrusivePtr(new SwapChain(pContext, surface));
-        if(!pNewSwapChain->Recreate(width, height, true))
+        if(!pNewSwapChain->Recreate(width, height, true) || !pNewSwapChain->IsValid())
         {
             return nullptr;
         }
@@ -25,6 +25,14 @@ namespace VkMana
     bool SwapChain::Recreate(uint32_t width, uint32_t height, bool vsync)
     {
         m_pContext->GetGraphicsQueue().waitIdle();
+
+        // Handle minimized surface/window case
+        if(width == 0 || height == 0)
+        {
+            m_backBufferImages.clear();
+            m_swapChain = nullptr;
+            return false;
+        }
 
         auto surfaceCaps = m_pContext->GetPhysicalDevice().getSurfaceCapabilitiesKHR(m_surface);
 
@@ -57,15 +65,19 @@ namespace VkMana
         swapchainInfo.setClipped(VK_TRUE);
         swapchainInfo.setOldSwapchain(oldSwapChain);
         m_swapChain = m_pContext->GetDevice().createSwapchainKHR(swapchainInfo);
+
+        // Cleanup old SwapChain now in-case new SwapChain creation failed
+        if(oldSwapChain)
+        {
+            m_backBufferImages.clear();
+            m_pContext->GetDevice().destroy(oldSwapChain);
+        }
+
         if(m_swapChain == nullptr)
         {
             VM_ERR("Failed to create SwapChain");
+            m_swapChain = nullptr;
             return false;
-        }
-
-        if(oldSwapChain)
-        {
-            m_pContext->GetDevice().destroy(oldSwapChain);
         }
 
         auto swapchainImages = m_pContext->GetDevice().getSwapchainImagesKHR(m_swapChain);

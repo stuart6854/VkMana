@@ -86,58 +86,6 @@ namespace VkMana
             .mipMapMode = vk::SamplerMipmapMode::eLinear,
         });
 
-        {
-            m_singleImageSetLayout = CreateSetLayout({
-                { 0, vk::DescriptorType::eCombinedImageSampler, 1, vk::ShaderStageFlagBits::eFragment },
-            });
-            auto fullscreenQuadPipelineLayout = CreatePipelineLayout({
-                .PushConstantRange = {},
-                .SetLayouts = { m_singleImageSetLayout.Get() },
-            });
-
-            const std::string vsSource = R"(
-#version 460 core
-layout(location = 0) out vec2 outTexCoord;
-void main()
-{
-    outTexCoord = vec2((gl_VertexIndex << 1) & 2, gl_VertexIndex & 2);
-    gl_Position = vec4(outTexCoord * 2.0 - 1.0, 0.0, 1.0);
-})";
-            const std::string fsSource = R"(
-#version 460 core
-layout(location = 0) in vec2 inTexCoord;
-layout(location = 0) out vec4 outFragColor;
-layout(set = 0, binding = 0) uniform sampler2D uTexture;
-void main()
-{
-    outFragColor = vec4(texture(uTexture, inTexCoord).rgb, 1.0);
-})";
-
-            ShaderCompileInfo shaderInfo{};
-            shaderInfo.srcLanguage = SourceLanguage::GLSL;
-            shaderInfo.pSrcStringStr = vsSource.c_str();
-            shaderInfo.stage = vk::ShaderStageFlagBits::eVertex;
-            shaderInfo.debug = false;
-            auto vsByteCode = CompileShader(shaderInfo);
-
-            shaderInfo.pSrcStringStr = fsSource.c_str();
-            shaderInfo.stage = vk::ShaderStageFlagBits::eFragment;
-            auto fsByteCode = CompileShader(shaderInfo);
-
-            GraphicsPipelineCreateInfo fullscreenQuadPipelineInfo{};
-            fullscreenQuadPipelineInfo.vs = {
-                { vsByteCode->data(), uint32_t(vsByteCode->size()) }
-            };
-            fullscreenQuadPipelineInfo.fs = {
-                { fsByteCode->data(), uint32_t(fsByteCode->size()) }
-            };
-            fullscreenQuadPipelineInfo.primitiveTopology = vk::PrimitiveTopology::eTriangleList;
-            fullscreenQuadPipelineInfo.colorTargetCount = 1;
-            fullscreenQuadPipelineInfo.colorFormats = { vk::Format::eB8G8R8A8Srgb };
-            fullscreenQuadPipelineInfo.pPipelineLayout = fullscreenQuadPipelineLayout;
-            m_fullscreenQuadPipeline = CreateGraphicsPipeline(fullscreenQuadPipelineInfo);
-        }
-
         return true;
     }
 
@@ -208,16 +156,6 @@ void main()
 
         GetFrame().FrameFences.push_back(fence);
         GetFrame().Garbage->Bin(fence);
-    }
-
-    void Context::DrawFullScreenQuad(CmdBuffer& cmd, ImageHandle& image)
-    {
-        auto imageSet = RequestDescriptorSet(m_singleImageSetLayout.Get());
-        imageSet->Write(image->GetImageView(ImageViewType::Texture), GetLinearSampler(), 0);
-
-        cmd->BindPipeline(m_fullscreenQuadPipeline.Get());
-        cmd->BindDescriptorSets(0, { imageSet.Get() }, {});
-        cmd->Draw(3, 0);
     }
 
     auto Context::CreateSurface(void* windowHandle) -> vk::SurfaceKHR

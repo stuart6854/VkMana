@@ -6,56 +6,11 @@ namespace VkMana
 {
     auto SwapChain::New(Context* pContext, vk::SurfaceKHR surface, uint32_t width, uint32_t height) -> IntrusivePtr<SwapChain>
     {
-        auto surfaceCaps = pContext->GetPhysicalDevice().getSurfaceCapabilitiesKHR(surface);
-
-        uint32_t minImageCount = surfaceCaps.minImageCount + 1;
-        if(surfaceCaps.maxImageCount != 0 && minImageCount < surfaceCaps.maxImageCount)
+        auto pNewSwapChain = IntrusivePtr(new SwapChain(pContext, surface));
+        if(!pNewSwapChain->Recreate(width, height, true))
         {
-            minImageCount = surfaceCaps.maxImageCount;
-        }
-
-        auto surfaceFormat = vk::SurfaceFormatKHR(vk::Format::eB8G8R8A8Srgb); // #TODO: Pick best available format
-
-        width = std::clamp(width, surfaceCaps.minImageExtent.width, surfaceCaps.maxImageExtent.width);
-        height = std::clamp(height, surfaceCaps.minImageExtent.height, surfaceCaps.maxImageExtent.height);
-
-        auto presentMode = vk::PresentModeKHR::eFifo;
-
-        vk::SwapchainCreateInfoKHR swapchainInfo{};
-        swapchainInfo.setSurface(surface);
-        swapchainInfo.setMinImageCount(minImageCount);
-        swapchainInfo.setImageFormat(surfaceFormat.format);
-        swapchainInfo.setImageColorSpace(surfaceFormat.colorSpace);
-        swapchainInfo.setImageExtent({ width, height });
-        swapchainInfo.setImageArrayLayers(1);
-        swapchainInfo.setImageUsage(vk::ImageUsageFlagBits::eColorAttachment);
-        swapchainInfo.setPreTransform(vk::SurfaceTransformFlagBitsKHR::eIdentity);
-        swapchainInfo.setCompositeAlpha(vk::CompositeAlphaFlagBitsKHR::eOpaque);
-        swapchainInfo.setPresentMode(presentMode);
-        swapchainInfo.setClipped(VK_TRUE);
-        swapchainInfo.setOldSwapchain(nullptr);
-        auto swapChain = pContext->GetDevice().createSwapchainKHR(swapchainInfo);
-        if(swapChain == nullptr)
-        {
-            VM_ERR("Failed to create SwapChain");
             return nullptr;
         }
-
-        auto swapchainImages = pContext->GetDevice().getSwapchainImagesKHR(swapChain);
-        std::vector<ImageHandle> backBufferImages(swapchainImages.size());
-        for(auto i = 0u; i < swapchainImages.size(); ++i)
-        {
-            backBufferImages[i] = IntrusivePtr(new Image(pContext, swapchainImages[i], width, height, surfaceFormat.format));
-            if(backBufferImages[i] == nullptr)
-            {
-                VM_ERR("Failed to create SwapChain (BackBuffer image {} was not created)", i);
-                return nullptr;
-            }
-            backBufferImages[i]->SetDebugName("BackBuffer " + std::to_string(i));
-        }
-        assert(backBufferImages.size() > 0);
-
-        auto pNewSwapChain = IntrusivePtr(new SwapChain(pContext, surface, swapChain, width, height, surfaceFormat.format, backBufferImages));
         return pNewSwapChain;
     }
 
@@ -65,6 +20,74 @@ namespace VkMana
         m_pContext->GetDevice().destroy(m_presentFence);
         m_pContext->GetDevice().destroy(m_swapChain);
         m_pContext->GetInstance().destroy(m_surface);
+    }
+
+    bool SwapChain::Recreate(uint32_t width, uint32_t height, bool vsync)
+    {
+        m_pContext->GetGraphicsQueue().waitIdle();
+
+        auto surfaceCaps = m_pContext->GetPhysicalDevice().getSurfaceCapabilitiesKHR(m_surface);
+
+        uint32_t minImageCount = surfaceCaps.minImageCount + 1;
+        if(surfaceCaps.maxImageCount != 0 && minImageCount < surfaceCaps.maxImageCount)
+        {
+            minImageCount = surfaceCaps.maxImageCount;
+        }
+
+        auto surfaceFormat = vk::SurfaceFormatKHR(vk::Format::eB8G8R8A8Srgb); // #TODO: Pick best available format
+
+        m_width = std::clamp(width, surfaceCaps.minImageExtent.width, surfaceCaps.maxImageExtent.width);
+        m_height = std::clamp(height, surfaceCaps.minImageExtent.height, surfaceCaps.maxImageExtent.height);
+
+        auto presentMode = vk::PresentModeKHR::eFifo; // #TODO: Select best available present mode (VSync)
+
+        auto oldSwapChain = m_swapChain;
+
+        vk::SwapchainCreateInfoKHR swapchainInfo{};
+        swapchainInfo.setSurface(m_surface);
+        swapchainInfo.setMinImageCount(minImageCount);
+        swapchainInfo.setImageFormat(surfaceFormat.format);
+        swapchainInfo.setImageColorSpace(surfaceFormat.colorSpace);
+        swapchainInfo.setImageExtent({ m_width, m_height });
+        swapchainInfo.setImageArrayLayers(1);
+        swapchainInfo.setImageUsage(vk::ImageUsageFlagBits::eColorAttachment);
+        swapchainInfo.setPreTransform(vk::SurfaceTransformFlagBitsKHR::eIdentity);
+        swapchainInfo.setCompositeAlpha(vk::CompositeAlphaFlagBitsKHR::eOpaque);
+        swapchainInfo.setPresentMode(presentMode);
+        swapchainInfo.setClipped(VK_TRUE);
+        swapchainInfo.setOldSwapchain(oldSwapChain);
+        m_swapChain = m_pContext->GetDevice().createSwapchainKHR(swapchainInfo);
+        if(m_swapChain == nullptr)
+        {
+            VM_ERR("Failed to create SwapChain");
+            return false;
+        }
+
+        if(oldSwapChain)
+        {
+            m_pContext->GetDevice().destroy(oldSwapChain);
+        }
+
+        auto swapchainImages = m_pContext->GetDevice().getSwapchainImagesKHR(m_swapChain);
+        assert(swapchainImages.size() > 0);
+
+        m_backBufferImages.resize(swapchainImages.size());
+        for(auto i = 0u; i < swapchainImages.size(); ++i)
+        {
+            m_backBufferImages[i] = IntrusivePtr(new Image(m_pContext, swapchainImages[i], width, height, surfaceFormat.format));
+            if(m_backBufferImages[i] == nullptr)
+            {
+                VM_ERR("Failed to create SwapChain (BackBuffer image {} was not created)", i);
+                return false;
+            }
+            m_backBufferImages[i]->SetDebugName("BackBuffer " + std::to_string(i));
+        }
+
+        m_backBufferFormat = surfaceFormat.format;
+
+        AcquireNextImage();
+
+        return true;
     }
 
     void SwapChain::Present()
@@ -98,25 +121,11 @@ namespace VkMana
         return renderPassInfo;
     }
 
-    SwapChain::SwapChain(
-        Context* pContext,
-        vk::SurfaceKHR surface,
-        vk::SwapchainKHR swapChain,
-        uint32_t width,
-        uint32_t height,
-        vk::Format backBufferFormat,
-        const std::vector<ImageHandle>& backBufferImages
-    )
+    SwapChain::SwapChain(Context* pContext, vk::SurfaceKHR surface)
         : m_pContext(pContext)
         , m_surface(surface)
-        , m_swapChain(swapChain)
-        , m_width(width)
-        , m_height(height)
-        , m_backBufferFormat(backBufferFormat)
-        , m_backBufferImages(backBufferImages)
     {
         m_presentFence = m_pContext->GetDevice().createFence({});
-        AcquireNextImage();
     }
 
     void SwapChain::AcquireNextImage()

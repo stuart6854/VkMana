@@ -14,6 +14,7 @@ namespace VkMana
 
         ~SwapChain();
 
+        bool Recreate(uint32_t width, uint32_t height, bool vsync);
         void Present();
 
 #pragma region Getters
@@ -34,15 +35,7 @@ namespace VkMana
 #pragma endregion
 
     private:
-        SwapChain(
-            Context* pContext,
-            vk::SurfaceKHR surface,
-            vk::SwapchainKHR swapChain,
-            uint32_t width,
-            uint32_t height,
-            vk::Format backBufferFormat,
-            const std::vector<ImageHandle>& backBufferImages
-        );
+        SwapChain(Context* pContext, vk::SurfaceKHR surface);
 
         void AcquireNextImage();
 
@@ -54,9 +47,9 @@ namespace VkMana
         std::vector<ImageHandle> m_backBufferImages;
         uint32_t m_backBufferIndex = 0;
 
-        uint32_t m_width;
-        uint32_t m_height;
-        vk::Format m_backBufferFormat;
+        uint32_t m_width = 0;
+        uint32_t m_height = 0;
+        vk::Format m_backBufferFormat = {};
     };
 
     using SwapChainHandle = IntrusivePtr<SwapChain>;

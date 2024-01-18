@@ -31,6 +31,9 @@ namespace VkMana
         {
             m_backBufferImages.clear();
             m_pContext->GetDevice().destroy(m_swapChain);
+            m_swapChain = nullptr;
+            width = 0;
+            height = 0;
             return false;
         }
 

@@ -124,11 +124,21 @@ namespace VkMana
 
     void CommandBuffer::BindDescriptorSets(uint32_t firstSet, const std::vector<DescriptorSet*>& sets, const std::vector<uint32_t>& dynamicOffsets)
     {
-        std::vector<vk::DescriptorSet> descSets(sets.size());
-        for(auto i = 0u; i < sets.size(); ++i)
+        const auto setCount = uint32_t(sets.size());
+        assert(setCount <= 32);
+        std::array<vk::DescriptorSet, 32> descSets;
+        for(auto i = 0u; i < setCount; ++i)
             descSets[i] = sets[i]->GetSet();
 
-        m_cmd.bindDescriptorSets(m_pipeline->GetBindPoint(), m_pipeline->GetLayout()->GetLayout(), firstSet, descSets, dynamicOffsets);
+        m_cmd.bindDescriptorSets(
+            m_pipeline->GetBindPoint(),
+            m_pipeline->GetLayout()->GetLayout(),
+            firstSet,
+            setCount,
+            descSets.data(),
+            uint32_t(dynamicOffsets.size()),
+            dynamicOffsets.data()
+        );
     }
 
     void CommandBuffer::BindIndexBuffer(const Buffer* pBuffer, uint64_t offsetBytes, vk::IndexType indexType)
@@ -138,11 +148,14 @@ namespace VkMana
 
     void CommandBuffer::BindVertexBuffers(uint32_t firstBinding, const std::vector<const Buffer*>& buffers, const std::vector<uint64_t>& offsets)
     {
-        std::vector<vk::Buffer> vtxBuffers(buffers.size());
-        for(auto i = 0u; i < buffers.size(); ++i)
+        const auto bufferCount = uint32_t(buffers.size());
+        assert(bufferCount <= 8);
+        std::array<vk::Buffer, 8> vtxBuffers;
+        for(auto i = 0u; i < bufferCount; ++i)
             vtxBuffers[i] = buffers[i]->GetBuffer();
 
-        m_cmd.bindVertexBuffers(firstBinding, vtxBuffers, offsets);
+        assert(offsets.size() == bufferCount);
+        m_cmd.bindVertexBuffers(firstBinding, bufferCount, vtxBuffers.data(), offsets.data());
     }
 
     void CommandBuffer::Draw(uint32_t vertexCount, uint32_t firstVertex) { m_cmd.draw(vertexCount, 1, firstVertex, 0); }

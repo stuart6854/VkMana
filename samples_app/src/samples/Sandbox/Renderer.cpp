@@ -33,10 +33,10 @@ namespace VkMana::SamplesApp
         }
 
         m_bindlessSetLayout = m_ctx->CreateSetLayout({
-            { 0,
+            {0,
              vk::DescriptorType::eCombinedImageSampler,
              MaxBindlessImages, vk::ShaderStageFlagBits::eFragment,
-             vk::DescriptorBindingFlagBits::ePartiallyBound },
+             vk::DescriptorBindingFlagBits::ePartiallyBound},
         });
         // #TODO: m_bindlessSetLayout->SetDebugName("Bindless");
 
@@ -128,7 +128,7 @@ namespace VkMana::SamplesApp
         };
 
         m_cameraSetLayout = m_ctx->CreateSetLayout({
-            { 0, vk::DescriptorType::eUniformBuffer, 1, vk::ShaderStageFlagBits::eVertex },
+            {0, vk::DescriptorType::eUniformBuffer, 1, vk::ShaderStageFlagBits::eVertex},
         });
         // #TODO: m_cameraSetLayout->SetDebugName()
 
@@ -174,6 +174,10 @@ namespace VkMana::SamplesApp
                     vk::VertexInputBindingDescription(0, sizeof(StaticVertex), vk::VertexInputRate::eVertex),
             },
             .primitiveTopology =  vk::PrimitiveTopology::eTriangleList,
+            .depthStencil = {
+                .depthTest = true,
+                .depthWrite = true,
+            },
             .colorTargetCount = 3,
             .colorFormats = { positionImageInfo.format, normalImageInfo.format, albedoImageInfo.format },
             .depthStencilFormat = depthImageInfo.format,
@@ -199,9 +203,9 @@ namespace VkMana::SamplesApp
         };
 
         m_compositionSetLayout = m_ctx->CreateSetLayout({
-            { 0, vk::DescriptorType::eCombinedImageSampler, 1, vk::ShaderStageFlagBits::eFragment },
-            { 1, vk::DescriptorType::eCombinedImageSampler, 1, vk::ShaderStageFlagBits::eFragment },
-            { 2, vk::DescriptorType::eCombinedImageSampler, 1, vk::ShaderStageFlagBits::eFragment },
+            {0, vk::DescriptorType::eCombinedImageSampler, 1, vk::ShaderStageFlagBits::eFragment},
+            {1, vk::DescriptorType::eCombinedImageSampler, 1, vk::ShaderStageFlagBits::eFragment},
+            {2, vk::DescriptorType::eCombinedImageSampler, 1, vk::ShaderStageFlagBits::eFragment},
         });
 
         const PipelineLayoutCreateInfo layoutInfo{
@@ -246,7 +250,7 @@ namespace VkMana::SamplesApp
     void Renderer::SetupScreenPass()
     {
         m_screenSetLayout = m_ctx->CreateSetLayout({
-            { 0, vk::DescriptorType::eCombinedImageSampler, 1, vk::ShaderStageFlagBits::eFragment },
+            {0, vk::DescriptorType::eCombinedImageSampler, 1, vk::ShaderStageFlagBits::eFragment},
         });
 
         const PipelineLayoutCreateInfo layoutInfo{

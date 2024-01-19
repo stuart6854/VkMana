@@ -60,7 +60,7 @@ namespace VkMana::SamplesApp
         m_depthTarget = ctx.CreateImage(depthImageInfo, nullptr);
 
         std::vector<VkMana::SetLayoutBinding> setBindings{
-            { 0, vk::DescriptorType::eCombinedImageSampler, 1, vk::ShaderStageFlagBits::eFragment },
+            {0, vk::DescriptorType::eCombinedImageSampler, 1, vk::ShaderStageFlagBits::eFragment},
         };
         m_setLayout = ctx.CreateSetLayout(setBindings);
         // #TODO: m_setLayout->SetDebugName("ModelLoading")
@@ -109,6 +109,10 @@ namespace VkMana::SamplesApp
                     vk::VertexInputBindingDescription(0, sizeof(Vertex), vk::VertexInputRate::eVertex),
             },
             .primitiveTopology = vk::PrimitiveTopology::eTriangleList,
+            .depthStencil = {
+                .depthTest = true,
+                .depthWrite = true,
+            },
             .colorTargetCount = 1,
             .colorFormats = { vk::Format::eB8G8R8A8Srgb },
             .depthStencilFormat = vk::Format::eD24UnormS8Uint,

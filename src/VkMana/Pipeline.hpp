@@ -5,6 +5,8 @@
 
 #include <vector>
 
+// #TODO: Stencil Test
+
 namespace VkMana
 {
     class Context;
@@ -29,6 +31,13 @@ namespace VkMana
         const char* entryPoint = "main"; // Should be "main" for GLSL.
     };
 
+    struct DepthStencilInfo
+    {
+        bool depthTest = false;
+        bool depthWrite = false;
+        vk::CompareOp depthCompareOp = vk::CompareOp::eLess;
+    };
+
     /**
      * Dynamic State
      * 	- Polygon Mode (Wireframe)
@@ -44,6 +53,7 @@ namespace VkMana
         std::vector<vk::VertexInputBindingDescription> vertexBindings;
 
         vk::PrimitiveTopology primitiveTopology;
+        DepthStencilInfo depthStencil;
 
         uint32_t colorTargetCount = 0;
         std::array<vk::Format, 8> colorFormats;                 // Render Targets - Color

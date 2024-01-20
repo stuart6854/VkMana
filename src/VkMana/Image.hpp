@@ -108,6 +108,8 @@ namespace VkMana
         /* Returns float(GetWidth()) / float(GetHeight()) */
         auto GetAspectRatio() const -> float { return float(GetWidth()) / float(GetHeight()); }
 
+        bool IsSwapChainImage() const { return !m_ownsImage; }
+
     private:
         friend class SwapChain;
 

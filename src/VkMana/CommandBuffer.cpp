@@ -316,6 +316,27 @@ namespace VkMana
         m_cmd.copyBufferToImage2(copyInfo);
     }
 
+    void CommandBuffer::CopyImageToBuffer(const ImageToBufferCopyInfo& info)
+    {
+        vk::BufferImageCopy2 region{};
+        region.setBufferOffset(0);
+        region.setBufferRowLength(0);
+        region.setBufferImageHeight(0);
+        region.setImageExtent({ info.pSrcImage->GetWidth(), info.pSrcImage->GetHeight(), info.pSrcImage->GetDepthOrArrayLayers() });
+        region.imageSubresource.setAspectMask(info.pSrcImage->GetAspect());
+        region.imageSubresource.setMipLevel(0);
+        region.imageSubresource.setBaseArrayLayer(0);
+        region.imageSubresource.setLayerCount(1);
+
+        vk::CopyImageToBufferInfo2 copyInfo{};
+        copyInfo.setSrcImage(info.pSrcImage->GetImage());
+        copyInfo.setSrcImageLayout(vk::ImageLayout::eTransferSrcOptimal);
+        copyInfo.setDstBuffer(info.pDstBuffer->GetBuffer());
+        copyInfo.setRegions(region);
+
+        m_cmd.copyImageToBuffer2(copyInfo);
+    }
+
     void CommandBuffer::ResetQueryPool(const QueryPool* pQueryPool, uint32_t firstQuery, uint32_t queryCount)
     {
         m_cmd.resetQueryPool(pQueryPool->GetPool(), firstQuery, queryCount);

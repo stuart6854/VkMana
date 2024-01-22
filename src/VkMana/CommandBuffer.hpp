@@ -73,6 +73,11 @@ namespace VkMana
         const Buffer* pSrcBuffer = nullptr;
         const Image* pDstImage = nullptr;
     };
+    struct ImageToBufferCopyInfo
+    {
+        const Image* pSrcImage = nullptr;
+        const Buffer* pDstBuffer = nullptr;
+    };
     struct QueryCopyInfo
     {
         const QueryPool* pQueryPool;
@@ -116,6 +121,7 @@ namespace VkMana
 
         void CopyBuffer(const BufferCopyInfo& info);
         void CopyBufferToImage(const BufferToImageCopyInfo& info);
+        void CopyImageToBuffer(const ImageToBufferCopyInfo& info);
 
         void ResetQueryPool(const QueryPool* pQueryPool, uint32_t firstQuery, uint32_t queryCount);
         void BeginQuery(const QueryPool* pQueryPool, uint32_t queryIndex, vk::QueryControlFlags flags = {});

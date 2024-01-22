@@ -31,6 +31,7 @@ target_link_libraries(VkMana
     Vulkan::Headers
     VulkanMemoryAllocator-Hpp
 )
+target_compile_definitions(VkMana PRIVATE VKMANA_EXPORTS)
 
 target_compile_features(VkMana PUBLIC cxx_std_20)
 

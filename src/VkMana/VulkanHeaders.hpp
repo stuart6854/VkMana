@@ -1,5 +1,11 @@
 #pragma once
 
+#if defined(VKMANA_EXPORTS)
+    #define VM_API __declspec(dllexport)
+#else
+    #define VM_API __declspec(dllimport)
+#endif
+
 #if defined(_WIN32) && !defined(VK_USE_PLATFORM_WIN32)
     #define VK_USE_PLATFORM_WIN32_KHR
     #ifndef WIN32_LEAN_AND_MEAN
@@ -24,10 +30,15 @@
 
 #include <vulkan/vulkan.h>
 #define VULKAN_HPP_DISPATCH_LOADER_DYNAMIC 1
-#include "Logging.hpp"
+#define VULKAN_HPP_STORAGE_SHARED
+#if defined(VKMANA_EXPORTS)
+    #define VULKAN_HPP_STORAGE_SHARED_EXPORT
+#endif
 #include <vk_mem_alloc.hpp>
 #include <vulkan/vulkan.hpp>
 #include <vulkan/vulkan_hash.hpp>
+
+#include "Logging.hpp"
 
 #ifdef VULKAN_DEBUG
     #define VK_ASSERT(x)                                                                                                                                       \
